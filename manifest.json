@@ -1,0 +1,11 @@
+{
+  "name": "Violet's Routines",
+  "short_name": "Routines",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#cce8ff",
+  "theme_color": "#9b87f5",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
