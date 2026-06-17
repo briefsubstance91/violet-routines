@@ -197,6 +197,28 @@
     }
     .task.done .task-label { text-decoration: line-through; opacity: 0.4; }
 
+    .expand-chevron {
+      margin-left: auto;
+      font-size: 1.3rem;
+      color: var(--muted);
+      line-height: 1;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .expand-chevron.open { transform: rotate(90deg); }
+
+    .subtask-group {
+      display: none;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-top: 0.4rem;
+      margin-left: 1.2rem;
+      padding-left: 0.75rem;
+      border-left: 2.5px solid rgba(155,135,245,0.25);
+    }
+    .subtask-group.expanded { display: flex; }
+    .subtask { min-height: 46px; font-size: 0.95rem; }
+
     .complete-banner {
       display: none;
       margin-top: 1.1rem;
@@ -350,10 +372,29 @@
       </div>
       <div class="task-list">
         {% for task in r.tasks %}
-        <div class="task" id="{{ r.id }}-{{ loop.index0 }}" onclick="toggle('{{ r.id }}', {{ loop.index0 }})">
-          <div class="task-check"></div>
-          <span class="task-label">{{ task }}</span>
-        </div>
+          {% if task.subtasks %}
+          <div class="task task-parent" id="{{ r.id }}-{{ task.idx }}"
+               onclick="toggleExpand('{{ r.id }}', '{{ task.idx }}')">
+            <div class="task-check"></div>
+            <span class="task-label">{{ task.label }}</span>
+            <span class="expand-chevron" id="chev-{{ r.id }}-{{ task.idx }}">›</span>
+          </div>
+          <div class="subtask-group" id="subs-{{ r.id }}-{{ task.idx }}">
+            {% for sub in task.subtasks %}
+            <div class="task subtask" id="{{ r.id }}-{{ sub.idx }}"
+                 onclick="toggle('{{ r.id }}', '{{ sub.idx }}')">
+              <div class="task-check"></div>
+              <span class="task-label">{{ sub.label }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="task" id="{{ r.id }}-{{ task.idx }}"
+               onclick="toggle('{{ r.id }}', '{{ task.idx }}')">
+            <div class="task-check"></div>
+            <span class="task-label">{{ task.label }}</span>
+          </div>
+          {% endif %}
         {% endfor %}
       </div>
       <div class="complete-banner">{{ r.banner }}</div>
@@ -374,17 +415,18 @@
 
   const TODAY = new Date().toDateString();
 
+  // v2 state uses {routine: {idx: bool}} instead of arrays
   function getState() {
-    const raw = localStorage.getItem('violet-routines');
+    const raw = localStorage.getItem('violet-routines-v2');
     if (!raw) return null;
     const s = JSON.parse(raw);
     if (s.date !== TODAY) return null;
     return s;
   }
   function saveState(state) {
-    localStorage.setItem('violet-routines', JSON.stringify({ ...state, date: TODAY }));
+    localStorage.setItem('violet-routines-v2', JSON.stringify({ ...state, date: TODAY }));
   }
-  let state = getState() || Object.fromEntries(Object.keys(ROUTINES).map(k => [k, []]));
+  let state = getState() || Object.fromEntries(Object.keys(ROUTINES).map(k => [k, {}]));
 
   function getStreaks() {
     const raw = localStorage.getItem('violet-streaks');
@@ -414,10 +456,17 @@
   document.getElementById('date-display').textContent =
     `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
 
+  function topLevelDone(routineId) {
+    const s = state[routineId] || {};
+    return ROUTINES[routineId].tasks.filter(t =>
+      t.subs.length ? t.subs.every(sub => !!s[sub]) : !!s[t.idx]
+    ).length;
+  }
+
   function render() {
     for (const [id, cfg] of Object.entries(ROUTINES)) {
-      const done  = state[id] || [];
-      const count = done.length;
+      const s     = state[id] || {};
+      const count = topLevelDone(id);
       const total = cfg.total;
       const pct   = Math.round((count / total) * 100);
 
@@ -425,9 +474,14 @@
       document.getElementById(`bar-${id}`).style.width  = pct + '%';
       document.getElementById(`card-${id}`).classList.toggle('complete', count === total);
 
-      for (let i = 0; i < total; i++) {
-        const task = document.getElementById(`${id}-${i}`);
-        if (task) task.classList.toggle('done', done.includes(i));
+      for (const task of cfg.tasks) {
+        const isDone = task.subs.length ? task.subs.every(sub => !!s[sub]) : !!s[task.idx];
+        const el = document.getElementById(`${id}-${task.idx}`);
+        if (el) el.classList.toggle('done', isDone);
+        for (const sub of task.subs) {
+          const subEl = document.getElementById(`${id}-${sub}`);
+          if (subEl) subEl.classList.toggle('done', !!s[sub]);
+        }
       }
 
       const streak = getStreak(id);
@@ -439,19 +493,26 @@
     }
   }
 
-  function toggle(routine, index) {
-    const done = state[routine] || [];
-    const wasComplete = done.length === ROUTINES[routine].total;
-    state[routine] = done.includes(index) ? done.filter(i => i !== index) : [...done, index];
+  function toggle(routine, idx) {
+    const wasComplete = topLevelDone(routine) === ROUTINES[routine].total;
+    const s = state[routine] || {};
+    state[routine] = { ...s, [idx]: !s[idx] };
     saveState(state);
     render();
-    if (!wasComplete && state[routine].length === ROUTINES[routine].total) {
+    if (!wasComplete && topLevelDone(routine) === ROUTINES[routine].total) {
       setTimeout(() => celebrate(routine), 200);
     }
   }
 
+  function toggleExpand(routine, parentIdx) {
+    const group = document.getElementById(`subs-${routine}-${parentIdx}`);
+    const chev  = document.getElementById(`chev-${routine}-${parentIdx}`);
+    if (group) group.classList.toggle('expanded');
+    if (chev)  chev.classList.toggle('open');
+  }
+
   function resetAll() {
-    state = Object.fromEntries(Object.keys(ROUTINES).map(k => [k, []]));
+    state = Object.fromEntries(Object.keys(ROUTINES).map(k => [k, {}]));
     saveState(state);
     render();
   }

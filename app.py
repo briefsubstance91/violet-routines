@@ -48,23 +48,41 @@ def load_routines():
     routines = []
     by_id = {}
     for row in rows:
-        rid  = row.get('ID', '').strip()
-        name = row.get('Routine', '').strip()
-        task = row.get('Task', '').strip()
-        if not rid or not task:
+        rid    = row.get('ID', '').strip()
+        name   = row.get('Routine', '').strip()
+        label  = row.get('Task', '').strip()
+        parent = row.get('Parent', '').strip()
+        if not rid or not label:
             continue
         if rid not in by_id:
             by_id[rid] = {
-                'id':     rid,
-                'name':   name,
-                'icon':   row.get('Icon', '').strip(),
-                'time':   row.get('Time', '').strip(),
-                'banner': row.get('Banner', '').strip(),
-                'tasks':  [],
+                'id':      rid,
+                'name':    name,
+                'icon':    row.get('Icon', '').strip(),
+                'time':    row.get('Time', '').strip(),
+                'banner':  row.get('Banner', '').strip(),
+                'tasks':   [],
+                '_map':    {},
             }
             routines.append(rid)
-        by_id[rid]['tasks'].append(task)
-    return [by_id[r] for r in routines]
+        r = by_id[rid]
+        if parent and parent in r['_map']:
+            r['_map'][parent]['subtasks'].append({'label': label})
+        else:
+            t = {'label': label, 'subtasks': []}
+            r['tasks'].append(t)
+            r['_map'][label] = t
+
+    result = []
+    for rid in routines:
+        r = by_id[rid]
+        del r['_map']
+        for i, task in enumerate(r['tasks']):
+            task['idx'] = str(i)
+            for j, sub in enumerate(task['subtasks']):
+                sub['idx'] = f'{i}-{j}'
+        result.append(r)
+    return result
 
 
 def load_phrases():
@@ -98,7 +116,14 @@ def index():
     routines   = load_routines()
     phrases    = load_phrases()
     milestones = load_milestones()
-    routines_cfg = {r['id']: {'total': len(r['tasks']), 'emoji': r['icon']} for r in routines}
+    routines_cfg = {
+        r['id']: {
+            'total': len(r['tasks']),
+            'emoji': r['icon'],
+            'tasks': [{'idx': t['idx'], 'subs': [s['idx'] for s in t['subtasks']]} for t in r['tasks']],
+        }
+        for r in routines
+    }
     return render_template(
         'index.html',
         routines=routines,
