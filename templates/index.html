@@ -432,8 +432,8 @@
       position: fixed; inset: 0; z-index: 500;
       background: linear-gradient(160deg, #cce8ff 0%, #e9e3ff 50%, #ffd6f0 100%);
       display: flex; flex-direction: column;
-      overflow: hidden;
-      transition: opacity 0.5s, display 0.5s;
+      transition: opacity 0.5s;
+      -webkit-tap-highlight-color: transparent;
     }
     .ob-overlay.hidden { opacity: 0; pointer-events: none; }
 
@@ -443,11 +443,13 @@
       font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700;
       color: var(--muted); border-radius: 100px; padding: 0.35rem 0.9rem;
       cursor: pointer; backdrop-filter: blur(4px); z-index: 10;
+      touch-action: manipulation;
     }
 
     .ob-track {
       display: flex; flex: 1;
       width: 100%;
+      overflow: hidden;
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -542,6 +544,7 @@
       cursor: pointer; letter-spacing: 0.02em;
       box-shadow: 0 4px 20px rgba(155,135,245,0.4);
       transition: transform 0.15s;
+      touch-action: manipulation;
     }
     .ob-btn-next:active { transform: scale(0.95); }
 
