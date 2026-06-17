@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Violet's Stats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --am:    #4db8ff;
+      --af:    #9b87f5;
+      --pm:    #7c3aed;
+      --text:  #1e1b4b;
+      --muted: #9490c0;
+      --card:  #ffffff;
+      --r:     22px;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(160deg, #cce8ff 0%, #e9e3ff 50%, #ffd6f0 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧';
+      position: fixed; top: 0; left: 0; right: 0;
+      font-size: 1rem; color: rgba(155,135,245,0.18);
+      letter-spacing: 2rem; word-spacing: 2rem; line-height: 3rem;
+      pointer-events: none; z-index: 0; word-break: break-all;
+    }
+
+    .header {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 2.5rem 1rem 0.5rem;
+    }
+    .header h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.03em;
+    }
+    .back-link:hover { color: var(--af); }
+
+    .page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+
+    /* ── Section label ── */
+    .section-label {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      color: var(--text);
+      margin: 2rem 0 0.75rem;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--r);
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(78,58,180,0.1);
+      border: 2px solid rgba(155,135,245,0.15);
+    }
+
+    /* ── Streak ── */
+    .streak-card {
+      text-align: center;
+      padding: 2rem 1.5rem;
+    }
+    .streak-number {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(4rem, 12vw, 7rem);
+      line-height: 1;
+      background: linear-gradient(135deg, #ff6b35, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .streak-label {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+    .streak-zero .streak-number { font-size: clamp(2rem, 6vw, 3.5rem); }
+
+    /* ── Week bars ── */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      align-items: end;
+      height: 140px;
+    }
+    .week-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.35rem;
+      height: 100%;
+    }
+    .week-bar-wrap {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: flex-end;
+    }
+    .week-bar {
+      width: 100%;
+      border-radius: 8px 8px 0 0;
+      min-height: 4px;
+      background: linear-gradient(to top, #9b87f5, #c4b5fd);
+      transition: height 0.4s ease;
+    }
+    .week-bar.full { background: linear-gradient(to top, #4db8ff, #9b87f5, #f472b6); }
+    .week-bar.empty { background: #ede9fe; }
+    .week-day-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .week-pct-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .week-bar.no-data { background: #f3f0ff; min-height: 4px; }
+
+    /* ── Routine cards ── */
+    .routine-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .routine-stat-card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 1.25rem 1.25rem 1rem;
+      box-shadow: 0 4px 20px rgba(78,58,180,0.08);
+      border: 2px solid rgba(155,135,245,0.15);
+    }
+    .routine-stat-card.am { border-top: 5px solid #4db8ff; }
+    .routine-stat-card.af { border-top: 5px solid #9b87f5; }
+    .routine-stat-card.pm { border-top: 5px solid #7c3aed; }
+    .rs-name {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+    }
+    .rs-pct {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.2rem;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .routine-stat-card.am .rs-pct { color: #4db8ff; }
+    .routine-stat-card.af .rs-pct { color: #9b87f5; }
+    .routine-stat-card.pm .rs-pct { color: #7c3aed; }
+    .rs-bar-wrap { height: 6px; background: #ede9fe; border-radius: 100px; overflow: hidden; }
+    .rs-bar { height: 100%; border-radius: 100px; }
+    .routine-stat-card.am .rs-bar { background: linear-gradient(90deg, #4db8ff, #a8d8ff); }
+    .routine-stat-card.af .rs-bar { background: linear-gradient(90deg, #9b87f5, #c4b5fd); }
+    .routine-stat-card.pm .rs-bar { background: linear-gradient(90deg, #7c3aed, #c084fc); }
+
+    /* ── Calendar ── */
+    .cal-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      margin-bottom: 3px;
+    }
+    .cal-day-name {
+      text-align: center;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-bottom: 4px;
+    }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .cal-cell {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      background: #f3f0ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: transparent;
+      position: relative;
+    }
+    .cal-cell.other-month { opacity: 0.25; }
+    .cal-cell.has-data { color: white; }
+    .cal-cell.pct-100 { background: linear-gradient(135deg, #4db8ff, #9b87f5); }
+    .cal-cell.pct-high { background: #9b87f5; }
+    .cal-cell.pct-mid  { background: #c4b5fd; color: var(--text); }
+    .cal-cell.pct-low  { background: #ede9fe; color: var(--muted); }
+    .cal-cell.today-cell { box-shadow: 0 0 0 2px #f472b6; }
+
+    /* ── Overall ── */
+    .overall-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .overall-stat {
+      text-align: center;
+      padding: 1.25rem;
+      background: #f8f5ff;
+      border-radius: 14px;
+    }
+    .overall-number {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.5rem;
+      line-height: 1;
+      background: linear-gradient(135deg, #4db8ff, #9b87f5);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .overall-desc {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>✦ Violet's Stats ✦</h1>
+  <a href="/" class="back-link">← Back to routines</a>
+</div>
+
+<div class="page">
+
+  <!-- Streak -->
+  <p class="section-label">🔥 Current Streak</p>
+  <div class="card streak-card{% if stats.streak == 0 %} streak-zero{% endif %}">
+    {% if stats.streak > 0 %}
+      <div class="streak-number">{{ stats.streak }}</div>
+      <div class="streak-label">day{{ 's' if stats.streak != 1 }} in a row!</div>
+    {% else %}
+      <div class="streak-number">Start today! ✨</div>
+      <div class="streak-label">Complete a routine to begin your streak</div>
+    {% endif %}
+  </div>
+
+  <!-- This Week -->
+  <p class="section-label">📅 This Week</p>
+  <div class="card" style="padding-bottom: 1.75rem;">
+    {% if stats.total_days > 0 %}
+    <div class="week-grid">
+      {% for day in stats.week %}
+      <div class="week-col">
+        <div class="week-bar-wrap">
+          {% if day.pct is none %}
+            <div class="week-bar no-data" style="height: 4px;"></div>
+          {% else %}
+            <div class="week-bar {% if day.pct == 1.0 %}full{% endif %}"
+                 style="height: {{ [day.pct * 120, 4] | max }}px;"></div>
+          {% endif %}
+        </div>
+        {% if day.pct is not none %}
+        <div class="week-pct-label">{{ (day.pct * 100) | round | int }}%</div>
+        {% endif %}
+        <div class="week-day-label">{{ day.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">No data yet — complete some routines to see your week!</div>
+    {% endif %}
+  </div>
+
+  <!-- By Routine -->
+  <p class="section-label">⭐ By Routine</p>
+  <div class="routine-grid">
+    {% for routine_id, name in routine_names.items() %}
+    {% set pct = stats.routine_pct.get(routine_id, 0) %}
+    <div class="routine-stat-card {{ routine_id }}">
+      <div class="rs-name">{{ name }}</div>
+      <div class="rs-pct">{{ pct }}%</div>
+      <div class="rs-bar-wrap">
+        <div class="rs-bar" style="width: {{ pct }}%;"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- This Month -->
+  <p class="section-label">🗓 {{ stats.month_label }}</p>
+  <div class="card">
+    <div class="cal-header">
+      {% for d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}
+      <div class="cal-day-name">{{ d }}</div>
+      {% endfor %}
+    </div>
+    <div class="cal-grid">
+      {% for cell in stats.cal_days %}
+      {% set today_flag = cell.date.isoformat() == today_iso %}
+      <div class="cal-cell
+        {% if not cell.this_month %}other-month{% endif %}
+        {% if cell.pct is not none %}
+          has-data
+          {% if cell.pct == 1.0 %}pct-100
+          {% elif cell.pct >= 0.66 %}pct-high
+          {% elif cell.pct >= 0.33 %}pct-mid
+          {% else %}pct-low{% endif %}
+        {% endif %}
+        {% if today_flag %}today-cell{% endif %}
+      ">{{ cell.date.day }}</div>
+      {% endfor %}
+    </div>
+    <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
+      {% for color, label in [('linear-gradient(135deg,#4db8ff,#9b87f5)','100%'), ('#9b87f5','67–99%'), ('#c4b5fd','33–66%'), ('#ede9fe','1–32%'), ('#f3f0ff','No data')] %}
+      <div style="display:flex;align-items:center;gap:0.35rem;">
+        <div style="width:12px;height:12px;border-radius:3px;background:{{ color }};flex-shrink:0;"></div>
+        <span style="font-size:0.65rem;font-weight:700;color:var(--muted);">{{ label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- All Time -->
+  <p class="section-label">🏆 All Time</p>
+  <div class="card">
+    <div class="overall-grid">
+      <div class="overall-stat">
+        <div class="overall-number">{{ stats.total_days }}</div>
+        <div class="overall-desc">days tracked</div>
+      </div>
+      <div class="overall-stat">
+        <div class="overall-number">{{ stats.overall_pct }}%</div>
+        <div class="overall-desc">overall completion</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

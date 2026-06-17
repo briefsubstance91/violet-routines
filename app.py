@@ -2,6 +2,9 @@ import csv
 import json
 import os
 
+from collections import defaultdict
+from datetime import date, timedelta
+
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
@@ -143,6 +146,73 @@ def load_log():
     return rows
 
 
+def compute_stats(log_rows):
+    today = date.today()
+    entries = []
+    for row in log_rows:
+        try:
+            d   = date.fromisoformat(row['Date'])
+            tot = int(row['Total'])
+            com = int(row['Completed'])
+            entries.append({'date': d, 'routine': row['Routine'],
+                            'completed': com, 'total': tot,
+                            'pct': com / tot if tot else 0})
+        except (ValueError, KeyError):
+            continue
+
+    by_date = defaultdict(list)
+    for e in entries: by_date[e['date']].append(e)
+
+    def day_pct(d):
+        rows = by_date.get(d)
+        if not rows: return None
+        return sum(e['pct'] for e in rows) / len(rows)
+
+    # Streak
+    streak, d = 0, today
+    while by_date.get(d):
+        streak += 1; d -= timedelta(days=1)
+
+    # Last 7 days
+    week = []
+    for i in range(6, -1, -1):
+        d = today - timedelta(days=i)
+        week.append({'label': d.strftime('%a'), 'pct': day_pct(d)})
+
+    # This month calendar
+    first = today.replace(day=1)
+    # pad to Monday start
+    pad = first.weekday()
+    cal_start = first - timedelta(days=pad)
+    # enough weeks to cover the month
+    last_day = (first.replace(month=first.month % 12 + 1, day=1) - timedelta(days=1)) if first.month < 12 else first.replace(month=12, day=31)
+    cal_days = []
+    d = cal_start
+    while d <= last_day or len(cal_days) % 7 != 0:
+        cal_days.append({'date': d, 'pct': day_pct(d), 'this_month': d.month == today.month})
+        d += timedelta(days=1)
+
+    # Per-routine all-time
+    rt = defaultdict(lambda: {'c': 0, 't': 0})
+    for e in entries:
+        rt[e['routine']]['c'] += e['completed']
+        rt[e['routine']]['t'] += e['total']
+    routine_pct = {k: round(v['c'] / v['t'] * 100) if v['t'] else 0 for k, v in rt.items()}
+
+    total_c = sum(e['completed'] for e in entries)
+    total_t = sum(e['total'] for e in entries)
+
+    return {
+        'streak':      streak,
+        'week':        week,
+        'cal_days':    cal_days,
+        'month_label': today.strftime('%B %Y'),
+        'routine_pct': routine_pct,
+        'total_days':  len(by_date),
+        'overall_pct': round(total_c / total_t * 100) if total_t else 0,
+    }
+
+
 @app.route('/log', methods=['POST'])
 def log_entry():
     data = request.get_json()
@@ -171,6 +241,15 @@ def index():
         milestones_json=json.dumps(milestones),
         images_json=json.dumps(list_images()),
     )
+
+
+@app.route('/stats')
+def stats():
+    routines = load_routines()
+    routine_names = {r['id']: r['name'] for r in routines}
+    s = compute_stats(load_log())
+    return render_template('stats.html', stats=s, routine_names=routine_names,
+                           today_iso=date.today().isoformat())
 
 
 if __name__ == '__main__':
