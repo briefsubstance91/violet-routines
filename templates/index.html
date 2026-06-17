@@ -55,6 +55,62 @@
       text-align: center;
       padding: 2.5rem 1rem 0.75rem;
     }
+    .menu-btn {
+      position: absolute;
+      top: 1.25rem; right: 1.25rem;
+      background: rgba(255,255,255,0.7);
+      border: none;
+      border-radius: 50%;
+      width: 42px; height: 42px;
+      font-size: 1.2rem;
+      color: var(--af);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 10px rgba(155,135,245,0.2);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .menu-backdrop {
+      display: none;
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(30,27,75,0.35);
+    }
+    .menu-backdrop.open { display: block; }
+    .menu-panel {
+      position: fixed;
+      top: 0; right: 0;
+      width: min(280px, 85vw);
+      height: 100%;
+      background: white;
+      z-index: 201;
+      transform: translateX(110%);
+      transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+      padding: 2rem 1.5rem 2rem;
+      display: flex; flex-direction: column; gap: 0;
+      box-shadow: -8px 0 40px rgba(78,58,180,0.15);
+    }
+    .menu-panel.open { transform: translateX(0); }
+    .menu-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.75rem;
+    }
+    .menu-item {
+      display: flex; align-items: center; gap: 0.9rem;
+      padding: 0.95rem 0.5rem;
+      border-bottom: 1.5px solid #f3f0ff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      border-radius: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .menu-item:hover { background: #f8f5ff; }
+    .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
+    .menu-item a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.9rem; width: 100%; }
     .header h1 {
       font-family: 'Fredoka One', cursive;
       font-size: clamp(2.2rem, 5.5vw, 3.8rem);
@@ -320,6 +376,290 @@
     }
     .celebration-close:active { transform: scale(0.95); }
 
+    /* ── Tab bar ── */
+    .tab-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      z-index: 90;
+      display: flex;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-top: 1.5px solid rgba(155,135,245,0.15);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .tab-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 0.6rem 0.5rem 0.65rem;
+      text-decoration: none; gap: 0.2rem;
+      color: var(--muted); transition: color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tab-icon { font-size: 1.35rem; line-height: 1; }
+    .tab-label { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+    .tab-item.active { color: var(--af); }
+    .tab-item.active .tab-icon { filter: drop-shadow(0 0 6px rgba(155,135,245,0.5)); }
+
+    /* ── Greeting ── */
+    .greeting {
+      font-size: clamp(0.85rem, 2.2vw, 1rem);
+      font-weight: 700; color: var(--muted);
+      margin-top: 0.3rem; min-height: 1.4em;
+    }
+    .greeting strong { color: var(--text); }
+
+    /* ── Now badge ── */
+    .now-badge {
+      display: none;
+      font-size: 0.62rem; font-weight: 900; letter-spacing: 0.08em;
+      text-transform: uppercase; color: white;
+      background: linear-gradient(135deg, #4db8ff, #9b87f5);
+      padding: 0.2rem 0.6rem; border-radius: 100px;
+      margin-left: auto; flex-shrink: 0;
+      animation: now-pulse 2s ease-in-out infinite;
+    }
+    .now-badge.visible { display: inline-flex; align-items: center; }
+    @keyframes now-pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.7; }
+    }
+    .routine-card.current { box-shadow: 0 0 0 3px rgba(155,135,245,0.35), 0 12px 40px rgba(155,135,245,0.18); }
+
+    /* extra bottom padding so content clears the tab bar */
+    .routines { padding-bottom: 5.5rem; }
+    .reset-wrap { padding-bottom: 5.5rem; }
+
+    /* ── Onboarding ── */
+    .ob-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: linear-gradient(160deg, #cce8ff 0%, #e9e3ff 50%, #ffd6f0 100%);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      transition: opacity 0.5s, display 0.5s;
+    }
+    .ob-overlay.hidden { opacity: 0; pointer-events: none; }
+
+    .ob-skip {
+      position: absolute; top: 1.1rem; right: 1.25rem;
+      background: rgba(255,255,255,0.55); border: none;
+      font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700;
+      color: var(--muted); border-radius: 100px; padding: 0.35rem 0.9rem;
+      cursor: pointer; backdrop-filter: blur(4px); z-index: 10;
+    }
+
+    .ob-track {
+      display: flex; flex: 1;
+      width: 100%;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .ob-slide {
+      min-width: 100%; width: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 3rem 2rem 2rem; text-align: center;
+      gap: 0;
+    }
+
+    .ob-visual {
+      font-size: 5.5rem; line-height: 1;
+      margin-bottom: 1.75rem;
+      animation: ob-float 3s ease-in-out infinite;
+    }
+    @keyframes ob-float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-10px); }
+    }
+
+    .ob-title {
+      font-family: 'Fredoka One', cursive; font-size: clamp(2rem, 7vw, 2.8rem);
+      font-weight: 400; line-height: 1.1; margin-bottom: 1rem;
+      background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .ob-body {
+      font-size: clamp(1rem, 3vw, 1.15rem); font-weight: 600;
+      color: var(--muted); line-height: 1.6; max-width: 320px;
+      margin-bottom: 1.5rem;
+    }
+
+    .ob-demo {
+      background: white; border-radius: 20px;
+      padding: 1rem 1.25rem; width: 100%; max-width: 300px;
+      box-shadow: 0 8px 30px rgba(155,135,245,0.2);
+      margin-bottom: 1.5rem;
+      border: 2px solid rgba(155,135,245,0.15);
+    }
+    .ob-demo-task {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.55rem 0;
+      font-size: 0.92rem; font-weight: 700; color: var(--text);
+      border-bottom: 1px dashed rgba(155,135,245,0.15);
+    }
+    .ob-demo-task:last-child { border-bottom: none; }
+    .ob-demo-circle {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 2.5px solid #4db8ff; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; color: #4db8ff;
+    }
+    .ob-demo-circle.done { background: #4db8ff; border-color: #4db8ff; color: white; }
+
+    .ob-fab-demo {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, #f472b6, #9b87f5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; margin: 0 auto 1.25rem;
+      box-shadow: 0 6px 24px rgba(155,135,245,0.5);
+      animation: ob-pulse 2s ease-in-out infinite;
+    }
+    @keyframes ob-pulse {
+      0%, 100% { box-shadow: 0 6px 24px rgba(155,135,245,0.5); transform: scale(1); }
+      50%       { box-shadow: 0 8px 32px rgba(244,114,182,0.6); transform: scale(1.06); }
+    }
+
+    .ob-dots {
+      display: flex; gap: 0.5rem; justify-content: center;
+      padding: 1rem 0 0.5rem;
+    }
+    .ob-dot {
+      width: 8px; height: 8px; border-radius: 4px;
+      background: rgba(155,135,245,0.25);
+      transition: background 0.3s, width 0.3s;
+    }
+    .ob-dot.active { background: var(--af); width: 22px; }
+
+    .ob-nav {
+      display: flex; align-items: center; justify-content: center;
+      gap: 1rem; padding: 0.75rem 1.5rem 1.5rem;
+    }
+
+    .ob-btn-next {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.25rem; font-weight: 400;
+      background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
+      color: white; border: none;
+      padding: 0.85rem 2.5rem; border-radius: 100px;
+      cursor: pointer; letter-spacing: 0.02em;
+      box-shadow: 0 4px 20px rgba(155,135,245,0.4);
+      transition: transform 0.15s;
+    }
+    .ob-btn-next:active { transform: scale(0.95); }
+
+    /* ── Level-Up FAB ── */
+    .lu-fab {
+      position: fixed;
+      bottom: 1.75rem; right: 1.25rem;
+      width: 62px; height: 62px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f472b6, #9b87f5);
+      border: none; font-size: 1.7rem;
+      cursor: pointer; z-index: 100;
+      box-shadow: 0 6px 24px rgba(155,135,245,0.55);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.15s, box-shadow 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .lu-fab:active { transform: scale(0.9); }
+
+    .lu-fab-badge {
+      position: absolute; top: -3px; right: -3px;
+      background: #ff6b35; color: white;
+      font-size: 0.68rem; font-weight: 900;
+      min-width: 20px; height: 20px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 5px; border: 2px solid white;
+    }
+
+    /* ── Level-Up Sheet ── */
+    .lu-sheet { position: fixed; inset: 0; z-index: 200; pointer-events: none; }
+    .lu-sheet.open { pointer-events: all; }
+
+    .lu-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(30,27,75,0.45);
+      backdrop-filter: blur(4px);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .lu-sheet.open .lu-backdrop { opacity: 1; }
+
+    .lu-panel {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: white; border-radius: 28px 28px 0 0;
+      padding: 0 1.25rem 2.5rem;
+      max-height: 82vh; overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+    }
+    .lu-sheet.open .lu-panel { transform: translateY(0); }
+
+    .lu-handle {
+      width: 40px; height: 4px; background: #e5e0ff;
+      border-radius: 2px; margin: 0.85rem auto 0;
+    }
+    .lu-header {
+      display: flex; align-items: center;
+      padding: 0.85rem 0 0.5rem; gap: 0.6rem;
+    }
+    .lu-title {
+      flex: 1; font-family: 'Fredoka One', cursive; font-size: 1.5rem; font-weight: 400;
+      background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .lu-icon-btn {
+      background: #f5f3ff; border: none;
+      width: 34px; height: 34px; border-radius: 50%;
+      font-size: 1rem; color: var(--muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Nunito', sans-serif; font-weight: 800;
+    }
+    .lu-icon-btn.back { color: var(--af); }
+
+    .lu-cat-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;
+      padding: 0.5rem 0 1rem;
+    }
+    .lu-cat-card {
+      background: #faf8ff; border: 2px solid #ede9fe;
+      border-radius: 20px; padding: 1.25rem 0.75rem;
+      text-align: center; cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .lu-cat-card:active { transform: scale(0.95); background: #ede9fe; }
+    .lu-cat-icon { font-size: 2.2rem; display: block; margin-bottom: 0.4rem; }
+    .lu-cat-label { font-size: 0.92rem; font-weight: 800; color: var(--text); }
+
+    .lu-win-btn {
+      display: block; width: 100%;
+      background: #faf8ff; border: 2px solid #ede9fe;
+      border-radius: 16px; padding: 1rem 1.25rem;
+      text-align: left; font-family: 'Nunito', sans-serif;
+      font-size: 1rem; font-weight: 700; color: var(--text);
+      cursor: pointer; margin-bottom: 0.65rem;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .lu-win-btn:active { transform: scale(0.97); background: #ede9fe; border-color: var(--af); }
+
+    .lu-flash {
+      position: fixed; inset: 0; z-index: 300;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(135deg, rgba(155,135,245,0.97), rgba(244,114,182,0.97));
+      opacity: 0; pointer-events: none; transition: opacity 0.2s; text-align: center;
+    }
+    .lu-flash.show { opacity: 1; pointer-events: all; }
+    .lu-flash-icon { font-size: 4.5rem; margin-bottom: 0.5rem;
+      animation: lu-pop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes lu-pop { from { transform: scale(0.4); } to { transform: scale(1); } }
+    .lu-flash-title {
+      font-family: 'Fredoka One', cursive; font-size: 2.4rem; color: white; margin-bottom: 0.5rem;
+    }
+    .lu-flash-win {
+      font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.88);
+      max-width: 280px; line-height: 1.45; padding: 0 1rem;
+    }
+
     .progress-bar-wrap {
       height: 7px; background: #ede9fe;
       border-radius: 100px; margin-bottom: 1.1rem; overflow: hidden;
@@ -351,6 +691,23 @@
 <div class="header">
   <h1>✦ Violet's Routines ✦</h1>
   <div class="date-display" id="date-display"></div>
+  <div class="greeting" id="greeting"></div>
+  <button class="menu-btn" onclick="openMenu()">☰</button>
+</div>
+
+<!-- ── Side menu ── -->
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-title">✦ Menu</div>
+  <div class="menu-item" onclick="closeMenu(); setTimeout(replayOnboarding, 200)">
+    <span class="menu-item-icon">✨</span> Welcome tour
+  </div>
+  <div class="menu-item">
+    <a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a>
+  </div>
+  <div class="menu-item" onclick="closeMenu(); setTimeout(resetAll, 200)">
+    <span class="menu-item-icon">↺</span> Reset routines
+  </div>
 </div>
 
 <div class="routines">
@@ -365,6 +722,7 @@
           <div class="routine-time">{{ r.time }}</div>
         </div>
         <span class="routine-progress" id="prog-{{ r.id }}">0 / {{ r.tasks | length }}</span>
+        <span class="now-badge" id="now-{{ r.id }}">Now</span>
         <span class="streak-badge" id="streak-{{ r.id }}"></span>
       </div>
       <div class="progress-bar-wrap">
@@ -405,6 +763,108 @@
 
 <div class="reset-wrap">
   <button class="reset-btn" onclick="resetAll()">↺ Reset all routines</button>
+</div>
+
+<!-- ── Tab bar ── -->
+<nav class="tab-bar">
+  <a href="/" class="tab-item active">
+    <span class="tab-icon">✦</span>
+    <span class="tab-label">Routines</span>
+  </a>
+  <a href="/stats" class="tab-item">
+    <span class="tab-icon">⭐</span>
+    <span class="tab-label">Progress</span>
+  </a>
+</nav>
+
+<!-- ── Onboarding ── -->
+<div class="ob-overlay" id="obOverlay">
+  <button class="ob-skip" onclick="obDone()">Skip</button>
+
+  <div class="ob-track" id="obTrack">
+
+    <!-- Slide 1: Welcome -->
+    <div class="ob-slide">
+      <div class="ob-visual">✦</div>
+      <div class="ob-title">Hi Violet! ✨</div>
+      <div class="ob-body">Welcome to your very own app — made just for you to shine every single day.</div>
+    </div>
+
+    <!-- Slide 2: Routines -->
+    <div class="ob-slide">
+      <div class="ob-visual">📋</div>
+      <div class="ob-title">Your Routines</div>
+      <div class="ob-body">Tap each task as you do it. Finish them all and something fun happens! 🎉</div>
+      <div class="ob-demo">
+        <div class="ob-demo-task">
+          <div class="ob-demo-circle done">✓</div>
+          <span>👗 Get dressed</span>
+        </div>
+        <div class="ob-demo-task">
+          <div class="ob-demo-circle done">✓</div>
+          <span>💇 Brush hair</span>
+        </div>
+        <div class="ob-demo-task">
+          <div class="ob-demo-circle"></div>
+          <span>🪥 Brush teeth</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Level Up -->
+    <div class="ob-slide">
+      <div class="ob-fab-demo">⚡</div>
+      <div class="ob-title">Level Up!</div>
+      <div class="ob-body">See the ⚡ button? Tap it whenever you do something even a little bit better than before.<br><br>Small wins every day add up to something <strong>huge</strong>. 💪</div>
+    </div>
+
+    <!-- Slide 4: Let's Go -->
+    <div class="ob-slide">
+      <div class="ob-visual">🌟</div>
+      <div class="ob-title">You're Ready!</div>
+      <div class="ob-body">Every day you show up makes you a little stronger, a little brighter.<br><br>Let's do this! 🚀</div>
+    </div>
+
+  </div>
+
+  <div class="ob-dots" id="obDots">
+    <div class="ob-dot active"></div>
+    <div class="ob-dot"></div>
+    <div class="ob-dot"></div>
+    <div class="ob-dot"></div>
+  </div>
+
+  <div class="ob-nav">
+    <button class="ob-btn-next" id="obNextBtn" onclick="obNext()">Next →</button>
+  </div>
+</div>
+
+<!-- ── Level-Up FAB ── -->
+<button class="lu-fab" id="luFab" onclick="openLevelUp()">
+  ⚡
+  <span class="lu-fab-badge" id="luBadge" style="display:none">0</span>
+</button>
+
+<!-- ── Level-Up Sheet ── -->
+<div class="lu-sheet" id="luSheet">
+  <div class="lu-backdrop" onclick="closeLevelUp()"></div>
+  <div class="lu-panel">
+    <div class="lu-handle"></div>
+    <div class="lu-header">
+      <button class="lu-icon-btn back" id="luBack" onclick="showLuCategories()" style="display:none">←</button>
+      <div class="lu-title" id="luTitle">Level Up ⚡</div>
+      <button class="lu-icon-btn" onclick="closeLevelUp()">✕</button>
+    </div>
+    <div class="lu-cat-grid" id="luCategories"></div>
+    <div id="luWins" style="display:none; padding-top:0.25rem;"></div>
+  </div>
+</div>
+
+<!-- ── Win Flash ── -->
+<div class="lu-flash" id="luFlash">
+  <div class="lu-flash-icon" id="luFlashIcon">⚡</div>
+  <div class="lu-flash-title">Level Up!</div>
+  <div class="lu-flash-win" id="luFlashWin"></div>
 </div>
 
 <script>
@@ -617,7 +1077,212 @@
   }
   setTimeout(() => { resetAll(); location.reload(); }, msUntilMidnight());
 
+  // ── Onboarding ──────────────────────────────────────────
+  const OB_TOTAL = 4;
+  let obCurrent = 0;
+
+  function obInit() {
+    if (localStorage.getItem('violet-onboarded')) {
+      document.getElementById('obOverlay').style.display = 'none';
+      return;
+    }
+    obRender();
+    // Swipe support
+    let touchX = null;
+    const overlay = document.getElementById('obOverlay');
+    overlay.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+    overlay.addEventListener('touchend', e => {
+      if (touchX === null) return;
+      const dx = e.changedTouches[0].clientX - touchX;
+      touchX = null;
+      if (Math.abs(dx) < 40) return;
+      if (dx < 0 && obCurrent < OB_TOTAL - 1) { obCurrent++; obRender(); }
+      if (dx > 0 && obCurrent > 0)             { obCurrent--; obRender(); }
+    }, { passive: true });
+  }
+
+  function obRender() {
+    document.getElementById('obTrack').style.transform = `translateX(-${obCurrent * 100}%)`;
+    document.querySelectorAll('.ob-dot').forEach((d, i) => d.classList.toggle('active', i === obCurrent));
+    document.getElementById('obNextBtn').textContent = obCurrent === OB_TOTAL - 1 ? "Let's go! ✨" : 'Next →';
+  }
+
+  function obNext() {
+    if (obCurrent < OB_TOTAL - 1) { obCurrent++; obRender(); }
+    else { obDone(); }
+  }
+
+  function obDone() {
+    localStorage.setItem('violet-onboarded', '1');
+    const el = document.getElementById('obOverlay');
+    el.classList.add('hidden');
+    setTimeout(() => el.style.display = 'none', 500);
+  }
+
+  function replayOnboarding() {
+    localStorage.removeItem('violet-onboarded');
+    obCurrent = 0;
+    const el = document.getElementById('obOverlay');
+    el.style.display = '';
+    el.classList.remove('hidden');
+    obRender();
+  }
+
+  function openMenu() {
+    document.getElementById('menuBackdrop').classList.add('open');
+    document.getElementById('menuPanel').classList.add('open');
+  }
+
+  function closeMenu() {
+    document.getElementById('menuBackdrop').classList.remove('open');
+    document.getElementById('menuPanel').classList.remove('open');
+  }
+
+  obInit();
+
+  // ── Level-Up ────────────────────────────────────────────
+  const LU_CATS = {{ levelup_categories_json | safe }};
+  let luTodayCount = 0;
+
+  async function initLuBadge() {
+    try {
+      const r = await fetch('/levelup/today');
+      const d = await r.json();
+      luTodayCount = d.count;
+      updateLuBadge();
+    } catch(e) {}
+  }
+
+  function updateLuBadge() {
+    const badge = document.getElementById('luBadge');
+    badge.textContent = luTodayCount;
+    badge.style.display = luTodayCount > 0 ? 'flex' : 'none';
+  }
+
+  function openLevelUp() {
+    document.getElementById('luSheet').classList.add('open');
+    showLuCategories();
+  }
+
+  function closeLevelUp() {
+    document.getElementById('luSheet').classList.remove('open');
+  }
+
+  function showLuCategories() {
+    document.getElementById('luBack').style.display = 'none';
+    document.getElementById('luTitle').textContent = 'Level Up ⚡';
+    document.getElementById('luWins').style.display = 'none';
+    const grid = document.getElementById('luCategories');
+    grid.style.display = 'grid';
+    grid.innerHTML = LU_CATS.map((cat, i) => `
+      <div class="lu-cat-card" onclick="showLuWins(${i})">
+        <span class="lu-cat-icon">${cat.icon}</span>
+        <span class="lu-cat-label">${cat.label}</span>
+      </div>
+    `).join('');
+  }
+
+  function showLuWins(catIndex) {
+    const cat = LU_CATS[catIndex];
+    document.getElementById('luBack').style.display = 'flex';
+    document.getElementById('luTitle').textContent = `${cat.icon} ${cat.label}`;
+    document.getElementById('luCategories').style.display = 'none';
+    const winsEl = document.getElementById('luWins');
+    winsEl.style.display = 'block';
+    winsEl.innerHTML = cat.wins.map(win => {
+      const btn = document.createElement('button');
+      btn.className = 'lu-win-btn';
+      btn.textContent = win;
+      btn.dataset.catId    = cat.id;
+      btn.dataset.catLabel = cat.label;
+      btn.dataset.win      = win;
+      btn.dataset.icon     = cat.icon;
+      btn.onclick = () => logWin(btn.dataset.catId, btn.dataset.catLabel, btn.dataset.win, btn.dataset.icon);
+      return btn.outerHTML;
+    }).join('');
+    // re-attach handlers (outerHTML loses them)
+    winsEl.querySelectorAll('.lu-win-btn').forEach(btn => {
+      btn.onclick = () => logWin(btn.dataset.catId, btn.dataset.catLabel, btn.dataset.win, btn.dataset.icon);
+    });
+  }
+
+  async function logWin(catId, catLabel, win, icon) {
+    const today = new Date().toISOString().split('T')[0];
+    // flash
+    document.getElementById('luFlashIcon').textContent = icon;
+    document.getElementById('luFlashWin').textContent  = win;
+    document.getElementById('luFlash').classList.add('show');
+    launchConfetti();
+    // log
+    try {
+      await fetch('/levelup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: today, category_id: catId, category: catLabel, win }),
+      });
+      luTodayCount++;
+      updateLuBadge();
+    } catch(e) {}
+    // close after 1.6s
+    setTimeout(() => {
+      document.getElementById('luFlash').classList.remove('show');
+      stopConfetti();
+      closeLevelUp();
+    }, 1600);
+  }
+
+  initLuBadge();
+
+  // ── Greeting + Now badge ─────────────────────────────────
+  const ROUTINE_ORDER = [
+    { id: 'am', start: 0,  end: 12 },
+    { id: 'af', start: 12, end: 18 },
+    { id: 'pm', start: 18, end: 24 },
+  ];
+
+  function currentRoutineId() {
+    const hour = new Date().getHours();
+    // Priority: first incomplete routine whose window has started
+    for (const { id, start } of ROUTINE_ORDER) {
+      if (ROUTINES[id] && hour >= start && topLevelDone(id) < ROUTINES[id].total) return id;
+    }
+    // All time-appropriate ones done — find any incomplete
+    for (const { id } of ROUTINE_ORDER) {
+      if (ROUTINES[id] && topLevelDone(id) < ROUTINES[id].total) return id;
+    }
+    return null; // all complete
+  }
+
+  function updateGreetingAndBadge() {
+    const hour = new Date().getHours();
+    const salutation = hour < 12 ? '☀️ Good morning' : hour < 18 ? '🌤 Good afternoon' : '🌙 Good evening';
+    const currentId = currentRoutineId();
+    const greetEl = document.getElementById('greeting');
+
+    // Clear all now badges and current highlights
+    document.querySelectorAll('.now-badge').forEach(b => b.classList.remove('visible'));
+    document.querySelectorAll('.routine-card').forEach(c => c.classList.remove('current'));
+
+    if (currentId) {
+      const name = ROUTINES[currentId] ? document.querySelector(`#card-${currentId} .routine-title`)?.textContent : '';
+      greetEl.innerHTML = `${salutation}, Violet! <strong>Start with ${name}.</strong>`;
+      document.getElementById(`now-${currentId}`)?.classList.add('visible');
+      document.getElementById(`card-${currentId}`)?.classList.add('current');
+      // scroll into view on first load
+      setTimeout(() => {
+        document.getElementById(`card-${currentId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    } else {
+      greetEl.innerHTML = `${salutation}, Violet! <strong>All done today — you're amazing! 🌟</strong>`;
+    }
+  }
+
   render();
+  updateGreetingAndBadge();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
 </script>
 </body>
 </html>
