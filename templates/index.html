@@ -511,13 +511,29 @@
     if (chev)  chev.classList.toggle('open');
   }
 
+  function logToServer(routineId) {
+    const today = new Date().toISOString().split('T')[0];
+    fetch('/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date:      today,
+        routine:   routineId,
+        completed: topLevelDone(routineId),
+        total:     ROUTINES[routineId].total,
+      }),
+    });
+  }
+
   function resetAll() {
+    Object.keys(ROUTINES).forEach(logToServer);
     state = Object.fromEntries(Object.keys(ROUTINES).map(k => [k, {}]));
     saveState(state);
     render();
   }
 
   function celebrate(routine) {
+    logToServer(routine);
     const streak   = incrementStreak(routine);
     const phrases  = PHRASES[routine] || [];
     const pick     = phrases[Math.floor(Math.random() * phrases.length)] || { title: 'Amazing!', reward: 'You did it!' };

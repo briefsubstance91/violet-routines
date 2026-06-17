@@ -2,7 +2,7 @@ import csv
 import json
 import os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
@@ -12,6 +12,7 @@ PHRASES_FILE    = os.path.join(_BASE, 'Violet Phrases.csv')
 MILESTONES_FILE = os.path.join(_BASE, 'Violet Milestones.csv')
 IMAGES_DIR      = os.path.join(_BASE, 'static', 'images')
 IMG_EXTS        = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+LOG_FILE        = os.path.join(_BASE, 'Violet Log.csv')
 
 
 def list_images():
@@ -109,6 +110,43 @@ def load_milestones():
         if streak and message:
             milestones[streak] = message
     return milestones
+
+
+def save_log_entry(date, routine_id, completed, total):
+    """Write (or overwrite) today's entry for a routine in the log CSV."""
+    rows = []
+    try:
+        with open(LOG_FILE, newline='', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if not (row['Date'] == date and row['Routine'] == routine_id):
+                    rows.append(row)
+    except FileNotFoundError:
+        pass
+    rows.append({'Date': date, 'Routine': routine_id, 'Completed': completed, 'Total': total})
+    with open(LOG_FILE, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=['Date', 'Routine', 'Completed', 'Total'])
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def load_log():
+    """Return all log rows as list of dicts."""
+    rows = []
+    try:
+        with open(LOG_FILE, newline='', encoding='utf-8-sig') as f:
+            for row in csv.DictReader(f):
+                rows.append(row)
+    except FileNotFoundError:
+        pass
+    return rows
+
+
+@app.route('/log', methods=['POST'])
+def log_entry():
+    data = request.get_json()
+    save_log_entry(data['date'], data['routine'], int(data['completed']), int(data['total']))
+    return '', 204
 
 
 @app.route('/')
