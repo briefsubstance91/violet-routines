@@ -1090,11 +1090,11 @@
       return;
     }
     obRender();
-    // Swipe support
+    // Swipe support — attach to track only, not buttons
     let touchX = null;
-    const overlay = document.getElementById('obOverlay');
-    overlay.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
-    overlay.addEventListener('touchend', e => {
+    const track = document.getElementById('obTrack');
+    track.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+    track.addEventListener('touchend', e => {
       if (touchX === null) return;
       const dx = e.changedTouches[0].clientX - touchX;
       touchX = null;
