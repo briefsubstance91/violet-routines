@@ -12,7 +12,8 @@ PHRASES_FILE    = os.path.join(_BASE, 'Violet Phrases.csv')
 MILESTONES_FILE = os.path.join(_BASE, 'Violet Milestones.csv')
 IMAGES_DIR      = os.path.join(_BASE, 'static', 'images')
 IMG_EXTS        = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
-LOG_FILE        = os.path.join(_BASE, 'Violet Log.csv')
+_DATA           = os.environ.get('DATA_DIR', _BASE)
+LOG_FILE        = os.path.join(_DATA, 'Violet Log.csv')
 
 
 def list_images():
