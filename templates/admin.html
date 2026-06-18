@@ -214,6 +214,26 @@
     }
     .btn-add-win:hover { border-color: var(--purple); background: #faf8ff; }
 
+    .help-box {
+      background: #f0ebff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.55;
+    }
+    .help-title {
+      font-weight: 800;
+      font-size: 0.92rem;
+      margin-bottom: 0.5rem;
+      color: var(--purple);
+    }
+    .help-box p { margin-bottom: 0.5rem; }
+    .help-box ul { padding-left: 1.2rem; margin: 0; }
+    .help-box li { margin-bottom: 0.25rem; }
+
     .add-category-wrap {
       margin-top: 1.25rem;
       text-align: center;
@@ -241,6 +261,18 @@
 </header>
 
 <div class="container">
+
+  <div class="help-box">
+    <div class="help-title">⚡ How Level Up works</div>
+    <p>When Violet taps the ⚡ button in the app, she picks a <strong>category</strong> and a <strong>win</strong> to log — something she did even a tiny bit better than before.</p>
+    <ul>
+      <li>Add categories that matter to Violet (School, Kindness, Health, etc.)</li>
+      <li>Add wins inside each category as specific examples she can pick from</li>
+      <li>She can also type a custom win — these are just starting prompts</li>
+      <li>Click a category name or win to edit it inline, then hit <strong>Save</strong></li>
+    </ul>
+  </div>
+
   <p class="section-title">Level-up Categories</p>
 
   <div class="categories" id="categoriesList"></div>

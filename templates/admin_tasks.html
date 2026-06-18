@@ -200,6 +200,25 @@
 
     .task-row.dragging { opacity: 0.4; }
     .task-row.drag-over { border-top: 2px solid var(--purple); }
+
+    .help-box {
+      background: #f0ebff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      padding: 1rem 1.25rem;
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.55;
+    }
+    .help-title {
+      font-weight: 800;
+      font-size: 0.92rem;
+      margin-bottom: 0.5rem;
+      color: var(--purple);
+    }
+    .help-box p { margin-bottom: 0.5rem; }
+    .help-box ul { padding-left: 1.2rem; margin: 0; }
+    .help-box li { margin-bottom: 0.25rem; }
   </style>
 </head>
 <body>
@@ -213,6 +232,17 @@
     <button class="btn btn-save" id="saveBtn" onclick="saveAll()" disabled>Save</button>
   </div>
 </header>
+
+<div class="help-box" style="max-width:720px;margin:1.5rem auto;">
+  <div class="help-title">📋 How Tasks work</div>
+  <p>These are the checklist items Violet sees inside each routine. Changes here update the app instantly after saving.</p>
+  <ul>
+    <li>Click any task text to edit it inline</li>
+    <li>Drag the <strong>⠿</strong> handle to reorder tasks within a routine</li>
+    <li>Hit <strong>×</strong> to delete a task, <strong>+ Add task</strong> to create one</li>
+    <li>Always click <strong>Save</strong> when you're done — unsaved changes are lost on refresh</li>
+  </ul>
+</div>
 
 <div class="container" id="routinesList"></div>
 
