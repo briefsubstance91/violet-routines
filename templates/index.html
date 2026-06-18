@@ -780,8 +780,8 @@
   </a>
 </nav>
 
-<!-- ── Onboarding ── -->
-<div class="ob-overlay" id="obOverlay">
+<!-- ── Onboarding (hidden) ── -->
+<div class="ob-overlay" id="obOverlay" style="display:none">
   <button class="ob-skip" ontouchend="event.preventDefault();obDone()" onclick="obDone()">Skip</button>
 
   <div class="ob-track" id="obTrack">
@@ -1085,23 +1085,9 @@
   let obCurrent = 0;
 
   function obInit() {
-    if (localStorage.getItem('violet-onboarded')) {
-      document.getElementById('obOverlay').style.display = 'none';
-      return;
-    }
-    obRender();
-    // Swipe support — attach to track only, not buttons
-    let touchX = null;
-    const track = document.getElementById('obTrack');
-    track.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
-    track.addEventListener('touchend', e => {
-      if (touchX === null) return;
-      const dx = e.changedTouches[0].clientX - touchX;
-      touchX = null;
-      if (Math.abs(dx) < 40) return;
-      if (dx < 0 && obCurrent < OB_TOTAL - 1) { obCurrent++; obRender(); }
-      if (dx > 0 && obCurrent > 0)             { obCurrent--; obRender(); }
-    }, { passive: true });
+    // Welcome tour disabled while being rebuilt — always hide
+    document.getElementById('obOverlay').style.display = 'none';
+    localStorage.setItem('violet-onboarded', '1');
   }
 
   function obRender() {
