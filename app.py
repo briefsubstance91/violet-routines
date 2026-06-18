@@ -5,7 +5,7 @@ import os
 from collections import defaultdict
 from datetime import date, timedelta
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
 
@@ -15,8 +15,10 @@ PHRASES_FILE    = os.path.join(_BASE, 'Violet Phrases.csv')
 MILESTONES_FILE = os.path.join(_BASE, 'Violet Milestones.csv')
 IMAGES_DIR      = os.path.join(_BASE, 'static', 'images')
 IMG_EXTS        = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
-_DATA           = os.environ.get('DATA_DIR', _BASE)
-LOG_FILE        = os.path.join(_DATA, 'Violet Log.csv')
+_DATA              = os.environ.get('DATA_DIR', _BASE)
+LOG_FILE           = os.path.join(_DATA, 'Violet Log.csv')
+LEVELUP_DATA_FILE  = os.path.join(_BASE, 'violet_data.json')
+LEVELUP_LOG_FILE   = os.path.join(_DATA, 'Violet Levelup Log.csv')
 
 
 def list_images():
@@ -213,6 +215,46 @@ def compute_stats(log_rows):
     }
 
 
+def load_levelup_data():
+    if os.path.isfile(LEVELUP_DATA_FILE):
+        with open(LEVELUP_DATA_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    return {'levelup_categories': []}
+
+
+def save_levelup_data(data):
+    with open(LEVELUP_DATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def log_levelup_entry(entry_date, category_id, category_label, win):
+    rows = []
+    try:
+        with open(LEVELUP_LOG_FILE, newline='', encoding='utf-8-sig') as f:
+            rows = list(csv.DictReader(f))
+    except FileNotFoundError:
+        pass
+    rows.append({'Date': entry_date, 'CategoryID': category_id,
+                 'Category': category_label, 'Win': win})
+    with open(LEVELUP_LOG_FILE, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=['Date', 'CategoryID', 'Category', 'Win'])
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def load_levelup_log():
+    try:
+        with open(LEVELUP_LOG_FILE, newline='', encoding='utf-8-sig') as f:
+            return list(csv.DictReader(f))
+    except FileNotFoundError:
+        return []
+
+
+@app.route('/sw.js')
+def service_worker():
+    return send_from_directory(_BASE, 'sw.js', mimetype='application/javascript')
+
+
 @app.route('/log', methods=['POST'])
 def log_entry():
     data = request.get_json()
@@ -233,6 +275,7 @@ def index():
         }
         for r in routines
     }
+    levelup_data = load_levelup_data()
     return render_template(
         'index.html',
         routines=routines,
@@ -240,7 +283,35 @@ def index():
         routines_json=json.dumps(routines_cfg),
         milestones_json=json.dumps(milestones),
         images_json=json.dumps(list_images()),
+        levelup_categories_json=json.dumps(levelup_data.get('levelup_categories', [])),
     )
+
+
+@app.route('/levelup', methods=['POST'])
+def log_levelup():
+    data = request.get_json()
+    log_levelup_entry(data['date'], data['category_id'], data['category'], data['win'])
+    return '', 204
+
+
+@app.route('/levelup/today')
+def levelup_today():
+    today = date.today().isoformat()
+    rows = [r for r in load_levelup_log() if r.get('Date') == today]
+    return jsonify({'count': len(rows), 'wins': rows})
+
+
+@app.route('/admin')
+def admin():
+    data = load_levelup_data()
+    return render_template('admin.html', data=data)
+
+
+@app.route('/admin/save', methods=['POST'])
+def admin_save():
+    data = request.get_json()
+    save_levelup_data(data)
+    return jsonify({'ok': True})
 
 
 @app.route('/stats')
