@@ -8,6 +8,7 @@ from datetime import date, timedelta
 from flask import Flask, render_template, request, jsonify, send_from_directory
 
 app = Flask(__name__)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 _BASE           = os.path.dirname(os.path.abspath(__file__))
 TASKS_FILE      = os.path.join(_BASE, 'Violet Tasks.csv')
