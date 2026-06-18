@@ -451,6 +451,11 @@ BADGES = [
 ]
 
 
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+
+
 @app.route('/badges')
 def badges():
     return render_template('badges.html', badges_json=json.dumps(BADGES))

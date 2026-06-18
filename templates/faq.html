@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>How It Works — Violet's Life OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #9b87f5;
+      --pink:   #f472b6;
+      --blue:   #4db8ff;
+      --green:  #34d399;
+      --text:   #1e1b4b;
+      --muted:  #9490c0;
+      --bg:     #f5f3ff;
+      --card:   #ffffff;
+      --border: #e5e0ff;
+      --r:      16px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 4rem;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #4a0080 60%, #9b87f5 100%);
+      padding: 1.5rem 1.5rem 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    header::after {
+      content: '';
+      position: absolute; bottom: -1px; left: 0; right: 0; height: 2.5rem;
+      background: var(--bg); border-radius: 2rem 2rem 0 0;
+    }
+    .header-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+    }
+    .header-label {
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.15em;
+      text-transform: uppercase; color: rgba(255,255,255,0.5);
+      margin-bottom: 0.3rem;
+    }
+    .header-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem; color: white; line-height: 1.1;
+    }
+
+    /* ── Hamburger ── */
+    .menu-btn { background: rgba(255,255,255,0.15); border: none; font-size: 1.5rem; color: white; cursor: pointer; padding: 0.25rem 0.6rem; border-radius: 10px; line-height: 1; }
+    .menu-btn:hover { background: rgba(255,255,255,0.25); }
+    .menu-backdrop { display: none; position: fixed; inset: 0; background: rgba(78,58,180,0.18); z-index: 200; backdrop-filter: blur(2px); }
+    .menu-backdrop.open { display: block; }
+    .menu-panel { position: fixed; top: 0; right: 0; width: min(280px, 85vw); height: 100%; background: white; z-index: 201; transform: translateX(110%); transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1); padding: 2rem 1.5rem; display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(78,58,180,0.15); }
+    .menu-panel.open { transform: translateX(0); }
+    .menu-title { font-family: 'Fredoka One', cursive; font-size: 1.4rem; background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1.75rem; }
+    .menu-item { display: flex; align-items: center; gap: 0.9rem; padding: 0.95rem 0.5rem; border-bottom: 1.5px solid #f3f0ff; font-size: 0.95rem; font-weight: 700; color: var(--text); border-radius: 8px; }
+    .menu-item:hover { background: #f8f5ff; }
+    .menu-item a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.9rem; width: 100%; }
+    .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
+
+    /* ── Page layout ── */
+    .page { max-width: 600px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+    /* ── Section header ── */
+    .section-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .section-pill {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      padding: 0.3rem 1rem;
+      border-radius: 100px;
+      color: white;
+    }
+    .section-pill.violet { background: linear-gradient(135deg, var(--purple), var(--pink)); }
+    .section-pill.parent { background: linear-gradient(135deg, #1e1b4b, var(--purple)); }
+    .section-desc {
+      font-size: 0.78rem; font-weight: 600; color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    /* ── Accordion ── */
+    .faq-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2rem; }
+
+    .faq-item {
+      background: var(--card);
+      border-radius: var(--r);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      overflow: hidden;
+      border: 1.5px solid var(--border);
+    }
+
+    .faq-q {
+      width: 100%; text-align: left;
+      background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.75rem;
+      padding: 1rem 1.1rem;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.92rem; font-weight: 800; color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .faq-q:hover { background: #faf8ff; }
+
+    .faq-chevron {
+      font-size: 0.7rem; color: var(--muted); flex-shrink: 0;
+      transition: transform 0.25s;
+    }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+    .faq-a {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s;
+      padding: 0 1.1rem;
+      font-size: 0.87rem; font-weight: 600; color: #4a4580;
+      line-height: 1.65;
+    }
+    .faq-item.open .faq-a {
+      max-height: 600px;
+      padding: 0 1.1rem 1rem;
+    }
+
+    .faq-a a {
+      color: var(--purple); font-weight: 800; text-decoration: none;
+    }
+    .faq-a a:hover { text-decoration: underline; }
+
+    /* tip box inside answers */
+    .tip {
+      background: #ede9fe; border-left: 3px solid var(--purple);
+      border-radius: 0 8px 8px 0;
+      padding: 0.55rem 0.85rem;
+      margin-top: 0.65rem;
+      font-size: 0.82rem; font-weight: 700; color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <div class="header-label">How It Works</div>
+      <div class="header-title">Your questions,<br>answered ✦</div>
+    </div>
+    <button class="menu-btn" onclick="openMenu()">☰</button>
+  </div>
+</header>
+
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-title">✦ Menu</div>
+  <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
+  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
+  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
+  <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
+  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
+</div>
+
+<div class="page">
+
+  <!-- ── For Violet ── -->
+  <div class="section-header">
+    <span class="section-pill violet">💜 For Violet</span>
+  </div>
+  <p class="section-desc">Everything you need to know about using your app.</p>
+
+  <div class="faq-group">
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        How do I complete a routine? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        Tap a routine card (Morning, Afternoon, or Evening) to open it. You'll see a checklist of tasks — tap each one as you finish it. When you've done enough, a <strong>Done!</strong> button appears at the bottom. Tap it to celebrate and save your streak. 🎉
+        <div class="tip">💡 You don't have to do every single task — just your best effort counts.</div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        What is a streak? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        A streak is how many days in a row you've completed at least one routine. The 🔥 number on your home screen shows your current streak. Even one routine a day keeps the streak alive — you don't have to do all three.
+        <div class="tip">💡 Try to do at least one routine every day to keep your streak going!</div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        What is Level Up ⚡? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        Level Up is where you log a win — something you did even a tiny bit better than before. It could be anything: being kind to someone, getting into bed on time, or trying a food you don't normally like. Tap the ⚡ button in the app to record it.
+        <div class="tip">💡 Small wins count just as much as big ones. Every win is worth celebrating.</div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        How do I earn badges? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        Badges unlock automatically as you reach milestones. There are four types:
+        <br><br>
+        🔥 <strong>Streak badges</strong> — build a 3, 7, 14, 21, 30, or 60-day streak<br>
+        ✨ <strong>Routine badges</strong> — complete a specific routine 5 or 20 times<br>
+        👑 <strong>Triple Crown</strong> — do all three routines in one day<br>
+        ⚡ <strong>Level Up badges</strong> — log 1, 10, or 25 wins<br><br>
+        When you unlock one, a little pop-up appears. Visit <a href="/badges">My Badges</a> to see them all.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        What is Triple Crown? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        Triple Crown 👑 is when you complete all three routines — Morning, Afternoon, <em>and</em> Evening — in the same day. It's one of the rarest badges! Each day you pull it off counts toward the badge.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        What happens if I miss a day? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        Your streak resets to zero — but that's okay! Every day is a fresh start. Your badges and total completion history are still saved, and a new streak starts the moment you do a routine again.
+        <div class="tip">💡 Missing one day doesn't erase all the work you've done. You've got this. 💜</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── For Parents ── -->
+  <div class="section-header">
+    <span class="section-pill parent">📊 For Parents</span>
+  </div>
+  <p class="section-desc">How to manage, customise, and read Violet's progress.</p>
+
+  <div class="faq-group">
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        How do I edit the routine tasks? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        Go to <a href="/admin/tasks">Admin → Tasks</a>. You'll see a card for each routine (Morning, Afternoon, Evening). Click any task text to edit it, drag the ⠿ handle to reorder, hit × to delete, and + Add task to create new ones. Always click <strong>Save</strong> when done.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        How do I manage Level Up categories and wins? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        Go to <a href="/admin">Admin → Level Up</a>. You can add categories (like School, Kindness, Health) and populate each one with example wins that Violet can choose from. Tap the emoji to change a category icon, click any win text to edit it, and hit Save.
+        <div class="tip">💡 Tailor the wins to what matters most to Violet right now — they'll feel more real that way.</div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        What are milestones and how do I set them? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        Milestones are streak rewards — prizes or experiences Violet earns at specific streak counts (e.g., "7-day streak: pick an outfit at H&M"). The <a href="/dashboard">Parent Dashboard</a> shows which milestone is next and how many days away it is.
+        <br><br>
+        Milestones are stored in <strong>Violet Milestones.csv</strong> on the server. To edit them, update that file and redeploy, or ask for help adding an admin UI for it.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        Where do I see Violet's progress? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        There are two views:
+        <br><br>
+        📊 <a href="/dashboard"><strong>Parent Dashboard</strong></a> — KPIs at a glance: streak, completion %, level-up wins, routine breakdown, this week's chart, and recent wins.<br><br>
+        ⭐ <a href="/stats"><strong>Stats page</strong></a> — more detail including a full monthly calendar view and Violet's celebration images.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        How does the streak calculation work? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        Each time Violet taps <strong>Done!</strong> on a routine, it logs a completion to the server with today's date. A streak counts consecutive days where at least one routine was logged. The streak is calculated from server data — it persists across devices and browser clears.
+        <div class="tip">💡 The streak badge in the app uses localStorage for speed, but the server log is the source of truth for the Stats and Dashboard pages.</div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggle(this)">
+        How is data stored? Is it private? <span class="faq-chevron">▼</span>
+      </button>
+      <div class="faq-a">
+        The app runs on a private Railway server — only people with the link can access it. Routine completions and Level Up wins are saved to CSV files on the server. Badge progress and streak display are stored in the browser's localStorage on Violet's device.
+        <br><br>
+        There are no accounts, no tracking, and no third-party analytics. It's just for your family. 💜
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function toggle(btn) {
+    const item = btn.closest('.faq-item');
+    item.classList.toggle('open');
+  }
+
+  function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
+  function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+</script>
+
+</body>
+</html>
