@@ -980,6 +980,7 @@
     state[routine] = { ...s, [idx]: !s[idx] };
     saveState(state);
     render();
+    logToServer(routine);
     if (!wasComplete && topLevelDone(routine) === ROUTINES[routine].total) {
       setTimeout(() => celebrate(routine), 200);
     }

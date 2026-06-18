@@ -323,7 +323,7 @@ def stats():
     routine_names = {r['id']: r['name'] for r in routines}
     s = compute_stats(load_log())
     return render_template('stats.html', stats=s, routine_names=routine_names,
-                           today_iso=date.today().isoformat())
+                           routines=routines, today_iso=date.today().isoformat())
 
 
 if __name__ == '__main__':
