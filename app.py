@@ -342,6 +342,7 @@ def index():
         cel_routines_json=json.dumps(cel_routines),
         cel_milestones_json=json.dumps(cel_milestones),
         levelup_categories_json=json.dumps(levelup_data.get('levelup_categories', [])),
+        badges_json=json.dumps(BADGES),
     )
 
 
@@ -420,6 +421,34 @@ def admin_tasks_save():
     routines = request.get_json()
     save_tasks_raw(routines)
     return jsonify({'ok': True})
+
+
+BADGES = [
+    # ── Streak badges ──
+    {'id': 'first-step',   'name': 'First Step',      'desc': 'Complete your first routine',  'emoji': '✨', 'bg': '#ede9fe', 'ring': '#9b87f5', 'type': 'streak',  'threshold': 1},
+    {'id': 'spark',        'name': '3-Day Spark',      'desc': '3 days in a row',              'emoji': '🔥', 'bg': '#fef3c7', 'ring': '#f59e0b', 'type': 'streak',  'threshold': 3},
+    {'id': 'week-warrior', 'name': 'Week Warrior',     'desc': '7-day streak',                 'emoji': '⭐', 'bg': '#d1fae5', 'ring': '#10b981', 'type': 'streak',  'threshold': 7},
+    {'id': 'fortnight',    'name': 'Fortnight Hero',   'desc': '14 days in a row',             'emoji': '👑', 'bg': '#dbeafe', 'ring': '#3b82f6', 'type': 'streak',  'threshold': 14},
+    {'id': '3-week',       'name': '3-Week Wonder',    'desc': '21 days in a row',             'emoji': '💜', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'streak',  'threshold': 21},
+    {'id': 'month',        'name': 'Month Marvel',     'desc': '30-day streak',                'emoji': '🏆', 'bg': '#fce7f3', 'ring': '#ec4899', 'type': 'streak',  'threshold': 30},
+    {'id': 'diamond',      'name': 'Diamond Legend',   'desc': '60-day streak',                'emoji': '💎', 'bg': '#cffafe', 'ring': '#06b6d4', 'type': 'streak',  'threshold': 60},
+    # ── Routine badges ──
+    {'id': 'morning-5',    'name': 'Morning Magic',    'desc': 'Morning routine ×5',           'emoji': '☁️', 'bg': '#fef9c3', 'ring': '#eab308', 'type': 'routine', 'routine': 'am', 'threshold': 5},
+    {'id': 'morning-20',   'name': 'Rise & Shine',     'desc': 'Morning routine ×20',          'emoji': '🌅', 'bg': '#fef9c3', 'ring': '#f59e0b', 'type': 'routine', 'routine': 'am', 'threshold': 20},
+    {'id': 'afternoon-5',  'name': 'Afternoon Ace',    'desc': 'Afternoon routine ×5',         'emoji': '🌸', 'bg': '#fce7f3', 'ring': '#ec4899', 'type': 'routine', 'routine': 'af', 'threshold': 5},
+    {'id': 'evening-5',    'name': 'Bedtime Boss',     'desc': 'Evening routine ×5',           'emoji': '🖤', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'routine', 'routine': 'pm', 'threshold': 5},
+    {'id': 'evening-20',   'name': 'Dream Keeper',     'desc': 'Evening routine ×20',          'emoji': '🌙', 'bg': '#ede9fe', 'ring': '#9b87f5', 'type': 'routine', 'routine': 'pm', 'threshold': 20},
+    {'id': 'triple-crown', 'name': 'Triple Crown',     'desc': 'All 3 routines in one day',   'emoji': '👑', 'bg': '#fef3c7', 'ring': '#f59e0b', 'type': 'triple',  'threshold': 1},
+    # ── Level Up badges ──
+    {'id': 'levelup-1',    'name': 'Level Up!',        'desc': 'Log your first win',           'emoji': '⚡', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'levelup', 'threshold': 1},
+    {'id': 'levelup-10',   'name': 'Win Collector',    'desc': '10 level-up wins',             'emoji': '💪', 'bg': '#fce7f3', 'ring': '#db2777', 'type': 'levelup', 'threshold': 10},
+    {'id': 'levelup-25',   'name': 'Legend',           'desc': '25 level-up wins',             'emoji': '🌟', 'bg': '#fef3c7', 'ring': '#d97706', 'type': 'levelup', 'threshold': 25},
+]
+
+
+@app.route('/badges')
+def badges():
+    return render_template('badges.html', badges_json=json.dumps(BADGES))
 
 
 @app.route('/stats')

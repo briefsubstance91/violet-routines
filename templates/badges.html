@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Violet's Badges</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #9b87f5;
+      --pink:   #f472b6;
+      --text:   #1e1b4b;
+      --muted:  #9490c0;
+      --bg:     #f5f3ff;
+      --border: #e5e0ff;
+      --r:      16px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 3rem;
+    }
+
+    header {
+      background: white;
+      border-bottom: 2px solid var(--border);
+      padding: 1.1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+
+    header h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9b87f5, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .back-link {
+      font-size: 0.85rem; font-weight: 700;
+      color: var(--muted); text-decoration: none;
+    }
+    .back-link:hover { color: var(--purple); }
+
+    .page { max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+    .earned-count {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .earned-count .num {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .earned-count .label {
+      font-size: 0.82rem; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;
+    }
+
+    .section-label {
+      font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted);
+      margin: 1.25rem 0 0.75rem;
+    }
+
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    /* ── Badge card ── */
+    .badge-card {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0.4rem; cursor: default;
+    }
+
+    .badge-circle {
+      position: relative;
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+      transition: transform 0.2s;
+    }
+    .badge-card.earned .badge-circle { transform: scale(1.04); }
+    .badge-card:not(.earned) .badge-circle { filter: grayscale(1); opacity: 0.45; }
+
+    .badge-inner {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: white;
+      position: relative;
+    }
+
+    .badge-emoji { font-size: 2rem; line-height: 1; }
+
+    /* polka-dot inner bg via radial-gradient */
+    .badge-inner::before {
+      content: '';
+      position: absolute; inset: 0; border-radius: 50%;
+      opacity: 0.18;
+      background-image: radial-gradient(circle, currentColor 1.5px, transparent 1.5px);
+      background-size: 10px 10px;
+    }
+
+    /* earned stamp */
+    .badge-stamp {
+      position: absolute; bottom: -2px; right: -2px;
+      width: 24px; height: 24px;
+      background: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    /* ribbon */
+    .badge-ribbon {
+      position: relative;
+      background: var(--ribbon-color, #f472b6);
+      color: white;
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.62rem;
+      letter-spacing: 0.04em;
+      padding: 0.18rem 0.65rem;
+      border-radius: 2px;
+      text-align: center;
+      white-space: nowrap;
+      max-width: 96px;
+    }
+    .badge-ribbon::before,
+    .badge-ribbon::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 0; height: 0;
+      border-style: solid;
+    }
+    .badge-ribbon::before {
+      left: -5px;
+      border-width: 0 5px 100% 0;
+      border-color: transparent var(--ribbon-color, #f472b6) transparent transparent;
+    }
+    .badge-ribbon::after {
+      right: -5px;
+      border-width: 0 0 100% 5px;
+      border-color: transparent transparent transparent var(--ribbon-color, #f472b6);
+    }
+
+    .badge-name {
+      font-size: 0.72rem; font-weight: 800;
+      color: var(--text); text-align: center; line-height: 1.2;
+      max-width: 88px;
+    }
+    .badge-card:not(.earned) .badge-name { color: var(--muted); }
+
+    .badge-desc {
+      font-size: 0.62rem; font-weight: 600;
+      color: var(--muted); text-align: center;
+      max-width: 88px; line-height: 1.3;
+    }
+
+    /* ── Progress bar on locked badges ── */
+    .badge-progress {
+      width: 80px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .badge-progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--purple);
+      transition: width 0.4s;
+    }
+
+    .empty { text-align: center; color: var(--muted); font-size: 0.9rem; padding: 2rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏅 My Badges</h1>
+  <a href="/" class="back-link">← App</a>
+</header>
+
+<div class="page">
+
+  <div class="earned-count">
+    <div class="num" id="earnedNum">0</div>
+    <div class="label">badges earned</div>
+  </div>
+
+  <p class="section-label" id="earnedLabel" style="display:none">✨ Earned</p>
+  <div class="badge-grid" id="earnedGrid"></div>
+
+  <p class="section-label">🔒 Still to unlock</p>
+  <div class="badge-grid" id="lockedGrid"></div>
+
+</div>
+
+<script>
+  const ALL_BADGES  = {{ badges_json | safe }};
+  const earned      = new Set(JSON.parse(localStorage.getItem('violet-badges') || '[]'));
+  const streaks     = JSON.parse(localStorage.getItem('violet-streaks') || '{}');
+  const completions = JSON.parse(localStorage.getItem('violet-completions') || '{}');
+  const tripleCount = parseInt(localStorage.getItem('violet-triples') || '0');
+  const luWins      = parseInt(localStorage.getItem('violet-lu-total') || '0');
+
+  function getProgress(badge) {
+    if (badge.type === 'streak') {
+      const best = Math.max(...Object.values(streaks).map(s => s.count || 0), 0);
+      return { val: best, max: badge.threshold };
+    }
+    if (badge.type === 'routine') {
+      return { val: completions[badge.routine] || 0, max: badge.threshold };
+    }
+    if (badge.type === 'triple') {
+      return { val: tripleCount, max: badge.threshold };
+    }
+    if (badge.type === 'levelup') {
+      return { val: luWins, max: badge.threshold };
+    }
+    return { val: 0, max: 1 };
+  }
+
+  function makeBadge(badge, isEarned) {
+    const { val, max } = getProgress(badge);
+    const pct = Math.min(val / max, 1);
+
+    const card = document.createElement('div');
+    card.className = 'badge-card' + (isEarned ? ' earned' : '');
+
+    // circle
+    const circle = document.createElement('div');
+    circle.className = 'badge-circle';
+    circle.style.background = badge.ring;
+    circle.style.padding = '9px';
+
+    const inner = document.createElement('div');
+    inner.className = 'badge-inner';
+    inner.style.background = badge.bg;
+    inner.style.color = badge.ring;
+
+    const emoji = document.createElement('span');
+    emoji.className = 'badge-emoji';
+    emoji.textContent = badge.emoji;
+    inner.appendChild(emoji);
+
+    if (isEarned) {
+      const stamp = document.createElement('div');
+      stamp.className = 'badge-stamp';
+      stamp.textContent = '✓';
+      stamp.style.color = badge.ring;
+      circle.appendChild(stamp);
+    }
+
+    circle.appendChild(inner);
+    card.appendChild(circle);
+
+    // ribbon
+    const ribbon = document.createElement('div');
+    ribbon.className = 'badge-ribbon';
+    ribbon.style.setProperty('--ribbon-color', badge.ring);
+    ribbon.style.background = badge.ring;
+    ribbon.textContent = badge.name;
+    card.appendChild(ribbon);
+
+    // desc
+    const desc = document.createElement('div');
+    desc.className = 'badge-desc';
+    desc.textContent = badge.desc;
+    card.appendChild(desc);
+
+    // progress bar (locked only)
+    if (!isEarned && pct > 0) {
+      const bar = document.createElement('div');
+      bar.className = 'badge-progress';
+      const fill = document.createElement('div');
+      fill.className = 'badge-progress-fill';
+      fill.style.width = (pct * 100) + '%';
+      fill.style.background = badge.ring;
+      bar.appendChild(fill);
+      card.appendChild(bar);
+    }
+
+    return card;
+  }
+
+  const earnedBadges = ALL_BADGES.filter(b => earned.has(b.id));
+  const lockedBadges = ALL_BADGES.filter(b => !earned.has(b.id));
+
+  document.getElementById('earnedNum').textContent = earnedBadges.length;
+
+  const earnedGrid = document.getElementById('earnedGrid');
+  const lockedGrid = document.getElementById('lockedGrid');
+
+  if (earnedBadges.length > 0) {
+    document.getElementById('earnedLabel').style.display = '';
+    earnedBadges.forEach(b => earnedGrid.appendChild(makeBadge(b, true)));
+  }
+  lockedBadges.forEach(b => lockedGrid.appendChild(makeBadge(b, false)));
+
+  if (lockedBadges.length === 0) {
+    lockedGrid.innerHTML = '<p class="empty" style="grid-column:1/-1">You earned them all! 🏆</p>';
+  }
+</script>
+
+</body>
+</html>
