@@ -317,7 +317,7 @@ def log_entry():
     return '', 204
 
 
-@app.route('/')
+@app.route('/routines')
 def index():
     routines   = load_routines()
     phrases    = load_phrases()
@@ -344,6 +344,11 @@ def index():
         levelup_categories_json=json.dumps(levelup_data.get('levelup_categories', [])),
         badges_json=json.dumps(BADGES),
     )
+
+
+@app.route('/')
+def landing():
+    return render_template('landing.html')
 
 
 @app.route('/levelup', methods=['POST'])

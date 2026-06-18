@@ -1,6 +1,6 @@
 {
-  "name": "Violet's Routines",
-  "short_name": "Routines",
+  "name": "Violet's Life OS",
+  "short_name": "Violet",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#cce8ff",
