@@ -13,6 +13,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* iOS Safari: elements with onclick must have cursor:pointer to receive tap events */
+    [onclick] { cursor: pointer; }
 
     :root {
       --am:     #4db8ff;
