@@ -372,6 +372,56 @@ def admin_save():
     return jsonify({'ok': True})
 
 
+def load_tasks_raw():
+    """Return routines as ordered list with metadata + task list for the task admin."""
+    rows = scan_csv(TASKS_FILE, 'Routine')
+    seen = {}
+    order = []
+    for row in rows:
+        rid = row.get('ID', '').strip()
+        if not rid:
+            continue
+        if rid not in seen:
+            seen[rid] = {
+                'id':     rid,
+                'name':   row.get('Routine', '').strip(),
+                'icon':   row.get('Icon', '').strip(),
+                'time':   row.get('Time', '').strip(),
+                'banner': row.get('Banner', '').strip(),
+                'tasks':  [],
+            }
+            order.append(rid)
+        task = row.get('Task', '').strip()
+        if task:
+            seen[rid]['tasks'].append(task)
+    return [seen[rid] for rid in order]
+
+
+def save_tasks_raw(routines):
+    """Write routines list back to Violet Tasks.csv."""
+    with open(TASKS_FILE, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Violet Tasks'])
+        writer.writerow(['Violet Tasks', '', '', '', '', ''])
+        writer.writerow(['Routine', 'ID', 'Icon', 'Time', 'Banner', 'Task'])
+        for r in routines:
+            for task in r['tasks']:
+                writer.writerow([r['name'], r['id'], r['icon'], r['time'], r['banner'], task])
+
+
+@app.route('/admin/tasks')
+def admin_tasks():
+    routines = load_tasks_raw()
+    return render_template('admin_tasks.html', routines_json=json.dumps(routines))
+
+
+@app.route('/admin/tasks/save', methods=['POST'])
+def admin_tasks_save():
+    routines = request.get_json()
+    save_tasks_raw(routines)
+    return jsonify({'ok': True})
+
+
 @app.route('/stats')
 def stats():
     routines = load_routines()

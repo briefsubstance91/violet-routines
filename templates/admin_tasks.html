@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Violet's App — Tasks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #9b87f5;
+      --blue:   #4db8ff;
+      --pink:   #f472b6;
+      --text:   #1e1b4b;
+      --muted:  #9490c0;
+      --bg:     #f5f3ff;
+      --card:   #ffffff;
+      --border: #e5e0ff;
+      --r:      14px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 4rem;
+    }
+
+    header {
+      background: white;
+      border-bottom: 2px solid var(--border);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--blue), var(--purple), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    .btn {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.5rem 1.1rem;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.96); }
+
+    .btn-save {
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: white;
+    }
+    .btn-save:disabled { opacity: 0.45; cursor: default; }
+
+    .btn-outline {
+      background: white;
+      border: 2px solid var(--border);
+      color: var(--muted);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    .btn-outline:hover { border-color: var(--purple); color: var(--purple); }
+
+    .btn-danger {
+      background: none;
+      border: none;
+      color: #f87171;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      line-height: 1;
+    }
+    .btn-danger:hover { background: #fff1f1; }
+
+    .save-status {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .save-status.saved { color: #34d399; }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .routine-card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+
+    .routine-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      background: #faf8ff;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .routine-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .routine-meta {
+      flex: 1;
+    }
+
+    .routine-name {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .routine-time {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .task-list {
+      padding: 0.5rem 0;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 1rem;
+    }
+
+    .drag-handle {
+      color: var(--border);
+      font-size: 1rem;
+      cursor: grab;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .drag-handle:active { cursor: grabbing; }
+
+    .task-input {
+      flex: 1;
+      min-width: 0;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 0.3rem 0.5rem;
+      background: none;
+    }
+    .task-input:focus { outline: none; border-color: var(--purple); background: white; }
+
+    .add-task-row {
+      padding: 0.4rem 1rem 0.85rem;
+    }
+
+    .btn-add-task {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--purple);
+      background: none;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 0.35rem 0.85rem;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
+    .btn-add-task:hover { border-color: var(--purple); background: #faf8ff; }
+
+    .task-row.dragging { opacity: 0.4; }
+    .task-row.drag-over { border-top: 2px solid var(--purple); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✦ Tasks</h1>
+  <div class="header-actions">
+    <a href="/admin" class="btn btn-outline">Level Up ⚡</a>
+    <a href="/" class="btn btn-outline">← App</a>
+    <span class="save-status" id="saveStatus">Saved ✓</span>
+    <button class="btn btn-save" id="saveBtn" onclick="saveAll()" disabled>Save</button>
+  </div>
+</header>
+
+<div class="container" id="routinesList"></div>
+
+<script>
+  let routines = {{ routines_json | safe }};
+  let dirty = false;
+
+  function markDirty() {
+    dirty = true;
+    document.getElementById('saveStatus').textContent = 'Unsaved changes';
+    document.getElementById('saveStatus').className = 'save-status';
+    document.getElementById('saveBtn').disabled = false;
+  }
+
+  function markSaved() {
+    dirty = false;
+    document.getElementById('saveStatus').textContent = 'Saved ✓';
+    document.getElementById('saveStatus').className = 'save-status saved';
+    document.getElementById('saveBtn').disabled = true;
+  }
+
+  function esc(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  }
+
+  function render() {
+    const container = document.getElementById('routinesList');
+    container.innerHTML = '';
+    routines.forEach((r, ri) => {
+      const card = document.createElement('div');
+      card.className = 'routine-card';
+      card.innerHTML = `
+        <div class="routine-header">
+          <span class="routine-icon">${esc(r.icon)}</span>
+          <div class="routine-meta">
+            <div class="routine-name">${esc(r.name)}</div>
+            <div class="routine-time">${esc(r.time)}</div>
+          </div>
+        </div>
+        <div class="task-list" id="tasks-${ri}"></div>
+        <div class="add-task-row">
+          <button class="btn-add-task" onclick="addTask(${ri})">+ Add task</button>
+        </div>
+      `;
+      container.appendChild(card);
+
+      const taskList = card.querySelector(`#tasks-${ri}`);
+      r.tasks.forEach((task, ti) => {
+        taskList.appendChild(makeTaskRow(ri, ti, task));
+      });
+    });
+  }
+
+  function makeTaskRow(ri, ti, task) {
+    const row = document.createElement('div');
+    row.className = 'task-row';
+    row.draggable = true;
+    row.dataset.ri = ri;
+    row.dataset.ti = ti;
+
+    row.innerHTML = `
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <input class="task-input" value="${esc(task)}" placeholder="Task name…"
+             oninput="updateTask(${ri},${ti},this.value)">
+      <button class="btn-danger" onclick="removeTask(${ri},${ti})" title="Delete">×</button>
+    `;
+
+    row.addEventListener('dragstart', onDragStart);
+    row.addEventListener('dragover', onDragOver);
+    row.addEventListener('dragleave', onDragLeave);
+    row.addEventListener('drop', onDrop);
+    row.addEventListener('dragend', onDragEnd);
+
+    return row;
+  }
+
+  function updateTask(ri, ti, val) {
+    routines[ri].tasks[ti] = val;
+    markDirty();
+  }
+
+  function addTask(ri) {
+    routines[ri].tasks.push('');
+    markDirty();
+    render();
+    const taskList = document.getElementById(`tasks-${ri}`);
+    const inputs = taskList.querySelectorAll('.task-input');
+    inputs[inputs.length - 1].focus();
+  }
+
+  function removeTask(ri, ti) {
+    routines[ri].tasks.splice(ti, 1);
+    markDirty();
+    render();
+  }
+
+  // ── Drag to reorder ──
+  let dragSrc = null;
+
+  function onDragStart(e) {
+    dragSrc = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    this.classList.add('drag-over');
+  }
+
+  function onDragLeave() {
+    this.classList.remove('drag-over');
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+    if (dragSrc === this) return;
+
+    const srcRi = parseInt(dragSrc.dataset.ri);
+    const srcTi = parseInt(dragSrc.dataset.ti);
+    const dstRi = parseInt(this.dataset.ri);
+    const dstTi = parseInt(this.dataset.ti);
+
+    if (srcRi !== dstRi) return; // only reorder within same routine for now
+
+    const tasks = routines[srcRi].tasks;
+    const [moved] = tasks.splice(srcTi, 1);
+    tasks.splice(dstTi, 0, moved);
+    markDirty();
+    render();
+  }
+
+  function onDragEnd() {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+  }
+
+  async function saveAll() {
+    const btn = document.getElementById('saveBtn');
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+    const res = await fetch('/admin/tasks/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(routines)
+    });
+    btn.textContent = 'Save';
+    if (res.ok) markSaved();
+  }
+
+  window.addEventListener('beforeunload', e => {
+    if (dirty) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  render();
+</script>
+
+</body>
+</html>
