@@ -463,40 +463,52 @@
     .ob-slide-1 { background: linear-gradient(160deg, #1a0035 0%, #4a0080 60%, #c026d3 100%); }
     .ob-slide-2 { background: linear-gradient(160deg, #0a1060 0%, #2563eb 60%, #7c3aed 100%); }
     .ob-slide-3 { background: linear-gradient(160deg, #1a0035 0%, #7c1fa0 50%, #f472b6 100%); }
-    .ob-slide-4 { background: linear-gradient(160deg, #0d1b4a 0%, #4a1a8c 50%, #9b87f5 100%); }
+    .ob-slide-4 { background: linear-gradient(160deg, #001a40 0%, #0369a1 60%, #67e8f9 100%); }
+    .ob-slide-5 { background: linear-gradient(160deg, #1a1a00 0%, #713f12 50%, #fbbf24 100%); }
 
     .ob-char-wrap {
       flex: 1; width: 100%;
-      display: flex; align-items: center; justify-content: center;
-      padding: 3.5rem 1.5rem 0.5rem;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 3.5rem 1.5rem 0.25rem;
+      gap: 0.6rem;
     }
     .ob-char-img {
-      max-width: min(260px, 68vw);
-      max-height: 48vh;
+      max-width: min(240px, 62vw);
+      max-height: 42vh;
       object-fit: contain;
       filter: drop-shadow(0 8px 32px rgba(0,0,0,0.45));
       animation: ob-float 3.5s ease-in-out infinite;
     }
+    .ob-char-img.ob-gif { animation: none; }
     @keyframes ob-float {
       0%, 100% { transform: translateY(0px); }
       50%       { transform: translateY(-14px); }
     }
+    .ob-char-name {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+    }
 
     .ob-text-block {
-      width: 100%; padding: 1.25rem 2rem 0;
+      width: 100%; padding: 0.75rem 2rem 0;
       text-align: center;
     }
     .ob-title {
       font-family: 'Fredoka One', cursive;
-      font-size: clamp(2rem, 7vw, 2.8rem);
-      font-weight: 400; line-height: 1.1; margin-bottom: 0.65rem;
+      font-size: clamp(1.8rem, 6.5vw, 2.5rem);
+      font-weight: 400; line-height: 1.1; margin-bottom: 0.5rem;
       color: white;
       text-shadow: 0 2px 20px rgba(0,0,0,0.3);
     }
     .ob-body {
-      font-size: clamp(0.95rem, 3vw, 1.08rem); font-weight: 600;
+      font-size: clamp(0.88rem, 2.8vw, 1rem); font-weight: 600;
       color: rgba(255,255,255,0.88); line-height: 1.55; max-width: 300px;
       margin: 0 auto;
+    }
+    .ob-voice {
+      font-size: clamp(0.8rem, 2.5vw, 0.92rem); font-weight: 400; font-style: italic;
+      color: rgba(255,255,255,0.65); line-height: 1.5; max-width: 280px;
+      margin: 0.45rem auto 0;
     }
 
     .ob-dots {
@@ -764,47 +776,68 @@
 
   <div class="ob-track" id="obTrack">
 
-    <!-- Slide 1: Welcome -->
+    <!-- Slide 1: Welcome — group shot -->
     <div class="ob-slide ob-slide-1">
       <div class="ob-char-wrap">
-        <img class="ob-char-img" src="/static/welcome/kuromi/kuromi celebrate.jpg" alt="">
+        <img class="ob-char-img" src="/static/welcome/kuromi/welcome misc.png" alt="Kuromi and friends">
+        <div class="ob-char-name">Kuromi &amp; the gang</div>
       </div>
       <div class="ob-text-block">
         <div class="ob-title">Hi Violet! ✨</div>
-        <div class="ob-body">Welcome to your very own app — made just for you to shine every single day.</div>
+        <div class="ob-body">This is YOUR very own app. Every day you use it, something good happens.</div>
+        <div class="ob-voice">"Hmph… okay fine. I'll admit it — I made this just for you."</div>
       </div>
     </div>
 
-    <!-- Slide 2: Routines -->
+    <!-- Slide 2: Routines — princess Kuromi -->
     <div class="ob-slide ob-slide-2">
       <div class="ob-char-wrap">
-        <img class="ob-char-img" src="/static/welcome/kuromi/welcome misc.jpg" alt="">
+        <img class="ob-char-img" src="/static/welcome/kuromi/536b66b07a936d7845b525c36e9ebb1e.png" alt="Princess Kuromi">
+        <div class="ob-char-name">Kuromi</div>
       </div>
       <div class="ob-text-block">
         <div class="ob-title">Your Routines 📋</div>
-        <div class="ob-body">Tap each task as you do it. Finish them all and something fun happens! 🎉</div>
+        <div class="ob-body">Tap each task as you finish it. Complete the whole routine and the gang celebrates! 🎉</div>
+        <div class="ob-voice">"Even the small things count. Especially the small things."</div>
       </div>
     </div>
 
-    <!-- Slide 3: Level Up -->
+    <!-- Slide 3: Level Up — winking Kuromi -->
     <div class="ob-slide ob-slide-3">
       <div class="ob-char-wrap">
-        <img class="ob-char-img" src="/static/welcome/kuromi/536b66b07a936d7845b525c36e9ebb1e.jpg" alt="">
+        <img class="ob-char-img" src="/static/welcome/kuromi/98cb2724e962077e8a1e51c9e6cfe459.png" alt="Kuromi winking">
+        <div class="ob-char-name">Kuromi</div>
       </div>
       <div class="ob-text-block">
-        <div class="ob-title">Level Up! ⚡</div>
-        <div class="ob-body">See the ⚡ button? Tap it whenever you do something even a little bit better than before. Small wins add up to something huge. 💪</div>
+        <div class="ob-title">Level Up ⚡</div>
+        <div class="ob-body">Tap ⚡ whenever you do something even a tiny bit better than yesterday. That's how legends are made.</div>
+        <div class="ob-voice">"Little by little. Day by day. That's the real magic. 💜"</div>
       </div>
     </div>
 
-    <!-- Slide 4: You're Ready -->
+    <!-- Slide 4: Streaks — Cinnamoroll GIF -->
     <div class="ob-slide ob-slide-4">
       <div class="ob-char-wrap">
-        <img class="ob-char-img" src="/static/welcome/kuromi/98cb2724e962077e8a1e51c9e6cfe459.jpg" alt="">
+        <img class="ob-char-img ob-gif" src="/static/welcome/cinnamoroll/cinnamoroll-sleepy.gif" alt="Cinnamoroll yawning">
+        <div class="ob-char-name">Cinnamoroll</div>
       </div>
       <div class="ob-text-block">
-        <div class="ob-title">You're Ready! 🌟</div>
-        <div class="ob-body">Every day you show up makes you a little stronger, a little brighter. Let's do this! 🚀</div>
+        <div class="ob-title">Keep the streak 🔥</div>
+        <div class="ob-body">Show up every day and your streak grows. Long enough and you unlock a real-life reward. 🏆</div>
+        <div class="ob-voice">"Every day you come back… I'll be here waiting. I always am. 🩵"</div>
+      </div>
+    </div>
+
+    <!-- Slide 5: You're Ready — Gudetama GIF -->
+    <div class="ob-slide ob-slide-5">
+      <div class="ob-char-wrap">
+        <img class="ob-char-img ob-gif" src="/static/welcome/gudetama/gudetama-love.gif" alt="Gudetama with hearts">
+        <div class="ob-char-name">Gudetama</div>
+      </div>
+      <div class="ob-text-block">
+        <div class="ob-title">You're ready 🌟</div>
+        <div class="ob-body">You don't have to be perfect. You just have to show up. We'll all be cheering you on. 💜</div>
+        <div class="ob-voice">"…I didn't want to get out of the shell today either. But here I am. So. Let's just do the thing."</div>
       </div>
     </div>
 
@@ -812,6 +845,7 @@
 
   <div class="ob-dots" id="obDots">
     <div class="ob-dot active"></div>
+    <div class="ob-dot"></div>
     <div class="ob-dot"></div>
     <div class="ob-dot"></div>
     <div class="ob-dot"></div>
@@ -1062,7 +1096,7 @@
   setTimeout(() => { resetAll(); location.reload(); }, msUntilMidnight());
 
   // ── Onboarding ──────────────────────────────────────────
-  const OB_TOTAL = 4;
+  const OB_TOTAL = 5;
   let obCurrent = 0;
 
   function obInit() {
