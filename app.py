@@ -258,6 +258,31 @@ def service_worker():
     return send_from_directory(_BASE, 'sw.js', mimetype='application/javascript')
 
 
+@app.route('/admin/import-log', methods=['POST'])
+def import_log():
+    rows = request.get_json()
+    existing = []
+    try:
+        with open(LOG_FILE, newline='', encoding='utf-8-sig') as f:
+            existing = list(csv.DictReader(f))
+    except FileNotFoundError:
+        pass
+    seen = {(r['Date'], r['Routine']) for r in existing}
+    added = 0
+    for row in rows:
+        key = (row['Date'], row['Routine'])
+        if key not in seen:
+            existing.append(row)
+            seen.add(key)
+            added += 1
+    existing.sort(key=lambda r: r['Date'])
+    with open(LOG_FILE, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=['Date', 'Routine', 'Completed', 'Total'])
+        writer.writeheader()
+        writer.writerows(existing)
+    return jsonify({'imported': added, 'total': len(existing)})
+
+
 @app.route('/debug')
 def debug():
     log_rows = load_log()
