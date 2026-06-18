@@ -392,7 +392,11 @@ def load_levelup_log():
 
 @app.route('/sw.js')
 def service_worker():
-    return send_from_directory(_BASE, 'sw.js', mimetype='application/javascript')
+    resp = send_from_directory(_BASE, 'sw.js', mimetype='application/javascript')
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 
 @app.route('/admin/import-log', methods=['POST'])

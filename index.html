@@ -312,6 +312,26 @@
     }
     .celebration-close:active { transform: scale(0.95); }
 
+    /* ── Streak badge ── */
+    .streak-badge {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #ff6b35;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .streak-badge.visible { opacity: 1; }
+
+    /* ── Celebration streak line ── */
+    .cel-streak {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #ff6b35;
+      margin-bottom: 0.5rem;
+      min-height: 1.4em;
+    }
+
     /* ── Progress bar ── */
     .progress-bar-wrap {
       height: 7px;
@@ -339,6 +359,7 @@
     <div class="celebration-emoji" id="cel-emoji">🎉</div>
     <div class="celebration-title" id="cel-title">Amazing!</div>
     <div class="celebration-sub" id="cel-sub">You finished your routine!</div>
+    <div class="cel-streak" id="cel-streak"></div>
     <button class="celebration-close" onclick="closeCelebration()">Woohoo! ✨</button>
   </div>
 </div>
@@ -361,6 +382,7 @@
           <div class="routine-time">8:00 AM</div>
         </div>
         <span class="routine-progress" id="prog-am">0 / 5</span>
+        <span class="streak-badge" id="streak-am"></span>
       </div>
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="bar-am" style="width:0%"></div>
@@ -401,7 +423,8 @@
           <div class="routine-title">Afternoon Routine</div>
           <div class="routine-time">5:00 PM</div>
         </div>
-        <span class="routine-progress" id="prog-af">0 / 1</span>
+        <span class="routine-progress" id="prog-af">0 / 2</span>
+        <span class="streak-badge" id="streak-af"></span>
       </div>
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="bar-af" style="width:0%"></div>
@@ -410,6 +433,10 @@
         <div class="task" id="af-0" onclick="toggle('af',0)">
           <div class="task-check"></div>
           <span class="task-label">🎒 Unpack backpack</span>
+        </div>
+        <div class="task" id="af-1" onclick="toggle('af',1)">
+          <div class="task-check"></div>
+          <span class="task-label">🧼 Wash your hands</span>
         </div>
       </div>
       <div class="complete-banner">🌸 Afternoon done — you're a star!</div>
@@ -426,7 +453,8 @@
           <div class="routine-title">Evening Routine</div>
           <div class="routine-time">6:00 PM</div>
         </div>
-        <span class="routine-progress" id="prog-pm">0 / 3</span>
+        <span class="routine-progress" id="prog-pm">0 / 5</span>
+        <span class="streak-badge" id="streak-pm"></span>
       </div>
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="bar-pm" style="width:0%"></div>
@@ -444,6 +472,14 @@
           <div class="task-check"></div>
           <span class="task-label">💇 Brush hair</span>
         </div>
+        <div class="task" id="pm-3" onclick="toggle('pm',3)">
+          <div class="task-check"></div>
+          <span class="task-label">🩷 Get PJ's on</span>
+        </div>
+        <div class="task" id="pm-4" onclick="toggle('pm',4)">
+          <div class="task-check"></div>
+          <span class="task-label">👕 Put dirty clothes in the laundry room</span>
+        </div>
       </div>
       <div class="complete-banner">🖤 Kuromi says: sweet dreams, Violet! 💜</div>
     </div>
@@ -458,36 +494,78 @@
 <script>
   // ── Routine config ──────────────────────────────────────
   const ROUTINES = {
-    am: {
-      total: 5,
-      celebration: { emoji: '☁️', title: 'Morning Magic!', sub: 'Cinnamoroll is so proud of you! ☁️✨' }
-    },
-    af: {
-      total: 1,
-      celebration: { emoji: '🌸', title: 'You Did It!', sub: 'Backpack unpacked — you\'re amazing, Violet!' }
-    },
-    pm: {
-      total: 3,
-      celebration: { emoji: '🖤', title: 'Bedtime Queen!', sub: 'Kuromi says: you totally slayed your evening routine! 💜' }
-    },
+    am: { total: 5, emoji: '☁️' },
+    af: { total: 2, emoji: '🌸' },
+    pm: { total: 5, emoji: '🖤' },
   };
 
-  // ── State (persisted per day) ───────────────────────────
+  // ── Celebration phrases — edit these freely! ────────────
+  const PHRASES = {
+    am: [
+      { title: 'Morning Magic!',    reward: 'Go pick a treat from the treat drawer! 🍬' },
+      { title: 'You Did It!',       reward: 'You get 15 minutes of iPad time! 📱' },
+      { title: 'Superstar! ☁️',    reward: 'Cinnamoroll is SO proud — pick your afternoon snack! 🍎' },
+      { title: 'Amazing, Violet!',  reward: 'Tell Mommy — you earned a sticker! ⭐' },
+      { title: 'Morning Queen!',    reward: 'You get to pick tonight\'s movie! 🎬' },
+    ],
+    af: [
+      { title: 'You Did It!',       reward: 'Go pick a treat! 🍭' },
+      { title: 'Afternoon Star!',   reward: 'You get 20 minutes of free choice time! ✨' },
+      { title: 'Great Job!',        reward: 'Tell Mommy — you earned some screen time! 📺' },
+    ],
+    pm: [
+      { title: 'Bedtime Queen!',    reward: 'Tomorrow you get to pick breakfast! 🥞' },
+      { title: 'You Slayed!',       reward: 'Kuromi says: you earned an extra story tonight! 📖' },
+      { title: 'Night Night Star!', reward: 'You get to stay up 10 extra minutes! ⏰' },
+      { title: 'Amazing, Violet!',  reward: 'Tell Mommy you earned a cuddle prize! 🤗' },
+      { title: 'Evening Magic! 💜', reward: 'Sweet dreams — you totally crushed it! 🌙' },
+    ],
+  };
+
+  // ── Milestone rewards (triggered at these exact streak counts) ──
+  const MILESTONES = {
+    3:  '🔥 3 days in a row! You get to pick a special treat!',
+    7:  '⭐ 7-day streak!! Movie night — YOUR pick!',
+    14: '👑 14 days!! Spa night with Mommy — you earned it!',
+    21: '💜 21 days!! Pick something new from the toy bin!',
+    30: '🏆 30 DAYS!! You\'re absolutely incredible — BIG reward time!',
+  };
+
+  // ── Daily state ─────────────────────────────────────────
   const TODAY = new Date().toDateString();
 
   function getState() {
     const raw = localStorage.getItem('violet-routines');
     if (!raw) return null;
-    const state = JSON.parse(raw);
-    if (state.date !== TODAY) return null;
-    return state;
+    const s = JSON.parse(raw);
+    if (s.date !== TODAY) return null;
+    return s;
   }
-
   function saveState(state) {
     localStorage.setItem('violet-routines', JSON.stringify({ ...state, date: TODAY }));
   }
-
   let state = getState() || { am: [], af: [], pm: [] };
+
+  // ── Streak state ────────────────────────────────────────
+  function getStreaks() {
+    const raw = localStorage.getItem('violet-streaks');
+    return raw ? JSON.parse(raw) : { am: { count: 0, lastDate: '' }, af: { count: 0, lastDate: '' }, pm: { count: 0, lastDate: '' } };
+  }
+  function saveStreaks(streaks) {
+    localStorage.setItem('violet-streaks', JSON.stringify(streaks));
+  }
+  function incrementStreak(routine) {
+    const streaks = getStreaks();
+    const s = streaks[routine];
+    if (s.lastDate === TODAY) return s.count;
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    s.count = (s.lastDate === yesterday.toDateString()) ? s.count + 1 : 1;
+    s.lastDate = TODAY;
+    streaks[routine] = s;
+    saveStreaks(streaks);
+    return s.count;
+  }
+  function getStreak(routine) { return getStreaks()[routine].count; }
 
   // ── Date display ────────────────────────────────────────
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -506,13 +584,18 @@
 
       document.getElementById(`prog-${id}`).textContent = `${count} / ${total}`;
       document.getElementById(`bar-${id}`).style.width = pct + '%';
-
-      const card = document.getElementById(`card-${id}`);
-      card.classList.toggle('complete', count === total);
+      document.getElementById(`card-${id}`).classList.toggle('complete', count === total);
 
       for (let i = 0; i < total; i++) {
         const task = document.getElementById(`${id}-${i}`);
         if (task) task.classList.toggle('done', done.includes(i));
+      }
+
+      const streak = getStreak(id);
+      const badge = document.getElementById(`streak-${id}`);
+      if (badge) {
+        badge.textContent = streak > 1 ? `🔥 ${streak} day streak` : '';
+        badge.classList.toggle('visible', streak > 1);
       }
     }
   }
@@ -520,20 +603,11 @@
   // ── Toggle task ─────────────────────────────────────────
   function toggle(routine, index) {
     const done = state[routine] || [];
-    const idx = done.indexOf(index);
-    let wasComplete = done.length === ROUTINES[routine].total;
-
-    if (idx === -1) {
-      state[routine] = [...done, index];
-    } else {
-      state[routine] = done.filter(i => i !== index);
-    }
-
+    const wasComplete = done.length === ROUTINES[routine].total;
+    state[routine] = done.includes(index) ? done.filter(i => i !== index) : [...done, index];
     saveState(state);
     render();
-
-    const nowComplete = state[routine].length === ROUTINES[routine].total;
-    if (!wasComplete && nowComplete) {
+    if (!wasComplete && state[routine].length === ROUTINES[routine].total) {
       setTimeout(() => celebrate(routine), 200);
     }
   }
@@ -547,10 +621,15 @@
 
   // ── Celebration ─────────────────────────────────────────
   function celebrate(routine) {
-    const cfg = ROUTINES[routine].celebration;
-    document.getElementById('cel-emoji').textContent = cfg.emoji;
-    document.getElementById('cel-title').textContent = cfg.title;
-    document.getElementById('cel-sub').textContent = cfg.sub;
+    const streak = incrementStreak(routine);
+    const phrases = PHRASES[routine];
+    const pick = phrases[Math.floor(Math.random() * phrases.length)];
+    const milestone = MILESTONES[streak];
+
+    document.getElementById('cel-emoji').textContent = ROUTINES[routine].emoji;
+    document.getElementById('cel-title').textContent = pick.title;
+    document.getElementById('cel-sub').textContent = pick.reward;
+    document.getElementById('cel-streak').textContent = milestone || (streak > 1 ? `🔥 ${streak}-day streak!` : '');
     document.getElementById('celebration').classList.add('show');
     launchConfetti();
   }
