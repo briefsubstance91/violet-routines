@@ -395,6 +395,8 @@
     .celebration-close:active { transform: scale(0.95); }
 
     /* ── Tab bar ── */
+    body.ob-open .tab-bar { display: none; }
+
     .tab-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
       z-index: 90;
@@ -1182,6 +1184,7 @@
     if (localStorage.getItem('violet-onboarded')) return;
     const el = document.getElementById('obOverlay');
     el.style.display = 'flex';
+    document.body.classList.add('ob-open');
     obCurrent = 0;
     obRender();
   }
@@ -1201,7 +1204,7 @@
     localStorage.setItem('violet-onboarded', '1');
     const el = document.getElementById('obOverlay');
     el.classList.add('hidden');
-    setTimeout(() => el.style.display = 'none', 500);
+    setTimeout(() => { el.style.display = 'none'; document.body.classList.remove('ob-open'); }, 500);
   }
 
   function replayOnboarding() {
