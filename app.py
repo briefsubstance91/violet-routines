@@ -113,8 +113,8 @@ def load_milestones():
     milestones = {}
     for row in rows:
         streak   = row.get('Streak', '').strip()
-        message  = row.get('Message', '').strip()
-        category = row.get('Category', '').strip()
+        message  = (row.get('Reward Message') or row.get('Message', '')).strip()
+        category = (row.get('Category') or row.get('Reward category', '')).strip()
         if streak and message:
             milestones[streak] = {'message': message, 'category': category}
     return milestones
