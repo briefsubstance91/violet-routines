@@ -341,7 +341,7 @@
       top: -55px; right: -10px;
       width: 115px; height: 115px;
       object-fit: contain;
-      mix-blend-mode: multiply;
+      border-radius: 16px;
       animation: treatFloat 2.8s ease-in-out infinite;
       pointer-events: none;
       transform-origin: center bottom;
@@ -1045,10 +1045,14 @@
     document.getElementById('cel-title').textContent  = pick.title;
     document.getElementById('cel-sub').textContent    = pick.reward;
     document.getElementById('cel-streak').textContent = milestone || (streak > 1 ? `🔥 ${streak}-day streak!` : '');
-    document.getElementById('cel-treat-deco').src = TREAT_SRCS[Math.floor(Math.random() * TREAT_SRCS.length)];
+    const chars = ROUTINE_CHARS[routine] || TREAT_SRCS;
+    document.getElementById('cel-treat-deco').src = chars[Math.floor(Math.random() * chars.length)];
 
     const photo = document.getElementById('cel-photo');
-    if (IMAGES.length) {
+    if (streak % 7 === 0) {
+      photo.src = '/static/misc images/Weekly Celebrate.jpg';
+      photo.classList.add('visible');
+    } else if (IMAGES.length) {
       photo.src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
       photo.classList.add('visible');
     } else {
@@ -1065,6 +1069,15 @@
   }
 
   // ── Confetti ────────────────────────────────────────────
+  const ROUTINE_CHARS = {
+    am: ['/static/misc images/Kuromi Celebrate 1.jpeg'],
+    af: ['/static/welcome/cinnamoroll/cinnamoroll-dance.gif'],
+    pm: [
+      '/static/misc images/a86f53ea6819c31cd555c2085b3c29ce.jpg',
+      '/static/misc images/2ab0b900494525787333cbbc368769d8.jpg',
+    ],
+  };
+
   const canvas = document.getElementById('confetti-canvas');
   const ctx    = canvas.getContext('2d');
   let particles = [], animId = null;
