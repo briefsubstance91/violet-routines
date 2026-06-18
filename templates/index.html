@@ -396,6 +396,7 @@
 
     /* ── Tab bar ── */
     body.ob-open .tab-bar { display: none; }
+    body.ob-open { overflow: hidden; }
 
     .tab-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -450,8 +451,8 @@
     /* ── Onboarding ── */
     .ob-overlay {
       position: fixed; inset: 0; z-index: 500;
+      width: 100vw; height: 100vh;
       display: flex; flex-direction: column;
-      background: #1a0035;
       transition: opacity 0.5s;
       -webkit-tap-highlight-color: transparent;
     }
@@ -467,7 +468,7 @@
     }
 
     .ob-track {
-      flex: 1; width: 100%;
+      position: absolute; inset: 0;
       overflow: hidden;
     }
     .ob-slides {
@@ -481,6 +482,7 @@
       align-items: center;
       position: relative;
       overflow: hidden;
+      padding-bottom: 9rem;
     }
     .ob-slide-1 { background: linear-gradient(160deg, #1a0035 0%, #4a0080 60%, #c026d3 100%); }
     .ob-slide-2 { background: linear-gradient(160deg, #0a1060 0%, #2563eb 60%, #7c3aed 100%); }
@@ -535,8 +537,10 @@
     }
 
     .ob-dots {
+      position: absolute; bottom: 5.5rem; left: 0; right: 0;
       display: flex; gap: 0.5rem; justify-content: center;
-      padding: 1.1rem 0 0.4rem;
+      padding: 0;
+      z-index: 10;
     }
     .ob-dot {
       width: 8px; height: 8px; border-radius: 4px;
@@ -546,8 +550,10 @@
     .ob-dot.active { background: white; width: 22px; }
 
     .ob-nav {
+      position: absolute; bottom: 0; left: 0; right: 0;
       display: flex; align-items: center; justify-content: center;
-      padding: 0.6rem 1.5rem 2.5rem;
+      padding: 0.5rem 1.5rem 2.5rem;
+      z-index: 10;
     }
     .ob-btn-next {
       font-family: 'Fredoka One', cursive;
