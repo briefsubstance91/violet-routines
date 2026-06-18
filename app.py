@@ -33,6 +33,10 @@ _already_notified  = {}  # {routine_id:date → True}
 
 
 def get_vapid_keys():
+    env_priv = os.environ.get('VAPID_PRIVATE_KEY')
+    env_pub  = os.environ.get('VAPID_PUBLIC_KEY')
+    if env_priv and env_pub:
+        return {'private': env_priv.replace('\\n', '\n'), 'public': env_pub}
     if os.path.exists(VAPID_FILE):
         with open(VAPID_FILE) as f:
             return json.load(f)
