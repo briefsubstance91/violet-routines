@@ -432,7 +432,6 @@
     /* ── Onboarding ── */
     .ob-overlay {
       position: fixed; inset: 0; z-index: 500;
-      background: linear-gradient(160deg, #cce8ff 0%, #e9e3ff 50%, #ffd6f0 100%);
       display: flex; flex-direction: column;
       transition: opacity 0.5s;
       -webkit-tap-highlight-color: transparent;
@@ -441,10 +440,10 @@
 
     .ob-skip {
       position: absolute; top: 1.1rem; right: 1.25rem;
-      background: rgba(255,255,255,0.55); border: none;
+      background: rgba(0,0,0,0.25); border: none;
       font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700;
-      color: var(--muted); border-radius: 100px; padding: 0.35rem 0.9rem;
-      cursor: pointer; backdrop-filter: blur(4px); z-index: 10;
+      color: rgba(255,255,255,0.85); border-radius: 100px; padding: 0.35rem 0.9rem;
+      cursor: pointer; backdrop-filter: blur(6px); z-index: 10;
       touch-action: manipulation;
     }
 
@@ -458,93 +457,70 @@
     .ob-slide {
       min-width: 100%; width: 100%;
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 3rem 2rem 2rem; text-align: center;
-      gap: 0;
+      align-items: center;
+      position: relative;
     }
+    .ob-slide-1 { background: linear-gradient(160deg, #1a0035 0%, #4a0080 60%, #c026d3 100%); }
+    .ob-slide-2 { background: linear-gradient(160deg, #0a1060 0%, #2563eb 60%, #7c3aed 100%); }
+    .ob-slide-3 { background: linear-gradient(160deg, #1a0035 0%, #7c1fa0 50%, #f472b6 100%); }
+    .ob-slide-4 { background: linear-gradient(160deg, #0d1b4a 0%, #4a1a8c 50%, #9b87f5 100%); }
 
-    .ob-visual {
-      font-size: 5.5rem; line-height: 1;
-      margin-bottom: 1.75rem;
-      animation: ob-float 3s ease-in-out infinite;
+    .ob-char-wrap {
+      flex: 1; width: 100%;
+      display: flex; align-items: center; justify-content: center;
+      padding: 3.5rem 1.5rem 0.5rem;
+    }
+    .ob-char-img {
+      max-width: min(260px, 68vw);
+      max-height: 48vh;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 32px rgba(0,0,0,0.45));
+      animation: ob-float 3.5s ease-in-out infinite;
     }
     @keyframes ob-float {
-      0%, 100% { transform: translateY(0); }
-      50%       { transform: translateY(-10px); }
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-14px); }
     }
 
+    .ob-text-block {
+      width: 100%; padding: 1.25rem 2rem 0;
+      text-align: center;
+    }
     .ob-title {
-      font-family: 'Fredoka One', cursive; font-size: clamp(2rem, 7vw, 2.8rem);
-      font-weight: 400; line-height: 1.1; margin-bottom: 1rem;
-      background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2rem, 7vw, 2.8rem);
+      font-weight: 400; line-height: 1.1; margin-bottom: 0.65rem;
+      color: white;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.3);
     }
-
     .ob-body {
-      font-size: clamp(1rem, 3vw, 1.15rem); font-weight: 600;
-      color: var(--muted); line-height: 1.6; max-width: 320px;
-      margin-bottom: 1.5rem;
-    }
-
-    .ob-demo {
-      background: white; border-radius: 20px;
-      padding: 1rem 1.25rem; width: 100%; max-width: 300px;
-      box-shadow: 0 8px 30px rgba(155,135,245,0.2);
-      margin-bottom: 1.5rem;
-      border: 2px solid rgba(155,135,245,0.15);
-    }
-    .ob-demo-task {
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 0.55rem 0;
-      font-size: 0.92rem; font-weight: 700; color: var(--text);
-      border-bottom: 1px dashed rgba(155,135,245,0.15);
-    }
-    .ob-demo-task:last-child { border-bottom: none; }
-    .ob-demo-circle {
-      width: 26px; height: 26px; border-radius: 50%;
-      border: 2.5px solid #4db8ff; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem; color: #4db8ff;
-    }
-    .ob-demo-circle.done { background: #4db8ff; border-color: #4db8ff; color: white; }
-
-    .ob-fab-demo {
-      width: 64px; height: 64px; border-radius: 50%;
-      background: linear-gradient(135deg, #f472b6, #9b87f5);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.8rem; margin: 0 auto 1.25rem;
-      box-shadow: 0 6px 24px rgba(155,135,245,0.5);
-      animation: ob-pulse 2s ease-in-out infinite;
-    }
-    @keyframes ob-pulse {
-      0%, 100% { box-shadow: 0 6px 24px rgba(155,135,245,0.5); transform: scale(1); }
-      50%       { box-shadow: 0 8px 32px rgba(244,114,182,0.6); transform: scale(1.06); }
+      font-size: clamp(0.95rem, 3vw, 1.08rem); font-weight: 600;
+      color: rgba(255,255,255,0.88); line-height: 1.55; max-width: 300px;
+      margin: 0 auto;
     }
 
     .ob-dots {
       display: flex; gap: 0.5rem; justify-content: center;
-      padding: 1rem 0 0.5rem;
+      padding: 1.1rem 0 0.4rem;
     }
     .ob-dot {
       width: 8px; height: 8px; border-radius: 4px;
-      background: rgba(155,135,245,0.25);
+      background: rgba(255,255,255,0.3);
       transition: background 0.3s, width 0.3s;
     }
-    .ob-dot.active { background: var(--af); width: 22px; }
+    .ob-dot.active { background: white; width: 22px; }
 
     .ob-nav {
       display: flex; align-items: center; justify-content: center;
-      gap: 1rem; padding: 0.75rem 1.5rem 1.5rem;
+      padding: 0.6rem 1.5rem 2.5rem;
     }
-
     .ob-btn-next {
       font-family: 'Fredoka One', cursive;
       font-size: 1.25rem; font-weight: 400;
-      background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
-      color: white; border: none;
-      padding: 0.85rem 2.5rem; border-radius: 100px;
+      background: white; color: #9b87f5;
+      border: none; padding: 0.85rem 2.75rem; border-radius: 100px;
       cursor: pointer; letter-spacing: 0.02em;
-      box-shadow: 0 4px 20px rgba(155,135,245,0.4);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
       transition: transform 0.15s;
       touch-action: manipulation;
     }
@@ -789,45 +765,47 @@
   <div class="ob-track" id="obTrack">
 
     <!-- Slide 1: Welcome -->
-    <div class="ob-slide">
-      <div class="ob-visual">✦</div>
-      <div class="ob-title">Hi Violet! ✨</div>
-      <div class="ob-body">Welcome to your very own app — made just for you to shine every single day.</div>
+    <div class="ob-slide ob-slide-1">
+      <div class="ob-char-wrap">
+        <img class="ob-char-img" src="/static/welcome/kuromi/kuromi celebrate.jpg" alt="">
+      </div>
+      <div class="ob-text-block">
+        <div class="ob-title">Hi Violet! ✨</div>
+        <div class="ob-body">Welcome to your very own app — made just for you to shine every single day.</div>
+      </div>
     </div>
 
     <!-- Slide 2: Routines -->
-    <div class="ob-slide">
-      <div class="ob-visual">📋</div>
-      <div class="ob-title">Your Routines</div>
-      <div class="ob-body">Tap each task as you do it. Finish them all and something fun happens! 🎉</div>
-      <div class="ob-demo">
-        <div class="ob-demo-task">
-          <div class="ob-demo-circle done">✓</div>
-          <span>👗 Get dressed</span>
-        </div>
-        <div class="ob-demo-task">
-          <div class="ob-demo-circle done">✓</div>
-          <span>💇 Brush hair</span>
-        </div>
-        <div class="ob-demo-task">
-          <div class="ob-demo-circle"></div>
-          <span>🪥 Brush teeth</span>
-        </div>
+    <div class="ob-slide ob-slide-2">
+      <div class="ob-char-wrap">
+        <img class="ob-char-img" src="/static/welcome/kuromi/welcome misc.jpg" alt="">
+      </div>
+      <div class="ob-text-block">
+        <div class="ob-title">Your Routines 📋</div>
+        <div class="ob-body">Tap each task as you do it. Finish them all and something fun happens! 🎉</div>
       </div>
     </div>
 
     <!-- Slide 3: Level Up -->
-    <div class="ob-slide">
-      <div class="ob-fab-demo">⚡</div>
-      <div class="ob-title">Level Up!</div>
-      <div class="ob-body">See the ⚡ button? Tap it whenever you do something even a little bit better than before.<br><br>Small wins every day add up to something <strong>huge</strong>. 💪</div>
+    <div class="ob-slide ob-slide-3">
+      <div class="ob-char-wrap">
+        <img class="ob-char-img" src="/static/welcome/kuromi/536b66b07a936d7845b525c36e9ebb1e.jpg" alt="">
+      </div>
+      <div class="ob-text-block">
+        <div class="ob-title">Level Up! ⚡</div>
+        <div class="ob-body">See the ⚡ button? Tap it whenever you do something even a little bit better than before. Small wins add up to something huge. 💪</div>
+      </div>
     </div>
 
-    <!-- Slide 4: Let's Go -->
-    <div class="ob-slide">
-      <div class="ob-visual">🌟</div>
-      <div class="ob-title">You're Ready!</div>
-      <div class="ob-body">Every day you show up makes you a little stronger, a little brighter.<br><br>Let's do this! 🚀</div>
+    <!-- Slide 4: You're Ready -->
+    <div class="ob-slide ob-slide-4">
+      <div class="ob-char-wrap">
+        <img class="ob-char-img" src="/static/welcome/kuromi/98cb2724e962077e8a1e51c9e6cfe459.jpg" alt="">
+      </div>
+      <div class="ob-text-block">
+        <div class="ob-title">You're Ready! 🌟</div>
+        <div class="ob-body">Every day you show up makes you a little stronger, a little brighter. Let's do this! 🚀</div>
+      </div>
     </div>
 
   </div>
@@ -1088,9 +1066,11 @@
   let obCurrent = 0;
 
   function obInit() {
-    // Welcome tour disabled while being rebuilt — always hide
-    document.getElementById('obOverlay').style.display = 'none';
-    localStorage.setItem('violet-onboarded', '1');
+    if (localStorage.getItem('violet-onboarded')) return;
+    const el = document.getElementById('obOverlay');
+    el.style.display = 'flex';
+    obCurrent = 0;
+    obRender();
   }
 
   function obRender() {
