@@ -1,4 +1,4 @@
-const CACHE = 'violet-v2';
+const CACHE = 'violet-v3';
 const SHELL = ['/', '/stats', '/manifest.json', '/icon.svg'];
 
 self.addEventListener('install', e => {
