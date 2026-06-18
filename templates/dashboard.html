@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Violet's Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #9b87f5;
+      --blue:   #4db8ff;
+      --pink:   #f472b6;
+      --green:  #34d399;
+      --yellow: #fbbf24;
+      --text:   #1e1b4b;
+      --muted:  #9490c0;
+      --bg:     #f5f3ff;
+      --card:   #ffffff;
+      --border: #e5e0ff;
+      --r:      16px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 4rem;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #4a0080 60%, #9b87f5 100%);
+      padding: 1.5rem 1.5rem 3rem;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    header::after {
+      content: '';
+      position: absolute; bottom: -1px; left: 0; right: 0; height: 2rem;
+      background: var(--bg);
+      border-radius: 2rem 2rem 0 0;
+    }
+    .header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .header-top a {
+      font-size: 0.82rem; font-weight: 700;
+      color: rgba(255,255,255,0.7); text-decoration: none;
+    }
+    .header-top a:hover { color: white; }
+    .header-label {
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.15em;
+      text-transform: uppercase; color: rgba(255,255,255,0.55);
+      margin-bottom: 0.25rem;
+    }
+    .header-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem; color: white; line-height: 1;
+    }
+    .header-sub {
+      font-size: 0.82rem; color: rgba(255,255,255,0.6);
+      margin-top: 0.3rem; font-weight: 600;
+    }
+
+    /* ── Layout ── */
+    .page { max-width: 680px; margin: 0 auto; padding: 0 1rem; }
+
+    /* ── KPI row ── */
+    .kpi-row {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 0.85rem; margin: -1.25rem 0 1.25rem;
+    }
+    .kpi-card {
+      background: var(--card);
+      border-radius: var(--r);
+      padding: 1.1rem 1rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      display: flex; flex-direction: column; gap: 0.15rem;
+    }
+    .kpi-label {
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .kpi-value {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.2rem; line-height: 1;
+    }
+    .kpi-sub { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+
+    /* ── Section heading ── */
+    .section-label {
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted);
+      margin: 1.5rem 0 0.65rem;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--r);
+      padding: 1.1rem 1.15rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      margin-bottom: 0.75rem;
+    }
+    .card-title {
+      font-size: 0.78rem; font-weight: 800; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Milestone card ── */
+    .milestone-card {
+      background: linear-gradient(135deg, #ede9fe 0%, #fce7f3 100%);
+      border: 1.5px solid var(--border);
+    }
+    .ms-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 0.65rem; gap: 0.5rem;
+    }
+    .ms-reward {
+      font-size: 1rem; font-weight: 800; color: var(--text); flex: 1;
+      line-height: 1.3;
+    }
+    .ms-days-left {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.4rem; color: var(--purple); white-space: nowrap;
+    }
+    .ms-days-label { font-size: 0.65rem; font-weight: 700; color: var(--muted); text-align: right; }
+    .ms-bar-wrap { background: rgba(155,135,245,0.15); border-radius: 6px; height: 8px; overflow: hidden; }
+    .ms-bar { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--purple), var(--pink)); transition: width 0.6s; }
+    .ms-bar-labels {
+      display: flex; justify-content: space-between;
+      font-size: 0.65rem; font-weight: 700; color: var(--muted); margin-top: 0.3rem;
+    }
+    .ms-done { text-align: center; font-size: 0.9rem; font-weight: 800; color: var(--purple); }
+
+    /* ── Week chart ── */
+    .week-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 0.3rem; align-items: flex-end;
+    }
+    .week-col { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+    .week-bar-wrap {
+      width: 100%; height: 80px;
+      display: flex; align-items: flex-end;
+      background: #f0ebff; border-radius: 6px; overflow: hidden;
+    }
+    .week-bar {
+      width: 100%; border-radius: 6px 6px 0 0;
+      transition: height 0.5s;
+      background: var(--purple);
+    }
+    .week-bar.full { background: linear-gradient(to top, var(--purple), var(--pink)); }
+    .week-bar.no-data { background: #e5e0ff; height: 4px !important; border-radius: 3px; }
+    .week-pct { font-size: 0.62rem; font-weight: 800; color: var(--text); }
+    .week-day { font-size: 0.65rem; font-weight: 700; color: var(--muted); }
+
+    /* ── Routine breakdown ── */
+    .routine-row {
+      display: flex; align-items: center; gap: 0.85rem;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .routine-row:last-child { border-bottom: none; }
+    .routine-icon-wrap {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+    }
+    .routine-info { flex: 1; min-width: 0; }
+    .routine-name { font-size: 0.9rem; font-weight: 800; color: var(--text); }
+    .routine-sub  { font-size: 0.72rem; font-weight: 600; color: var(--muted); }
+    .routine-pct-wrap { text-align: right; }
+    .routine-pct  { font-family: 'Fredoka One', cursive; font-size: 1.4rem; color: var(--purple); }
+    .routine-pct-label { font-size: 0.65rem; font-weight: 700; color: var(--muted); }
+    .routine-bar-wrap { height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.35rem; overflow: hidden; }
+    .routine-bar { height: 100%; border-radius: 2px; background: var(--purple); }
+
+    /* ── Recent wins ── */
+    .win-row {
+      display: flex; gap: 0.6rem; padding: 0.55rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+    .win-row:last-child { border-bottom: none; }
+    .win-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; color: white; font-weight: 800;
+      flex-shrink: 0; margin-top: 0.05rem;
+    }
+    .win-content { flex: 1; min-width: 0; }
+    .win-text { font-size: 0.88rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+    .win-meta { font-size: 0.7rem; font-weight: 600; color: var(--muted); margin-top: 0.1rem; }
+    .win-date { font-size: 0.7rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+
+    /* ── Badge mini-grid ── */
+    .badge-mini-grid {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+    }
+    .badge-pip {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.35rem;
+    }
+    .badge-pip.locked { filter: grayscale(1); opacity: 0.3; }
+
+    /* ── Empty state ── */
+    .empty { color: var(--muted); font-size: 0.85rem; font-weight: 600; padding: 0.5rem 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <div class="header-label">Parent Dashboard</div>
+      <div class="header-title">Violet's Progress ✦</div>
+      <div class="header-sub">{{ today_iso }}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end">
+      <a href="/">← App</a>
+      <a href="/stats">Full Stats</a>
+      <a href="/badges">Badges 🏅</a>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- ── KPI row ── -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">🔥 Streak</div>
+      <div class="kpi-value" style="color:var(--purple)">{{ stats.streak }}</div>
+      <div class="kpi-sub">day{{ 's' if stats.streak != 1 }} in a row</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">✅ Completion</div>
+      <div class="kpi-value" style="color:var(--green)">{{ stats.overall_pct }}%</div>
+      <div class="kpi-sub">all-time average</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">⚡ Level Ups</div>
+      <div class="kpi-value" style="color:var(--pink)">{{ lu_total }}</div>
+      <div class="kpi-sub">wins logged ever</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">📅 Days Active</div>
+      <div class="kpi-value" style="color:var(--blue)">{{ stats.total_days }}</div>
+      <div class="kpi-sub">days with data</div>
+    </div>
+  </div>
+
+  <!-- ── Milestone ── -->
+  <p class="section-label">🏆 Next Reward</p>
+  {% if next_ms %}
+    {% set days_left = next_ms[0] - stats.streak %}
+    {% set range_size = next_ms[0] - prev_ms_streak %}
+    {% set progress = ((stats.streak - prev_ms_streak) / range_size * 100) | round | int %}
+  <div class="card milestone-card">
+    <div class="ms-header">
+      <div class="ms-reward">{{ next_ms[1].message }}</div>
+      <div>
+        <div class="ms-days-left">{{ days_left }}</div>
+        <div class="ms-days-label">days left</div>
+      </div>
+    </div>
+    <div class="ms-bar-wrap">
+      <div class="ms-bar" style="width: {{ progress }}%"></div>
+    </div>
+    <div class="ms-bar-labels">
+      <span>Day {{ prev_ms_streak }}</span>
+      <span>{{ progress }}% there</span>
+      <span>Day {{ next_ms[0] }}</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="card milestone-card">
+    <div class="ms-done">🏆 All milestones reached — Violet is a legend!</div>
+  </div>
+  {% endif %}
+
+  <!-- ── This week ── -->
+  <p class="section-label">📅 This Week</p>
+  <div class="card">
+    <div class="week-grid">
+      {% for day in stats.week %}
+      <div class="week-col">
+        {% if day.pct is none %}
+          <div class="week-bar-wrap"><div class="week-bar no-data" style="height:4px"></div></div>
+          <div class="week-pct" style="opacity:0">0</div>
+        {% else %}
+          <div class="week-bar-wrap">
+            <div class="week-bar {% if day.pct == 1.0 %}full{% endif %}"
+                 style="height: {{ [day.pct * 80, 4] | max }}px"></div>
+          </div>
+          <div class="week-pct">{{ (day.pct * 100) | round | int }}%</div>
+        {% endif %}
+        <div class="week-day">{{ day.label[:1] }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Routine breakdown ── -->
+  <p class="section-label">📋 Routines</p>
+  <div class="card">
+    {% for rid, meta in routine_meta.items() %}
+    {% set pct = stats.routine_pct.get(rid, 0) %}
+    <div class="routine-row">
+      <div class="routine-icon-wrap">{{ meta.icon }}</div>
+      <div class="routine-info">
+        <div class="routine-name">{{ meta.name }}</div>
+        <div class="routine-sub">{{ meta.time }}</div>
+        <div class="routine-bar-wrap" style="margin-top:0.4rem">
+          <div class="routine-bar" style="width:{{ pct }}%; background: {% if pct >= 80 %}var(--green){% elif pct >= 50 %}var(--yellow){% else %}var(--purple){% endif %}"></div>
+        </div>
+      </div>
+      <div class="routine-pct-wrap">
+        <div class="routine-pct">{{ pct }}%</div>
+        <div class="routine-pct-label">completion</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Recent Level Up wins ── -->
+  <p class="section-label">⚡ Recent Wins</p>
+  <div class="card">
+    {% if recent_wins %}
+      {% for w in recent_wins %}
+      <div class="win-row">
+        <div class="win-dot">⚡</div>
+        <div class="win-content">
+          <div class="win-text">{{ w.Win }}</div>
+          <div class="win-meta">{{ w.Category }}</div>
+        </div>
+        <div class="win-date">{{ w.Date[5:] }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">No wins logged yet — tap ⚡ in the app to start!</div>
+    {% endif %}
+  </div>
+
+  <!-- ── Badges ── -->
+  <p class="section-label">🏅 Badges</p>
+  <div class="card">
+    <div class="card-title"><span id="badgeCountLabel">Loading…</span></div>
+    <div class="badge-mini-grid" id="badgeMiniGrid"></div>
+  </div>
+
+</div>
+
+<script>
+  const ALL_BADGES = {{ badges_json | safe }};
+  const earned = new Set(JSON.parse(localStorage.getItem('violet-badges') || '[]'));
+
+  document.getElementById('badgeCountLabel').textContent =
+    `${earned.size} of ${ALL_BADGES.length} earned`;
+
+  const grid = document.getElementById('badgeMiniGrid');
+  for (const b of ALL_BADGES) {
+    const pip = document.createElement('div');
+    pip.className = 'badge-pip' + (earned.has(b.id) ? '' : ' locked');
+    pip.style.background = b.bg;
+    pip.style.border = `3px solid ${b.ring}`;
+    pip.title = b.name + (earned.has(b.id) ? ' ✓' : ' — ' + b.desc);
+    pip.textContent = b.emoji;
+    grid.appendChild(pip);
+  }
+</script>
+
+</body>
+</html>

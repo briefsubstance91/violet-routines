@@ -451,6 +451,39 @@ def badges():
     return render_template('badges.html', badges_json=json.dumps(BADGES))
 
 
+@app.route('/dashboard')
+def dashboard():
+    routines     = load_routines()
+    routine_meta = {r['id']: {'name': r['name'], 'icon': r['icon'], 'time': r['time']} for r in routines}
+    milestones   = load_milestones()
+    s            = compute_stats(load_log())
+    lu_log       = load_levelup_log()
+
+    # recent wins (last 10, newest first)
+    recent_wins  = list(reversed(lu_log[-10:])) if lu_log else []
+    lu_total     = len(lu_log)
+
+    # next milestone
+    streak = s['streak']
+    milestones_sorted = sorted(milestones.items(), key=lambda x: int(x[0]))
+    next_ms = next(((int(k), v) for k, v in milestones_sorted if int(k) > streak), None)
+    prev_ms_streak = max((int(k) for k, v in milestones_sorted if int(k) <= streak), default=0)
+
+    return render_template(
+        'dashboard.html',
+        stats=s,
+        routine_meta=routine_meta,
+        milestones=milestones,
+        next_ms=next_ms,
+        prev_ms_streak=prev_ms_streak,
+        recent_wins=recent_wins,
+        lu_total=lu_total,
+        badges=BADGES,
+        badges_json=json.dumps(BADGES),
+        today_iso=date.today().isoformat(),
+    )
+
+
 @app.route('/stats')
 def stats():
     routines = load_routines()
