@@ -907,9 +907,11 @@
 
 <script>
   const ROUTINES   = {{ routines_json | safe }};
-  const PHRASES    = {{ phrases_json | safe }};
-  const MILESTONES = {{ milestones_json | safe }};
-  const IMAGES     = {{ images_json | safe }};
+  const PHRASES       = {{ phrases_json | safe }};
+  const MILESTONES    = {{ milestones_json | safe }};
+  const IMAGES        = {{ images_json | safe }};
+  const CEL_ROUTINES  = {{ cel_routines_json | safe }};
+  const CEL_MILESTONES = {{ cel_milestones_json | safe }};
 
   const TODAY = new Date().toDateString();
 
@@ -1045,12 +1047,13 @@
     document.getElementById('cel-title').textContent  = pick.title;
     document.getElementById('cel-sub').textContent    = pick.reward;
     document.getElementById('cel-streak').textContent = milestone || (streak > 1 ? `🔥 ${streak}-day streak!` : '');
-    const chars = ROUTINE_CHARS[routine] || TREAT_SRCS;
+    const chars = (CEL_ROUTINES[routine] || []).length ? CEL_ROUTINES[routine] : TREAT_SRCS;
     document.getElementById('cel-treat-deco').src = chars[Math.floor(Math.random() * chars.length)];
 
     const photo = document.getElementById('cel-photo');
-    if (streak % 7 === 0) {
-      photo.src = '/static/misc images/Weekly Celebrate.jpg';
+    const milestoneImg = CEL_MILESTONES[String(streak)];
+    if (milestoneImg) {
+      photo.src = milestoneImg;
       photo.classList.add('visible');
     } else if (IMAGES.length) {
       photo.src = IMAGES[Math.floor(Math.random() * IMAGES.length)];
@@ -1069,15 +1072,6 @@
   }
 
   // ── Confetti ────────────────────────────────────────────
-  const ROUTINE_CHARS = {
-    am: ['/static/misc images/Kuromi Celebrate 1.jpeg'],
-    af: ['/static/welcome/cinnamoroll/cinnamoroll-dance.gif'],
-    pm: [
-      '/static/misc images/a86f53ea6819c31cd555c2085b3c29ce.jpg',
-      '/static/misc images/2ab0b900494525787333cbbc368769d8.jpg',
-    ],
-  };
-
   const canvas = document.getElementById('confetti-canvas');
   const ctx    = canvas.getContext('2d');
   let particles = [], animId = null;

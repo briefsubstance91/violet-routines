@@ -15,6 +15,7 @@ TASKS_FILE      = os.path.join(_BASE, 'Violet Tasks.csv')
 PHRASES_FILE    = os.path.join(_BASE, 'Violet Phrases.csv')
 MILESTONES_FILE = os.path.join(_BASE, 'Violet Milestones.csv')
 IMAGES_DIR      = os.path.join(_BASE, 'static', 'images')
+CEL_DIR         = os.path.join(_BASE, 'static', 'celebration')
 IMG_EXTS        = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
 _DATA              = os.environ.get('DATA_DIR', _BASE)
 LOG_FILE           = os.path.join(_DATA, 'Violet Log.csv')
@@ -29,6 +30,33 @@ def list_images():
                 if os.path.splitext(f)[1].lower() in IMG_EXTS]
     except FileNotFoundError:
         return []
+
+
+def list_celebration_images():
+    """Return { routine_id: [url, ...] } and { streak_str: url } for milestones."""
+    routines = {}
+    for folder in ('am', 'af', 'pm'):
+        path = os.path.join(CEL_DIR, folder)
+        try:
+            routines[folder] = [
+                f'/static/celebration/{folder}/{f}'
+                for f in sorted(os.listdir(path))
+                if os.path.splitext(f)[1].lower() in IMG_EXTS
+            ]
+        except FileNotFoundError:
+            routines[folder] = []
+
+    milestones = {}
+    path = os.path.join(CEL_DIR, 'milestones')
+    try:
+        for f in os.listdir(path):
+            stem, ext = os.path.splitext(f)
+            if ext.lower() in IMG_EXTS:
+                milestones[stem] = f'/static/celebration/milestones/{f}'
+    except FileNotFoundError:
+        pass
+
+    return routines, milestones
 
 
 def scan_csv(path, header_col):
@@ -124,14 +152,8 @@ def load_milestones():
 def save_log_entry(date, routine_id, completed, total):
     """Write (or overwrite) today's entry for a routine in the log CSV."""
     rows = []
-    try:
-        with open(LOG_FILE, newline='', encoding='utf-8-sig') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if not (row['Date'] == date and row['Routine'] == routine_id):
-                    rows.append(row)
-    except FileNotFoundError:
-        pass
+    existing = scan_csv(LOG_FILE, 'Date')
+    rows = [r for r in existing if not (r.get('Date') == date and r.get('Routine') == routine_id)]
     rows.append({'Date': date, 'Routine': routine_id, 'Completed': completed, 'Total': total})
     with open(LOG_FILE, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=['Date', 'Routine', 'Completed', 'Total'])
@@ -140,15 +162,7 @@ def save_log_entry(date, routine_id, completed, total):
 
 
 def load_log():
-    """Return all log rows as list of dicts."""
-    rows = []
-    try:
-        with open(LOG_FILE, newline='', encoding='utf-8-sig') as f:
-            for row in csv.DictReader(f):
-                rows.append(row)
-    except FileNotFoundError:
-        pass
-    return rows
+    return scan_csv(LOG_FILE, 'Date')
 
 
 def compute_stats(log_rows):
@@ -317,6 +331,7 @@ def index():
         for r in routines
     }
     levelup_data = load_levelup_data()
+    cel_routines, cel_milestones = list_celebration_images()
     return render_template(
         'index.html',
         routines=routines,
@@ -324,6 +339,8 @@ def index():
         routines_json=json.dumps(routines_cfg),
         milestones_json=json.dumps(milestones),
         images_json=json.dumps(list_images()),
+        cel_routines_json=json.dumps(cel_routines),
+        cel_milestones_json=json.dumps(cel_milestones),
         levelup_categories_json=json.dumps(levelup_data.get('levelup_categories', [])),
     )
 
