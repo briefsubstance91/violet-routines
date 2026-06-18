@@ -243,6 +243,7 @@
   <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
   <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
   <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
+  <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
 </div>
 
 <!-- ── Hero ── -->
@@ -316,6 +317,11 @@
 </div>
 
 <script>
+  // First-time onboarding redirect
+  if (!localStorage.getItem('violet-onboarded')) {
+    window.location.replace('/welcome');
+  }
+
   // Greeting
   const h = new Date().getHours();
   document.getElementById('heroGreeting').textContent =

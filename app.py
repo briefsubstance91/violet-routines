@@ -473,6 +473,11 @@ def landing():
     return render_template('landing.html')
 
 
+@app.route('/welcome')
+def welcome():
+    return render_template('welcome.html')
+
+
 @app.route('/levelup', methods=['POST'])
 def log_levelup():
     data = request.get_json()

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Violet">
+  <link rel="manifest" href="/manifest.json">
+  <title>Welcome, Violet! ✨</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+    /* ── Slides ── */
+    .slide {
+      display: none;
+      position: fixed; inset: 0;
+      flex-direction: column;
+    }
+    .slide.active { display: flex; animation: fadeUp 0.4s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Background ── */
+    .slide-bg { position: absolute; inset: 0; z-index: 0; }
+    .slide-1 .slide-bg, .slide-2 .slide-bg {
+      background: linear-gradient(160deg, #120e2e 0%, #2d1060 45%, #7c3aed 80%, #c084fc 100%);
+    }
+    .slide-3 .slide-bg {
+      background: linear-gradient(160deg, #0f0a1e 0%, #1e0a3d 50%, #4c0080 80%, #7c3aed 100%);
+    }
+    .slide-4 .slide-bg {
+      background: linear-gradient(160deg, #0a1628 0%, #0f3460 50%, #1a6bba 80%, #4db8ff 100%);
+    }
+    .slide-5 .slide-bg {
+      background: linear-gradient(160deg, #2d1a00 0%, #7c4000 50%, #d97706 80%, #fbbf24 100%);
+    }
+
+    /* ── Skip ── */
+    .skip-btn {
+      position: absolute;
+      top: calc(env(safe-area-inset-top) + 1rem);
+      right: 1rem; z-index: 10;
+      background: rgba(255,255,255,0.15);
+      border: none; color: rgba(255,255,255,0.8);
+      font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 800;
+      padding: 0.3rem 0.85rem; border-radius: 100px; cursor: pointer;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Image area ── */
+    .img-area {
+      position: relative; z-index: 1;
+      flex: 1; display: flex;
+      align-items: flex-end; justify-content: center;
+      padding: calc(env(safe-area-inset-top) + 3.5rem) 2rem 0;
+      overflow: hidden;
+    }
+    .slide-img {
+      max-height: 50vh; max-width: 88%;
+      width: auto; object-fit: contain; display: block;
+      border-radius: 20px;
+      filter: drop-shadow(0 10px 28px rgba(0,0,0,0.3));
+    }
+
+    /* ── Content card ── */
+    .content-card {
+      position: relative; z-index: 2;
+      background: white;
+      border-radius: 28px 28px 0 0;
+      padding: 1.4rem 1.5rem calc(env(safe-area-inset-bottom) + 2rem);
+      box-shadow: 0 -6px 32px rgba(0,0,0,0.14);
+    }
+
+    /* ── Dots ── */
+    .dots { display: flex; justify-content: center; gap: 0.4rem; margin-bottom: 1.1rem; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #e5e0ff; transition: all 0.3s; }
+    .dot.active { width: 22px; border-radius: 4px; background: #9b87f5; }
+    .slide-4 .dot.active { background: #4db8ff; }
+    .slide-5 .dot.active { background: #f59e0b; }
+
+    /* ── Text ── */
+    .slide-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.8rem; line-height: 1.1;
+      color: #1e1b4b; margin-bottom: 0.55rem;
+    }
+    .slide-body {
+      font-size: 0.92rem; font-weight: 600;
+      color: #4a4580; line-height: 1.55;
+      margin-bottom: 0.85rem;
+    }
+
+    /* ── Character voice ── */
+    .slide-voice {
+      display: flex; gap: 0.55rem; align-items: flex-start;
+      background: #f8f5ff; border-radius: 14px;
+      padding: 0.7rem 0.9rem; margin-bottom: 1.15rem;
+    }
+    .slide-4 .slide-voice { background: #eff9ff; }
+    .slide-5 .slide-voice { background: #fffbeb; }
+    .voice-char {
+      font-size: 0.64rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: #9b87f5; white-space: nowrap; margin-top: 0.12rem;
+    }
+    .slide-4 .voice-char { color: #1a6bba; }
+    .slide-5 .voice-char { color: #d97706; }
+    .voice-text {
+      font-size: 0.83rem; font-weight: 700;
+      color: #6d6a9c; font-style: italic; line-height: 1.45;
+    }
+
+    /* ── Button ── */
+    .slide-btn {
+      width: 100%;
+      font-family: 'Fredoka One', cursive; font-size: 1.1rem;
+      color: white;
+      background: linear-gradient(135deg, #9b87f5, #f472b6);
+      border: none; border-radius: 100px;
+      padding: 0.9rem 1.5rem; cursor: pointer;
+      box-shadow: 0 6px 22px rgba(155,135,245,0.4);
+      transition: transform 0.13s, box-shadow 0.13s;
+    }
+    .slide-btn:active { transform: scale(0.97); box-shadow: 0 3px 10px rgba(155,135,245,0.3); }
+    .slide-5 .slide-btn {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      box-shadow: 0 6px 22px rgba(245,158,11,0.4);
+    }
+    .slide-5 .slide-btn:active { box-shadow: 0 3px 10px rgba(245,158,11,0.25); }
+  </style>
+</head>
+<body>
+
+<div id="slides"></div>
+
+<script>
+  const SLIDES = [
+    {
+      cls: 'slide-1',
+      img: '/static/welcome/kuromi/welcome misc.png',
+      char: 'Kuromi',
+      title: 'Hi Violet! ✨',
+      body: 'This is YOUR very own app. Every day you use it, something good happens.',
+      voice: 'Hmph… okay fine. I\'ll admit it — I made this just for you.',
+      btn: 'Let\'s see it →',
+    },
+    {
+      cls: 'slide-2',
+      img: '/static/welcome/kuromi/98cb2724e962077e8a1e51c9e6cfe459.png',
+      char: 'Kuromi',
+      title: 'Your Routines 📋',
+      body: 'Tap each task as you finish it. Complete the whole routine and the gang celebrates! 🎉',
+      voice: 'Even the small things count. Especially the small things.',
+      btn: 'Ooh, what else? →',
+    },
+    {
+      cls: 'slide-3',
+      img: '/static/welcome/kuromi/Kuromi Celebrate.png',
+      char: 'Kuromi',
+      title: 'Level Up ⚡',
+      body: 'Tap ⚡ whenever you do something even a tiny bit better than yesterday. That\'s how legends are made.',
+      voice: 'Little by little. Day by day. That\'s the real magic. 💜',
+      btn: 'Keep going →',
+    },
+    {
+      cls: 'slide-4',
+      img: '/static/welcome/cinnamoroll/cinnamoroll-sleepy.gif',
+      char: 'Cinnamoroll',
+      title: 'Keep the streak 🔥',
+      body: 'Show up every day and your streak grows. Long enough and you unlock a real-life reward. 🏆',
+      voice: 'Every day you come back… I\'ll be here waiting. I always am. 🩵',
+      btn: 'Almost there →',
+    },
+    {
+      cls: 'slide-5',
+      img: '/static/welcome/gudetama/af1bf687f656c9137a327b0bfabe5a88.jpeg',
+      char: 'Gudetama',
+      title: 'You\'re ready 🌟',
+      body: 'You don\'t have to be perfect. You just have to show up. We\'ll all be cheering you on. 💜',
+      voice: '…I didn\'t want to get out of the shell today either. But here I am. So. Let\'s just do the thing.',
+      btn: 'Let\'s do this! ✨',
+    },
+  ];
+
+  let current = 0;
+
+  function makeDots(active) {
+    return SLIDES.map((_, i) =>
+      `<div class="dot${i === active ? ' active' : ''}"></div>`
+    ).join('');
+  }
+
+  function render() {
+    document.getElementById('slides').innerHTML = SLIDES.map((s, i) => `
+      <div class="slide ${s.cls}" id="slide-${i}">
+        <div class="slide-bg"></div>
+        <button class="skip-btn" onclick="finish()">Skip</button>
+        <div class="img-area">
+          <img class="slide-img" src="${s.img}" alt="${s.char}">
+        </div>
+        <div class="content-card">
+          <div class="dots">${makeDots(i)}</div>
+          <div class="slide-title">${s.title}</div>
+          <div class="slide-body">${s.body}</div>
+          <div class="slide-voice">
+            <div class="voice-char">${s.char}</div>
+            <div class="voice-text">"${s.voice}"</div>
+          </div>
+          <button class="slide-btn" onclick="${i < SLIDES.length - 1 ? `goTo(${i+1})` : 'finish()'}">${s.btn}</button>
+        </div>
+      </div>
+    `).join('');
+    document.getElementById('slide-0').classList.add('active');
+  }
+
+  function goTo(n) {
+    document.getElementById('slide-' + current).classList.remove('active');
+    current = n;
+    document.getElementById('slide-' + current).classList.add('active');
+  }
+
+  function finish() {
+    localStorage.setItem('violet-onboarded', 'true');
+    window.location.href = '/';
+  }
+
+  // Swipe support
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 55) {
+      if (dx < 0 && current < SLIDES.length - 1) goTo(current + 1);
+      else if (dx > 0 && current > 0) goTo(current - 1);
+    }
+  });
+
+  render();
+</script>
+
+</body>
+</html>
