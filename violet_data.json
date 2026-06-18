@@ -1,0 +1,70 @@
+{
+  "levelup_categories": [
+    {
+      "id": "sleep",
+      "icon": "🛏️",
+      "label": "Sleep",
+      "wins": [
+        "Got into bed on time",
+        "Woke up without being called",
+        "No screens 30 min before bed",
+        "Made my bed in the morning"
+      ]
+    },
+    {
+      "id": "eating",
+      "icon": "🥦",
+      "label": "Eating",
+      "wins": [
+        "Tried a new food",
+        "Ate all my vegetables",
+        "Drank enough water today",
+        "Chose a healthy snack"
+      ]
+    },
+    {
+      "id": "moving",
+      "icon": "🏃",
+      "label": "Moving",
+      "wins": [
+        "Played outside",
+        "Did some stretching or exercise",
+        "Walked instead of asking for a ride",
+        "Danced or moved my body for fun"
+      ]
+    },
+    {
+      "id": "focus",
+      "icon": "📚",
+      "label": "Focus",
+      "wins": [
+        "Read for 10 minutes",
+        "Did homework without being asked",
+        "Finished something I started",
+        "Put my phone away and focused"
+      ]
+    },
+    {
+      "id": "kindness",
+      "icon": "💛",
+      "label": "Kindness",
+      "wins": [
+        "Said something kind to someone",
+        "Helped without being asked",
+        "Shared something with someone",
+        "Used my manners really well"
+      ]
+    },
+    {
+      "id": "brave",
+      "icon": "⚡",
+      "label": "Brave",
+      "wins": [
+        "Tried something that scared me a little",
+        "Spoke up when it was hard",
+        "Did something I didn't feel like doing",
+        "Asked for help instead of giving up"
+      ]
+    }
+  ]
+}

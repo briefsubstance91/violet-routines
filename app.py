@@ -17,7 +17,8 @@ IMAGES_DIR      = os.path.join(_BASE, 'static', 'images')
 IMG_EXTS        = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
 _DATA              = os.environ.get('DATA_DIR', _BASE)
 LOG_FILE           = os.path.join(_DATA, 'Violet Log.csv')
-LEVELUP_DATA_FILE  = os.path.join(_BASE, 'violet_data.json')
+LEVELUP_DATA_FILE  = os.path.join(_DATA, 'violet_data.json')
+LEVELUP_SEED_FILE  = os.path.join(_BASE, 'violet_data.json')
 LEVELUP_LOG_FILE   = os.path.join(_DATA, 'Violet Levelup Log.csv')
 
 
@@ -111,10 +112,11 @@ def load_milestones():
     rows = scan_csv(MILESTONES_FILE, 'Streak')
     milestones = {}
     for row in rows:
-        streak  = row.get('Streak', '').strip()
-        message = row.get('Message', '').strip()
+        streak   = row.get('Streak', '').strip()
+        message  = row.get('Message', '').strip()
+        category = row.get('Category', '').strip()
         if streak and message:
-            milestones[streak] = message
+            milestones[streak] = {'message': message, 'category': category}
     return milestones
 
 
@@ -216,9 +218,10 @@ def compute_stats(log_rows):
 
 
 def load_levelup_data():
-    if os.path.isfile(LEVELUP_DATA_FILE):
-        with open(LEVELUP_DATA_FILE, encoding='utf-8') as f:
-            return json.load(f)
+    for path in (LEVELUP_DATA_FILE, LEVELUP_SEED_FILE):
+        if os.path.isfile(path):
+            with open(path, encoding='utf-8') as f:
+                return json.load(f)
     return {'levelup_categories': []}
 
 

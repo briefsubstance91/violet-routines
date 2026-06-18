@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Violet's App — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #9b87f5;
+      --blue:   #4db8ff;
+      --pink:   #f472b6;
+      --text:   #1e1b4b;
+      --muted:  #9490c0;
+      --bg:     #f5f3ff;
+      --card:   #ffffff;
+      --border: #e5e0ff;
+      --r:      14px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 4rem;
+    }
+
+    header {
+      background: white;
+      border-bottom: 2px solid var(--border);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--blue), var(--purple), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    .btn {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.5rem 1.1rem;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.96); }
+
+    .btn-save {
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: white;
+    }
+    .btn-save:disabled { opacity: 0.45; cursor: default; }
+
+    .btn-outline {
+      background: white;
+      border: 2px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-outline:hover { border-color: var(--purple); color: var(--purple); }
+
+    .btn-add {
+      background: var(--purple);
+      color: white;
+      font-size: 0.85rem;
+      padding: 0.4rem 0.9rem;
+    }
+
+    .btn-danger {
+      background: none;
+      border: none;
+      color: #f87171;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      line-height: 1;
+    }
+    .btn-danger:hover { background: #fff1f1; }
+
+    .save-status {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .save-status.saved { color: #34d399; }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .categories { display: flex; flex-direction: column; gap: 1rem; }
+
+    .category-card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      background: #faf8ff;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cat-icon-input {
+      font-size: 1.5rem;
+      width: 2.5rem;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      text-align: center;
+      background: none;
+      cursor: text;
+      padding: 0.1rem;
+    }
+    .cat-icon-input:focus { outline: none; border-color: var(--purple); background: white; }
+
+    .cat-label-input {
+      flex: 1;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 0.3rem 0.5rem;
+      background: none;
+    }
+    .cat-label-input:focus { outline: none; border-color: var(--purple); background: white; }
+
+    .wins-list {
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .win-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .win-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--purple);
+      flex-shrink: 0;
+    }
+
+    .win-input {
+      flex: 1;
+      min-width: 0;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 0.3rem 0.5rem;
+      background: none;
+    }
+    .win-input:focus { outline: none; border-color: var(--purple); background: white; }
+
+    .add-win-row {
+      padding: 0.5rem 1rem 0.85rem;
+    }
+
+    .btn-add-win {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--purple);
+      background: none;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 0.35rem 0.85rem;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
+    .btn-add-win:hover { border-color: var(--purple); background: #faf8ff; }
+
+    .add-category-wrap {
+      margin-top: 1.25rem;
+      text-align: center;
+    }
+
+    .back-link {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--purple); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✦ Admin</h1>
+  <div class="header-actions">
+    <a href="/" class="back-link">← App</a>
+    <span class="save-status" id="saveStatus">Unsaved changes</span>
+    <button class="btn btn-save" id="saveBtn" onclick="saveAll()">Save</button>
+  </div>
+</header>
+
+<div class="container">
+  <p class="section-title">Level-up Categories</p>
+
+  <div class="categories" id="categoriesList"></div>
+
+  <div class="add-category-wrap">
+    <button class="btn btn-add" onclick="addCategory()">+ Add Category</button>
+  </div>
+</div>
+
+<script>
+  let data = {{ data | tojson }};
+  let dirty = false;
+
+  function markDirty() {
+    dirty = true;
+    document.getElementById('saveStatus').textContent = 'Unsaved changes';
+    document.getElementById('saveStatus').className = 'save-status';
+    document.getElementById('saveBtn').disabled = false;
+  }
+
+  function markSaved() {
+    dirty = false;
+    document.getElementById('saveStatus').textContent = 'Saved ✓';
+    document.getElementById('saveStatus').className = 'save-status saved';
+    document.getElementById('saveBtn').disabled = true;
+  }
+
+  function render() {
+    const list = document.getElementById('categoriesList');
+    list.innerHTML = '';
+    (data.levelup_categories || []).forEach((cat, ci) => {
+      const card = document.createElement('div');
+      card.className = 'category-card';
+      card.innerHTML = `
+        <div class="category-header">
+          <input class="cat-icon-input" value="${cat.icon}" oninput="updateCat(${ci},'icon',this.value)" maxlength="2">
+          <input class="cat-label-input" value="${esc(cat.label)}" oninput="updateCat(${ci},'label',this.value)" placeholder="Category name">
+          <button class="btn-danger" onclick="removeCategory(${ci})" title="Delete category">×</button>
+        </div>
+        <div class="wins-list" id="wins-${ci}">
+          ${(cat.wins || []).map((w, wi) => winRow(ci, wi, w)).join('')}
+        </div>
+        <div class="add-win-row">
+          <button class="btn-add-win" onclick="addWin(${ci})">+ Add a win</button>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  function winRow(ci, wi, w) {
+    return `<div class="win-row" id="win-${ci}-${wi}">
+      <div class="win-dot"></div>
+      <input class="win-input" value="${esc(w)}" oninput="updateWin(${ci},${wi},this.value)" placeholder="Describe the win…">
+      <button class="btn-danger" onclick="removeWin(${ci},${wi})">×</button>
+    </div>`;
+  }
+
+  function esc(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  }
+
+  function updateCat(ci, field, val) {
+    data.levelup_categories[ci][field] = val;
+    markDirty();
+  }
+
+  function updateWin(ci, wi, val) {
+    data.levelup_categories[ci].wins[wi] = val;
+    markDirty();
+  }
+
+  function addWin(ci) {
+    data.levelup_categories[ci].wins.push('');
+    markDirty();
+    render();
+    // focus the new input
+    const wins = document.getElementById(`wins-${ci}`);
+    const inputs = wins.querySelectorAll('.win-input');
+    inputs[inputs.length - 1].focus();
+  }
+
+  function removeWin(ci, wi) {
+    data.levelup_categories[ci].wins.splice(wi, 1);
+    markDirty();
+    render();
+  }
+
+  function addCategory() {
+    data.levelup_categories.push({ id: 'new-' + Date.now(), icon: '⭐', label: '', wins: [] });
+    markDirty();
+    render();
+    // focus the new label input
+    const cards = document.querySelectorAll('.category-card');
+    const last = cards[cards.length - 1];
+    last.querySelector('.cat-label-input').focus();
+  }
+
+  function removeCategory(ci) {
+    if (!confirm(`Delete "${data.levelup_categories[ci].label || 'this category'}" and all its wins?`)) return;
+    data.levelup_categories.splice(ci, 1);
+    markDirty();
+    render();
+  }
+
+  async function saveAll() {
+    const btn = document.getElementById('saveBtn');
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+    // Sync any edited IDs from labels (slugify)
+    data.levelup_categories.forEach(cat => {
+      if (!cat.id || cat.id.startsWith('new-')) {
+        cat.id = cat.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || ('cat-' + Date.now());
+      }
+    });
+    await fetch('/admin/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    btn.textContent = 'Save';
+    markSaved();
+  }
+
+  // Warn before leaving with unsaved changes
+  window.addEventListener('beforeunload', e => {
+    if (dirty) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  render();
+  markSaved();
+</script>
+
+</body>
+</html>

@@ -1002,7 +1002,8 @@
     const streak   = incrementStreak(routine);
     const phrases  = PHRASES[routine] || [];
     const pick     = phrases[Math.floor(Math.random() * phrases.length)] || { title: 'Amazing!', reward: 'You did it!' };
-    const milestone = MILESTONES[String(streak)];
+    const ms = MILESTONES[String(streak)];
+    const milestone = ms ? ms.message : null;
 
     document.getElementById('cel-emoji').textContent  = ROUTINES[routine].emoji;
     document.getElementById('cel-title').textContent  = pick.title;
