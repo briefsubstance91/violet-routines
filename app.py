@@ -365,10 +365,38 @@ def levelup_today():
     return jsonify({'count': len(rows), 'wins': rows})
 
 
+def save_milestones(items):
+    """Write milestones list back to Violet Milestones.csv."""
+    with open(MILESTONES_FILE, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Violet Milestones'])
+        writer.writerow(['Streak', 'Reward Message', 'Category'])
+        for item in sorted(items, key=lambda x: int(x.get('streak', 0) or 0)):
+            writer.writerow([item['streak'], item['message'], item.get('category', '')])
+
+
 @app.route('/admin')
 def admin():
-    data = load_levelup_data()
-    return render_template('admin.html', data=data)
+    data      = load_levelup_data()
+    routines  = load_tasks_raw()
+    ms_dict   = load_milestones()
+    milestones = [
+        {'streak': k, 'message': v['message'], 'category': v.get('category', '')}
+        for k, v in sorted(ms_dict.items(), key=lambda x: int(x[0]))
+    ]
+    return render_template(
+        'admin.html',
+        data=data,
+        routines_json=json.dumps(routines),
+        milestones_json=json.dumps(milestones),
+    )
+
+
+@app.route('/admin/milestones/save', methods=['POST'])
+def admin_milestones_save():
+    items = request.get_json()
+    save_milestones(items)
+    return jsonify({'ok': True})
 
 
 @app.route('/admin/save', methods=['POST'])

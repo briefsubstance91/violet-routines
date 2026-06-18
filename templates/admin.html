@@ -2,243 +2,137 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Violet's App — Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Admin — Violet's Life OS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --purple: #9b87f5;
-      --blue:   #4db8ff;
-      --pink:   #f472b6;
-      --text:   #1e1b4b;
-      --muted:  #9490c0;
-      --bg:     #f5f3ff;
-      --card:   #ffffff;
-      --border: #e5e0ff;
-      --r:      14px;
+      --purple: #9b87f5; --blue: #4db8ff; --pink: #f472b6; --green: #34d399;
+      --text: #1e1b4b; --muted: #9490c0; --bg: #f5f3ff; --card: #fff;
+      --border: #e5e0ff; --r: 14px;
     }
+    body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 5rem; }
 
-    body {
-      font-family: 'Nunito', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 0 0 4rem;
-    }
-
+    /* ── Header ── */
     header {
-      background: white;
-      border-bottom: 2px solid var(--border);
-      padding: 1.25rem 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      background: white; border-bottom: 2px solid var(--border);
+      padding: 1rem 1.25rem 0; position: sticky; top: 0; z-index: 50;
     }
-
+    .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem; }
     header h1 {
-      font-size: 1.25rem;
-      font-weight: 800;
+      font-family: 'Fredoka One', cursive; font-size: 1.4rem;
       background: linear-gradient(135deg, var(--blue), var(--purple), var(--pink));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
+    .header-right { display: flex; align-items: center; gap: 0.6rem; }
+    .save-status { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+    .save-status.saved { color: var(--green); }
+    .save-status.dirty { color: #f59e0b; }
 
-    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
-
-    .btn {
-      font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-      font-size: 0.9rem;
-      padding: 0.5rem 1.1rem;
-      border-radius: 100px;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 0.3rem; padding-bottom: 0; }
+    .tab-btn {
+      flex: 1; font-family: 'Nunito', sans-serif; font-size: 0.8rem; font-weight: 800;
+      padding: 0.55rem 0.5rem; border: none; border-radius: 10px 10px 0 0;
+      background: #f0ebff; color: var(--muted); cursor: pointer;
+      border-bottom: 3px solid transparent; transition: all 0.15s;
     }
-    .btn:active { transform: scale(0.96); }
+    .tab-btn.active { background: var(--bg); color: var(--purple); border-bottom: 3px solid var(--purple); }
+    .tab-btn:hover:not(.active) { background: #e8e0ff; color: var(--text); }
 
-    .btn-save {
-      background: linear-gradient(135deg, var(--purple), var(--pink));
-      color: white;
+    /* ── Content ── */
+    .tab-content { display: none; max-width: 720px; margin: 0 auto; padding: 1.25rem 1rem; }
+    .tab-content.active { display: block; }
+
+    /* ── Shared cards ── */
+    .card {
+      background: var(--card); border: 2px solid var(--border);
+      border-radius: var(--r); overflow: hidden; margin-bottom: 1rem;
     }
-    .btn-save:disabled { opacity: 0.45; cursor: default; }
-
-    .btn-outline {
-      background: white;
-      border: 2px solid var(--border);
-      color: var(--muted);
-    }
-    .btn-outline:hover { border-color: var(--purple); color: var(--purple); }
-
-    .btn-add {
-      background: var(--purple);
-      color: white;
-      font-size: 0.85rem;
-      padding: 0.4rem 0.9rem;
-    }
-
-    .btn-danger {
-      background: none;
-      border: none;
-      color: #f87171;
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 0.2rem 0.4rem;
-      border-radius: 6px;
-      line-height: 1;
-    }
-    .btn-danger:hover { background: #fff1f1; }
-
-    .save-status {
-      font-size: 0.8rem;
-      color: var(--muted);
-      font-weight: 600;
-    }
-    .save-status.saved { color: #34d399; }
-
-    .container {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 1.5rem 1rem;
-    }
-
-    .section-title {
-      font-size: 0.7rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 1rem;
-    }
-
-    .categories { display: flex; flex-direction: column; gap: 1rem; }
-
-    .category-card {
-      background: var(--card);
-      border: 2px solid var(--border);
-      border-radius: var(--r);
-      overflow: hidden;
-    }
-
-    .category-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.85rem 1rem;
-      background: #faf8ff;
+    .card-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.85rem 1rem; background: #faf8ff;
       border-bottom: 1px solid var(--border);
     }
 
-    .cat-icon-input {
-      font-size: 1.5rem;
-      width: 2.5rem;
-      border: 2px solid transparent;
-      border-radius: 8px;
-      text-align: center;
-      background: none;
-      cursor: text;
-      padding: 0.1rem;
+    /* ── Buttons ── */
+    .btn {
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.85rem;
+      padding: 0.45rem 1rem; border-radius: 100px; border: none; cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s;
     }
-    .cat-icon-input:focus { outline: none; border-color: var(--purple); background: white; }
+    .btn:active { transform: scale(0.95); }
+    .btn-primary { background: linear-gradient(135deg, var(--purple), var(--pink)); color: white; }
+    .btn-primary:disabled { opacity: 0.4; cursor: default; }
+    .btn-ghost { background: none; border: 2px dashed var(--border); color: var(--purple); font-size: 0.8rem; padding: 0.35rem 0.85rem; border-radius: 8px; width: 100%; text-align: left; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 700; }
+    .btn-ghost:hover { border-color: var(--purple); background: #faf8ff; }
+    .btn-del { background: none; border: none; color: #f87171; font-size: 1.1rem; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 6px; line-height: 1; flex-shrink: 0; }
+    .btn-del:hover { background: #fff1f1; }
+    .drag-handle { color: var(--border); font-size: 1rem; cursor: grab; flex-shrink: 0; user-select: none; }
+    .drag-handle:active { cursor: grabbing; }
 
-    .cat-label-input {
-      flex: 1;
-      font-family: 'Nunito', sans-serif;
-      font-size: 1rem;
-      font-weight: 800;
-      color: var(--text);
-      border: 2px solid transparent;
-      border-radius: 8px;
-      padding: 0.3rem 0.5rem;
-      background: none;
+    /* ── Inputs ── */
+    .inp {
+      font-family: 'Nunito', sans-serif; font-size: 0.92rem; font-weight: 600; color: var(--text);
+      border: 2px solid transparent; border-radius: 8px; padding: 0.3rem 0.5rem;
+      background: none; width: 100%;
     }
-    .cat-label-input:focus { outline: none; border-color: var(--purple); background: white; }
+    .inp:focus { outline: none; border-color: var(--purple); background: white; }
+    .inp-sm { font-size: 0.82rem; padding: 0.2rem 0.4rem; }
+    .inp-icon { font-size: 1.4rem; width: 2.5rem; text-align: center; border-radius: 8px; border: 2px solid transparent; background: none; cursor: text; }
+    .inp-icon:focus { outline: none; border-color: var(--purple); background: white; }
 
-    .wins-list {
-      padding: 0.75rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+    /* ── Routine section ── */
+    .routine-meta { display: flex; align-items: center; gap: 0.5rem; flex: 1; flex-wrap: wrap; }
+    .meta-name { flex: 1; min-width: 120px; font-weight: 800; font-size: 1rem; }
+    .meta-time { width: 90px; font-size: 0.85rem; color: var(--muted); }
+    .routine-expand-btn {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 6px;
+      font-family: 'Nunito', sans-serif; font-weight: 700; white-space: nowrap;
     }
+    .routine-expand-btn:hover { background: var(--bg); color: var(--purple); }
+    .task-list { padding: 0.4rem 0; }
+    .task-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 1rem; }
+    .task-row.dragging { opacity: 0.4; }
+    .task-row.drag-over { border-top: 2px solid var(--purple); }
+    .add-task-wrap { padding: 0.35rem 1rem 0.75rem; }
+    .tasks-body { display: none; }
+    .tasks-body.open { display: block; }
 
-    .win-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+    /* ── Level Up section ── */
+    .wins-list { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    .win-row { display: flex; align-items: center; gap: 0.5rem; }
+    .win-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--purple); flex-shrink: 0; }
 
-    .win-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--purple);
-      flex-shrink: 0;
+    /* ── Milestones section ── */
+    .milestone-row {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.5rem 1rem; border-bottom: 1px solid var(--border);
     }
+    .milestone-row:last-child { border-bottom: none; }
+    .ms-streak { width: 64px; flex-shrink: 0; }
+    .ms-streak input { width: 100%; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.92rem; color: var(--purple); text-align: center; border: 2px solid transparent; border-radius: 8px; padding: 0.3rem; background: #f0ebff; }
+    .ms-streak input:focus { outline: none; border-color: var(--purple); background: white; }
+    .ms-message { flex: 1; }
+    .ms-category { width: 110px; }
+    .ms-header-row {
+      display: flex; gap: 0.6rem; padding: 0.4rem 1rem;
+      background: #faf8ff; border-bottom: 1px solid var(--border);
+      font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+    }
+    .ms-header-row .ms-streak { font-size: 0.68rem; }
+    .add-ms-wrap { padding: 0.5rem 1rem 0.85rem; }
 
-    .win-input {
-      flex: 1;
-      min-width: 0;
-      font-family: 'Nunito', sans-serif;
-      font-size: 0.92rem;
-      font-weight: 600;
-      color: var(--text);
-      border: 2px solid transparent;
-      border-radius: 8px;
-      padding: 0.3rem 0.5rem;
-      background: none;
-    }
-    .win-input:focus { outline: none; border-color: var(--purple); background: white; }
+    /* ── Help box ── */
+    .help-box { background: #f0ebff; border: 1.5px solid var(--border); border-radius: var(--r); padding: 0.85rem 1.1rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text); line-height: 1.55; }
+    .help-title { font-weight: 800; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--purple); }
+    .help-box ul { padding-left: 1.2rem; }
+    .help-box li { margin-bottom: 0.2rem; }
 
-    .add-win-row {
-      padding: 0.5rem 1rem 0.85rem;
-    }
-
-    .btn-add-win {
-      font-family: 'Nunito', sans-serif;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: var(--purple);
-      background: none;
-      border: 2px dashed var(--border);
-      border-radius: 8px;
-      padding: 0.35rem 0.85rem;
-      cursor: pointer;
-      width: 100%;
-      text-align: left;
-    }
-    .btn-add-win:hover { border-color: var(--purple); background: #faf8ff; }
-
-    .help-box {
-      background: #f0ebff;
-      border: 1.5px solid var(--border);
-      border-radius: var(--r);
-      padding: 1rem 1.25rem;
-      margin-bottom: 1.5rem;
-      font-size: 0.88rem;
-      color: var(--text);
-      line-height: 1.55;
-    }
-    .help-title {
-      font-weight: 800;
-      font-size: 0.92rem;
-      margin-bottom: 0.5rem;
-      color: var(--purple);
-    }
-    .help-box p { margin-bottom: 0.5rem; }
-    .help-box ul { padding-left: 1.2rem; margin: 0; }
-    .help-box li { margin-bottom: 0.25rem; }
-
-    .add-category-wrap {
-      margin-top: 1.25rem;
-      text-align: center;
-    }
-
+    /* ── Hamburger ── */
     .menu-btn { background: none; border: none; font-size: 1.5rem; color: var(--muted); cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 8px; line-height: 1; }
     .menu-btn:hover { background: var(--bg); color: var(--purple); }
     .menu-backdrop { display: none; position: fixed; inset: 0; background: rgba(78,58,180,0.18); z-index: 200; backdrop-filter: blur(2px); }
@@ -255,173 +149,372 @@
 <body>
 
 <header>
-  <h1>✦ Admin</h1>
-  <div class="header-actions">
-    <span class="save-status" id="saveStatus">Unsaved changes</span>
-    <button class="btn btn-save" id="saveBtn" onclick="saveAll()">Save</button>
-    <button class="menu-btn" onclick="openMenu()">☰</button>
+  <div class="header-row">
+    <h1>⚙️ Admin</h1>
+    <div class="header-right">
+      <span class="save-status" id="saveStatus">All saved ✓</span>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveActive()" disabled>Save</button>
+      <button class="menu-btn" onclick="openMenu()">☰</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-routines" onclick="switchTab('routines')">✦ Routines</button>
+    <button class="tab-btn" id="tab-levelup" onclick="switchTab('levelup')">⚡ Level Up</button>
+    <button class="tab-btn" id="tab-milestones" onclick="switchTab('milestones')">🏆 Milestones</button>
   </div>
 </header>
 
 <div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
 <div class="menu-panel" id="menuPanel">
   <div class="menu-title">✦ Menu</div>
+  <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
   <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
   <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
   <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
   <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
-  <div class="menu-item"><a href="/admin/tasks"><span class="menu-item-icon">📋</span> Tasks</a></div>
   <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
   <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
 </div>
 
-<div class="container">
-
+<!-- ══════════════════════════════════════════
+     TAB 1 — ROUTINES
+     ══════════════════════════════════════════ -->
+<div id="section-routines" class="tab-content active">
   <div class="help-box">
-    <div class="help-title">⚡ How Level Up works</div>
-    <p>When Violet taps the ⚡ button in the app, she picks a <strong>category</strong> and a <strong>win</strong> to log — something she did even a tiny bit better than before.</p>
+    <div class="help-title">✦ Editing Routines</div>
     <ul>
-      <li>Add categories that matter to Violet (School, Kindness, Health, etc.)</li>
-      <li>Add wins inside each category as specific examples she can pick from</li>
-      <li>She can also type a custom win — these are just starting prompts</li>
-      <li>Click a category name or win to edit it inline, then hit <strong>Save</strong></li>
+      <li>Edit a routine's <strong>name</strong>, <strong>icon</strong>, or <strong>time</strong> directly in its header</li>
+      <li>Tap <strong>▸ Tasks</strong> to expand the task list — click to edit, drag ⠿ to reorder, × to delete</li>
+      <li>Changes don't save until you hit <strong>Save</strong></li>
     </ul>
   </div>
+  <div id="routinesList"></div>
+</div>
 
-  <p class="section-title">Level-up Categories</p>
-
+<!-- ══════════════════════════════════════════
+     TAB 2 — LEVEL UP
+     ══════════════════════════════════════════ -->
+<div id="section-levelup" class="tab-content">
+  <div class="help-box">
+    <div class="help-title">⚡ How Level Up works</div>
+    <ul>
+      <li>When Violet taps ⚡ she picks a <strong>category</strong> then a <strong>win</strong> from the list below</li>
+      <li>Add categories that matter to her (School, Kindness, Health…) and fill each with example wins</li>
+      <li>Tap any text to edit it inline, hit + to add, × to remove</li>
+    </ul>
+  </div>
   <div class="categories" id="categoriesList"></div>
+  <div style="margin-top:1rem; text-align:center">
+    <button class="btn btn-primary" onclick="addCategory()">+ Add Category</button>
+  </div>
+</div>
 
-  <div class="add-category-wrap">
-    <button class="btn btn-add" onclick="addCategory()">+ Add Category</button>
+<!-- ══════════════════════════════════════════
+     TAB 3 — MILESTONES
+     ══════════════════════════════════════════ -->
+<div id="section-milestones" class="tab-content">
+  <div class="help-box">
+    <div class="help-title">🏆 How Milestones work</div>
+    <ul>
+      <li>A milestone is a reward Violet earns when her streak hits a specific day count</li>
+      <li>Set the <strong>streak day</strong>, the <strong>reward</strong> (what she gets), and optionally a <strong>category</strong></li>
+      <li>Rows are auto-sorted by streak number when saved</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="ms-header-row">
+      <div class="ms-streak">Day #</div>
+      <div class="ms-message" style="flex:1">Reward</div>
+      <div class="ms-category">Category</div>
+      <div style="width:2rem"></div>
+    </div>
+    <div id="milestonesList"></div>
+    <div class="add-ms-wrap">
+      <button class="btn-ghost" onclick="addMilestone()">+ Add milestone</button>
+    </div>
   </div>
 </div>
 
 <script>
-  let data = {{ data | tojson }};
-  let dirty = false;
+  /* ── Data ── */
+  let routines   = {{ routines_json | safe }};
+  let levelup    = {{ data | tojson }};
+  let milestones = {{ milestones_json | safe }};
 
-  function markDirty() {
-    dirty = true;
-    document.getElementById('saveStatus').textContent = 'Unsaved changes';
-    document.getElementById('saveStatus').className = 'save-status';
-    document.getElementById('saveBtn').disabled = false;
+  /* ── Tab state ── */
+  let activeTab = 'routines';
+  let dirty = { routines: false, levelup: false, milestones: false };
+
+  function switchTab(name) {
+    ['routines','levelup','milestones'].forEach(t => {
+      document.getElementById('section-' + t).classList.toggle('active', t === name);
+      document.getElementById('tab-' + t).classList.toggle('active', t === name);
+    });
+    activeTab = name;
+    updateSaveBtn();
   }
 
-  function markSaved() {
-    dirty = false;
-    document.getElementById('saveStatus').textContent = 'Saved ✓';
-    document.getElementById('saveStatus').className = 'save-status saved';
-    document.getElementById('saveBtn').disabled = true;
+  function markDirty(tab) {
+    dirty[tab] = true;
+    updateSaveBtn();
+  }
+  function markSaved(tab) {
+    dirty[tab] = false;
+    updateSaveBtn();
+  }
+  function updateSaveBtn() {
+    const d = dirty[activeTab];
+    document.getElementById('saveBtn').disabled = !d;
+    const s = document.getElementById('saveStatus');
+    s.textContent = d ? 'Unsaved changes' : 'All saved ✓';
+    s.className   = 'save-status ' + (d ? 'dirty' : 'saved');
   }
 
-  function render() {
-    const list = document.getElementById('categoriesList');
-    list.innerHTML = '';
-    (data.levelup_categories || []).forEach((cat, ci) => {
+  async function saveActive() {
+    const btn = document.getElementById('saveBtn');
+    btn.textContent = 'Saving…'; btn.disabled = true;
+    let url, body;
+    if (activeTab === 'routines')   { url = '/admin/tasks/save';       body = routines; }
+    if (activeTab === 'levelup')    { url = '/admin/save';              body = levelup; }
+    if (activeTab === 'milestones') { url = '/admin/milestones/save';   body = milestones; }
+    const res = await fetch(url, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    btn.textContent = 'Save';
+    if (res.ok) markSaved(activeTab);
+    else { document.getElementById('saveStatus').textContent = 'Error — try again'; }
+  }
+
+  window.addEventListener('beforeunload', e => {
+    if (Object.values(dirty).some(Boolean)) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  /* ══════════════════════════════════════
+     ROUTINES TAB
+     ══════════════════════════════════════ */
+  function renderRoutines() {
+    const container = document.getElementById('routinesList');
+    container.innerHTML = '';
+    routines.forEach((r, ri) => {
       const card = document.createElement('div');
-      card.className = 'category-card';
+      card.className = 'card';
       card.innerHTML = `
-        <div class="category-header">
-          <input class="cat-icon-input" value="${cat.icon}" oninput="updateCat(${ci},'icon',this.value)" maxlength="2">
-          <input class="cat-label-input" value="${esc(cat.label)}" oninput="updateCat(${ci},'label',this.value)" placeholder="Category name">
-          <button class="btn-danger" onclick="removeCategory(${ci})" title="Delete category">×</button>
+        <div class="card-header">
+          <input class="inp-icon" value="${esc(r.icon)}" placeholder="☁️"
+                 onchange="routines[${ri}].icon=this.value; markDirty('routines')">
+          <div class="routine-meta">
+            <input class="inp meta-name" value="${esc(r.name)}" placeholder="Routine name"
+                   oninput="routines[${ri}].name=this.value; markDirty('routines')">
+            <input class="inp meta-time inp-sm" value="${esc(r.time)}" placeholder="8:00 AM"
+                   oninput="routines[${ri}].time=this.value; markDirty('routines')">
+          </div>
+          <button class="routine-expand-btn" onclick="toggleTasks(this)">▸ Tasks (${r.tasks.length})</button>
         </div>
-        <div class="wins-list" id="wins-${ci}">
-          ${(cat.wins || []).map((w, wi) => winRow(ci, wi, w)).join('')}
-        </div>
-        <div class="add-win-row">
-          <button class="btn-add-win" onclick="addWin(${ci})">+ Add a win</button>
+        <div class="tasks-body" id="tasks-${ri}">
+          <div class="task-list" id="task-list-${ri}"></div>
+          <div class="add-task-wrap">
+            <button class="btn-ghost" onclick="addTask(${ri})">+ Add task</button>
+          </div>
         </div>
       `;
-      list.appendChild(card);
+      container.appendChild(card);
+      renderTasks(ri);
     });
   }
 
-  function winRow(ci, wi, w) {
-    return `<div class="win-row" id="win-${ci}-${wi}">
-      <div class="win-dot"></div>
-      <input class="win-input" value="${esc(w)}" oninput="updateWin(${ci},${wi},this.value)" placeholder="Describe the win…">
-      <button class="btn-danger" onclick="removeWin(${ci},${wi})">×</button>
-    </div>`;
+  function toggleTasks(btn) {
+    const body = btn.closest('.card').querySelector('.tasks-body');
+    const open = body.classList.toggle('open');
+    btn.textContent = open
+      ? `▾ Tasks (${body.querySelectorAll('.task-row').length})`
+      : `▸ Tasks (${body.querySelectorAll('.task-row').length})`;
   }
 
-  function esc(s) {
-    return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  function renderTasks(ri) {
+    const list = document.getElementById('task-list-' + ri);
+    list.innerHTML = '';
+    routines[ri].tasks.forEach((task, ti) => {
+      list.appendChild(makeTaskRow(ri, ti, task));
+    });
   }
 
-  function updateCat(ci, field, val) {
-    data.levelup_categories[ci][field] = val;
-    markDirty();
+  function makeTaskRow(ri, ti, task) {
+    const row = document.createElement('div');
+    row.className = 'task-row'; row.draggable = true;
+    row.dataset.ri = ri; row.dataset.ti = ti;
+    row.innerHTML = `
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <input class="inp" value="${esc(task)}" placeholder="Task…"
+             oninput="routines[${ri}].tasks[${ti}]=this.value; markDirty('routines')">
+      <button class="btn-del" onclick="removeTask(${ri},${ti})">×</button>
+    `;
+    row.addEventListener('dragstart', onDragStart);
+    row.addEventListener('dragover',  onDragOver);
+    row.addEventListener('dragleave', onDragLeave);
+    row.addEventListener('drop',      onDrop);
+    row.addEventListener('dragend',   onDragEnd);
+    return row;
   }
 
-  function updateWin(ci, wi, val) {
-    data.levelup_categories[ci].wins[wi] = val;
-    markDirty();
+  function addTask(ri) {
+    routines[ri].tasks.push('');
+    markDirty('routines');
+    renderTasks(ri);
+    const list = document.getElementById('task-list-' + ri);
+    list.querySelectorAll('.inp')[list.querySelectorAll('.inp').length - 1]?.focus();
   }
 
-  function addWin(ci) {
-    data.levelup_categories[ci].wins.push('');
-    markDirty();
-    render();
-    // focus the new input
-    const wins = document.getElementById(`wins-${ci}`);
-    const inputs = wins.querySelectorAll('.win-input');
-    inputs[inputs.length - 1].focus();
+  function removeTask(ri, ti) {
+    routines[ri].tasks.splice(ti, 1);
+    markDirty('routines');
+    renderTasks(ri);
   }
 
-  function removeWin(ci, wi) {
-    data.levelup_categories[ci].wins.splice(wi, 1);
-    markDirty();
-    render();
+  let dragSrc = null;
+  function onDragStart(e) { dragSrc = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+  function onDragOver(e)  { e.preventDefault(); this.classList.add('drag-over'); }
+  function onDragLeave()  { this.classList.remove('drag-over'); }
+  function onDragEnd()    { this.classList.remove('dragging'); document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); }
+  function onDrop(e) {
+    e.preventDefault(); this.classList.remove('drag-over');
+    if (dragSrc === this) return;
+    const sri = +dragSrc.dataset.ri, sti = +dragSrc.dataset.ti;
+    const dri = +this.dataset.ri,    dti = +this.dataset.ti;
+    if (sri !== dri) return;
+    const [moved] = routines[sri].tasks.splice(sti, 1);
+    routines[sri].tasks.splice(dti, 0, moved);
+    markDirty('routines');
+    renderTasks(sri);
+  }
+
+  /* ══════════════════════════════════════
+     LEVEL UP TAB
+     ══════════════════════════════════════ */
+  function renderLevelUp() {
+    const container = document.getElementById('categoriesList');
+    container.innerHTML = '';
+    const cats = levelup.levelup_categories || [];
+    cats.forEach((cat, ci) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-header">
+          <input class="inp-icon" value="${esc(cat.icon || '')}" placeholder="⚡"
+                 onchange="levelup.levelup_categories[${ci}].icon=this.value; markDirty('levelup')">
+          <input class="inp" style="font-weight:800;font-size:1rem" value="${esc(cat.label || '')}" placeholder="Category name"
+                 oninput="levelup.levelup_categories[${ci}].label=this.value; markDirty('levelup')">
+          <button class="btn-del" onclick="removeCategory(${ci})">×</button>
+        </div>
+        <div class="wins-list" id="wins-${ci}"></div>
+        <div style="padding:0.35rem 1rem 0.75rem">
+          <button class="btn-ghost" onclick="addWin(${ci})">+ Add a win</button>
+        </div>
+      `;
+      container.appendChild(card);
+      renderWins(ci);
+    });
+  }
+
+  function renderWins(ci) {
+    const list = document.getElementById('wins-' + ci);
+    list.innerHTML = '';
+    const wins = levelup.levelup_categories[ci].wins || [];
+    wins.forEach((win, wi) => {
+      const row = document.createElement('div');
+      row.className = 'win-row';
+      row.innerHTML = `
+        <div class="win-dot"></div>
+        <input class="inp" value="${esc(win)}" placeholder="A win…"
+               oninput="levelup.levelup_categories[${ci}].wins[${wi}]=this.value; markDirty('levelup')">
+        <button class="btn-del" onclick="removeWin(${ci},${wi})">×</button>
+      `;
+      list.appendChild(row);
+    });
   }
 
   function addCategory() {
-    data.levelup_categories.push({ id: 'new-' + Date.now(), icon: '⭐', label: '', wins: [] });
-    markDirty();
-    render();
-    // focus the new label input
-    const cards = document.querySelectorAll('.category-card');
-    const last = cards[cards.length - 1];
-    last.querySelector('.cat-label-input').focus();
+    if (!levelup.levelup_categories) levelup.levelup_categories = [];
+    const id = 'cat_' + Date.now();
+    levelup.levelup_categories.push({id, label:'', icon:'⚡', wins:[]});
+    markDirty('levelup');
+    renderLevelUp();
   }
 
   function removeCategory(ci) {
-    if (!confirm(`Delete "${data.levelup_categories[ci].label || 'this category'}" and all its wins?`)) return;
-    data.levelup_categories.splice(ci, 1);
-    markDirty();
-    render();
+    levelup.levelup_categories.splice(ci, 1);
+    markDirty('levelup');
+    renderLevelUp();
   }
 
-  async function saveAll() {
-    const btn = document.getElementById('saveBtn');
-    btn.textContent = 'Saving…';
-    btn.disabled = true;
-    // Sync any edited IDs from labels (slugify)
-    data.levelup_categories.forEach(cat => {
-      if (!cat.id || cat.id.startsWith('new-')) {
-        cat.id = cat.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || ('cat-' + Date.now());
-      }
-    });
-    await fetch('/admin/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    btn.textContent = 'Save';
-    markSaved();
+  function addWin(ci) {
+    if (!levelup.levelup_categories[ci].wins) levelup.levelup_categories[ci].wins = [];
+    levelup.levelup_categories[ci].wins.push('');
+    markDirty('levelup');
+    renderWins(ci);
+    const list = document.getElementById('wins-' + ci);
+    const inputs = list.querySelectorAll('.inp');
+    inputs[inputs.length - 1]?.focus();
   }
 
-  // Warn before leaving with unsaved changes
-  window.addEventListener('beforeunload', e => {
-    if (dirty) { e.preventDefault(); e.returnValue = ''; }
-  });
+  function removeWin(ci, wi) {
+    levelup.levelup_categories[ci].wins.splice(wi, 1);
+    markDirty('levelup');
+    renderWins(ci);
+  }
 
-  render();
-  markSaved();
+  /* ══════════════════════════════════════
+     MILESTONES TAB
+     ══════════════════════════════════════ */
+  function renderMilestones() {
+    const list = document.getElementById('milestonesList');
+    list.innerHTML = '';
+    milestones.forEach((ms, i) => {
+      const row = document.createElement('div');
+      row.className = 'milestone-row';
+      row.innerHTML = `
+        <div class="ms-streak">
+          <input type="number" min="1" value="${esc(ms.streak)}" placeholder="7"
+                 oninput="milestones[${i}].streak=this.value; markDirty('milestones')">
+        </div>
+        <div class="ms-message">
+          <input class="inp" value="${esc(ms.message)}" placeholder="Reward description…"
+                 oninput="milestones[${i}].message=this.value; markDirty('milestones')">
+        </div>
+        <div class="ms-category">
+          <input class="inp inp-sm" value="${esc(ms.category||'')}" placeholder="Category"
+                 oninput="milestones[${i}].category=this.value; markDirty('milestones')">
+        </div>
+        <button class="btn-del" onclick="removeMilestone(${i})">×</button>
+      `;
+      list.appendChild(row);
+    });
+  }
 
+  function addMilestone() {
+    milestones.push({streak:'', message:'', category:''});
+    markDirty('milestones');
+    renderMilestones();
+    const rows = document.querySelectorAll('.milestone-row');
+    rows[rows.length - 1]?.querySelector('input')?.focus();
+  }
+
+  function removeMilestone(i) {
+    milestones.splice(i, 1);
+    markDirty('milestones');
+    renderMilestones();
+  }
+
+  /* ── Helpers ── */
+  function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
   function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
   function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  /* ── Init ── */
+  renderRoutines();
+  renderLevelUp();
+  renderMilestones();
+  updateSaveBtn();
 </script>
 
 </body>
