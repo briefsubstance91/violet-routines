@@ -228,6 +228,49 @@
 
     /* ── Empty state ── */
     .empty { color: var(--muted); font-size: 0.85rem; font-weight: 600; padding: 0.5rem 0; }
+
+    /* ── Tag breakdown ── */
+    .tag-row {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.5rem 0; border-bottom: 1px solid var(--border);
+    }
+    .tag-row:last-child { border-bottom: none; }
+    .tag-pill {
+      display: inline-flex; align-items: center;
+      background: #ede9fe; color: #6d28d9;
+      border-radius: 100px; padding: 0.18rem 0.65rem;
+      font-size: 0.72rem; font-weight: 800;
+      flex-shrink: 0; min-width: 80px;
+    }
+    .tag-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .tag-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--purple), var(--pink)); }
+    .tag-count { font-size: 0.72rem; font-weight: 800; color: var(--muted); white-space: nowrap; }
+
+    /* ── How It Works ── */
+    .hiw-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; background: none; border: none; cursor: pointer;
+      font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 800;
+      color: var(--muted); padding: 0; text-align: left;
+    }
+    .hiw-toggle:hover { color: var(--purple); }
+    .hiw-arrow { font-size: 0.7rem; transition: transform 0.2s; }
+    .hiw-arrow.open { transform: rotate(90deg); }
+    .hiw-body { display: none; margin-top: 0.85rem; }
+    .hiw-body.open { display: block; }
+    .hiw-section { margin-bottom: 1rem; }
+    .hiw-section-title { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.45rem; }
+    .hiw-item { display: flex; gap: 0.6rem; padding: 0.3rem 0; font-size: 0.83rem; line-height: 1.4; }
+    .hiw-item-icon { flex-shrink: 0; width: 20px; text-align: center; }
+    .hiw-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+    .hiw-link {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 100px; padding: 0.3rem 0.75rem;
+      font-size: 0.75rem; font-weight: 800; color: var(--purple);
+      text-decoration: none; transition: border-color 0.15s;
+    }
+    .hiw-link:hover { border-color: var(--purple); }
   </style>
 </head>
 <body>
@@ -353,6 +396,25 @@
     {% endfor %}
   </div>
 
+  <!-- ── Task Categories (tag breakdown) ── -->
+  <p class="section-label">🏷️ Task Categories</p>
+  <div class="card">
+    {% if tag_breakdown %}
+      {% set max_count = tag_breakdown.values() | list | max %}
+      {% for tag, count in tag_breakdown.items() %}
+      <div class="tag-row">
+        <span class="tag-pill">{{ tag }}</span>
+        <div class="tag-bar-wrap">
+          <div class="tag-bar" style="width: {{ (count / max_count * 100) | round | int }}%"></div>
+        </div>
+        <span class="tag-count">{{ count }} task{{ 's' if count != 1 }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">No tags yet — open Admin → Routines, expand any task, and type in the <em>+ tag</em> field.</div>
+    {% endif %}
+  </div>
+
   <!-- ── Recent Level Up wins ── -->
   <p class="section-label">⚡ Recent Wins</p>
   <div class="card">
@@ -381,7 +443,7 @@
 
   <!-- ── Admin shortcuts ── -->
   <p class="section-label">⚙️ Admin</p>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.75rem">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1.25rem">
     <a href="/admin" style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;padding:1rem;background:white;border-radius:16px;text-decoration:none;color:var(--text);box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1.5px solid var(--border);">
       <span style="font-size:1.6rem">⚡</span>
       <span style="font-size:0.82rem;font-weight:800">Level Up Editor</span>
@@ -392,6 +454,45 @@
       <span style="font-size:0.82rem;font-weight:800">Routines & Tasks</span>
       <span style="font-size:0.68rem;font-weight:600;color:var(--muted);text-align:center">Edit checklists & names</span>
     </a>
+  </div>
+
+  <!-- ── How It Works ── -->
+  <div class="card" style="margin-bottom: 2rem">
+    <button class="hiw-toggle" onclick="toggleHiw(this)">
+      <span>💬 How this app works</span>
+      <span class="hiw-arrow">▶</span>
+    </button>
+    <div class="hiw-body">
+
+      <div class="hiw-section">
+        <div class="hiw-section-title">The daily loop</div>
+        <div class="hiw-item"><span class="hiw-item-icon">✦</span><span>Violet has <strong>three daily routines</strong> (Morning, Afternoon, Evening). She checks off tasks in each one on her phone.</span></div>
+        <div class="hiw-item"><span class="hiw-item-icon">🔥</span><span>Completing <em>any</em> routine on a given day counts toward her <strong>streak</strong>. Missing a full day breaks it.</span></div>
+        <div class="hiw-item"><span class="hiw-item-icon">⚡</span><span><strong>Level Up</strong> is her win log — after a routine she can tap ⚡ and record a small personal victory in a category you've set (School, Kindness, Health…).</span></div>
+      </div>
+
+      <div class="hiw-section">
+        <div class="hiw-section-title">Rewards & recognition</div>
+        <div class="hiw-item"><span class="hiw-item-icon">🏆</span><span><strong>Milestones</strong> are custom rewards you set in Admin. When Violet's streak hits that day count, she sees the reward message.</span></div>
+        <div class="hiw-item"><span class="hiw-item-icon">🏅</span><span><strong>Badges</strong> are earned automatically — for streaks, completing each routine a certain number of times, logging wins, and getting a Triple Crown (all 3 routines in one day).</span></div>
+        <div class="hiw-item"><span class="hiw-item-icon">👑</span><span><strong>Triple Crown</strong> is awarded when Violet completes all three routines on the same day.</span></div>
+      </div>
+
+      <div class="hiw-section">
+        <div class="hiw-section-title">Understanding this dashboard</div>
+        <div class="hiw-item"><span class="hiw-item-icon">📅</span><span><strong>Completion %</strong> is the all-time average across every routine logged. Each routine is weighted equally.</span></div>
+        <div class="hiw-item"><span class="hiw-item-icon">🏷️</span><span><strong>Task Categories</strong> shows the tag breakdown across all tasks — add tags in Admin → Routines to populate it.</span></div>
+        <div class="hiw-item"><span class="hiw-item-icon">📊</span><span>Data lives in CSV files on the server. It isn't tied to a specific device — it's server-side and persists across logins.</span></div>
+      </div>
+
+      <div class="hiw-links">
+        <a href="/faq" class="hiw-link">💬 Full FAQ</a>
+        <a href="/admin" class="hiw-link">⚙️ Admin panel</a>
+        <a href="/stats" class="hiw-link">⭐ Violet's stats</a>
+        <a href="/badges" class="hiw-link">🏅 Badges</a>
+      </div>
+
+    </div>
   </div>
 
 </div>
@@ -416,6 +517,12 @@
 
   function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
   function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  function toggleHiw(btn) {
+    const body = btn.nextElementSibling;
+    const open = body.classList.toggle('open');
+    btn.querySelector('.hiw-arrow').classList.toggle('open', open);
+  }
 </script>
 
 </body>

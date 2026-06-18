@@ -15,6 +15,25 @@ self.addEventListener('activate', e => {
   );
 });
 
+self.addEventListener('push', e => {
+  const data = e.data ? e.data.json() : {};
+  e.waitUntil(
+    self.registration.showNotification(data.title || "Violet's Routines", {
+      body:    data.body    || '',
+      icon:    data.icon    || '/icon.svg',
+      badge:   data.badge   || '/icon.svg',
+      data:    data.data    || {},
+      vibrate: [200, 100, 200],
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || '/routines';
+  e.waitUntil(clients.openWindow(url));
+});
+
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 

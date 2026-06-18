@@ -1,11 +1,15 @@
 import csv
 import json
 import os
-
+import re
+import atexit
 from collections import defaultdict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from flask import Flask, render_template, request, jsonify, send_from_directory
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -22,6 +26,118 @@ LOG_FILE           = os.path.join(_DATA, 'Violet Log.csv')
 LEVELUP_DATA_FILE  = os.path.join(_DATA, 'violet_data.json')
 LEVELUP_SEED_FILE  = os.path.join(_BASE, 'violet_data.json')
 LEVELUP_LOG_FILE   = os.path.join(_DATA, 'Violet Levelup Log.csv')
+VAPID_FILE         = os.path.join(_DATA, 'vapid_keys.json')
+PUSH_SUBS_FILE     = os.path.join(_DATA, 'push_subscriptions.json')
+VAPID_CLAIMS       = {'sub': 'mailto:bgelineau@proton.me'}
+_already_notified  = {}  # {routine_id:date → True}
+
+
+def get_vapid_keys():
+    if os.path.exists(VAPID_FILE):
+        with open(VAPID_FILE) as f:
+            return json.load(f)
+    from py_vapid import Vapid
+    import base64
+    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+    vapid = Vapid()
+    vapid.generate_keys()
+    private_pem = vapid.private_pem().decode()
+    pub_bytes = vapid._private_key.public_key().public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
+    pub_b64 = base64.urlsafe_b64encode(pub_bytes).rstrip(b'=').decode()
+    keys = {'private': private_pem, 'public': pub_b64}
+    with open(VAPID_FILE, 'w') as f:
+        json.dump(keys, f)
+    return keys
+
+
+def load_push_subs():
+    try:
+        with open(PUSH_SUBS_FILE) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def save_push_subs(subs):
+    with open(PUSH_SUBS_FILE, 'w') as f:
+        json.dump(subs, f, indent=2)
+
+
+def _parse_time_hm(time_str):
+    m = re.match(r'(\d{1,2}):(\d{2})\s*(AM|PM)', (time_str or '').strip(), re.IGNORECASE)
+    if not m:
+        return None, None
+    h, mn, period = int(m.group(1)), int(m.group(2)), m.group(3).upper()
+    if period == 'PM' and h != 12:
+        h += 12
+    if period == 'AM' and h == 12:
+        h = 0
+    return h, mn
+
+
+_ROUTINE_MESSAGES = {
+    'am': ('Morning Routine ☁️', "Hey Violet! Time for your morning routine. You've got this 💜"),
+    'af': ('Afternoon Routine 🌸', "Afternoon check-in! Keep the momentum going, Violet 💜"),
+    'pm': ('Evening Routine 🌙', "Almost done for the day! Time for your evening routine 💜"),
+}
+
+
+def _send_push_for_routine(routine):
+    from pywebpush import webpush, WebPushException
+    rid = routine['id']
+    title, body = _ROUTINE_MESSAGES.get(
+        rid, (f"{routine.get('name', 'Routine')} time!", "Time for your routine, Violet! 💜")
+    )
+    payload = json.dumps({
+        'title': title, 'body': body,
+        'icon': '/icon.svg', 'badge': '/icon.svg',
+        'data': {'url': '/routines'},
+    })
+    vapid = get_vapid_keys()
+    subs = load_push_subs()
+    dead = []
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info={'endpoint': sub['endpoint'], 'keys': sub['keys']},
+                data=payload,
+                vapid_private_key=vapid['private'],
+                vapid_claims=VAPID_CLAIMS,
+            )
+        except WebPushException as ex:
+            if ex.response and ex.response.status_code in (404, 410):
+                dead.append(sub['endpoint'])
+            else:
+                print(f'[push] send error: {ex}')
+    if dead:
+        save_push_subs([s for s in subs if s['endpoint'] not in dead])
+
+
+def _check_and_notify():
+    try:
+        subs = load_push_subs()
+        if not subs:
+            return
+        tz_name = subs[0].get('timezone', 'America/Toronto')
+        now = datetime.now(ZoneInfo(tz_name))
+        today_key = now.strftime('%Y-%m-%d')
+        for r in load_tasks_raw():
+            rh, rm = _parse_time_hm(r.get('time', ''))
+            if rh is None:
+                continue
+            if now.hour == rh and now.minute == rm:
+                key = f"{r['id']}:{today_key}"
+                if key not in _already_notified:
+                    _already_notified[key] = True
+                    _send_push_for_routine(r)
+    except Exception as exc:
+        print(f'[push] check_and_notify error: {exc}')
+
+
+_scheduler = BackgroundScheduler()
+_scheduler.add_job(_check_and_notify, IntervalTrigger(minutes=1), id='notify_check')
+_scheduler.start()
+atexit.register(lambda: _scheduler.shutdown(wait=False))
 
 
 def list_images():
@@ -106,7 +222,9 @@ def load_routines():
         if parent and parent in r['_map']:
             r['_map'][parent]['subtasks'].append({'label': label})
         else:
-            t = {'label': label, 'subtasks': []}
+            tags_raw = row.get('Tags', '').strip()
+            tags = [tg.strip() for tg in tags_raw.split(',') if tg.strip()] if tags_raw else []
+            t = {'label': label, 'subtasks': [], 'tags': tags}
             r['tasks'].append(t)
             r['_map'][label] = t
 
@@ -407,7 +525,7 @@ def admin_save():
 
 
 def load_tasks_raw():
-    """Return routines as ordered list with metadata + task list for the task admin."""
+    """Return routines as ordered list with metadata + task list (each task is {label, tags})."""
     rows = scan_csv(TASKS_FILE, 'Routine')
     seen = {}
     order = []
@@ -425,9 +543,11 @@ def load_tasks_raw():
                 'tasks':  [],
             }
             order.append(rid)
-        task = row.get('Task', '').strip()
-        if task:
-            seen[rid]['tasks'].append(task)
+        task_label = row.get('Task', '').strip()
+        if task_label:
+            tags_raw = row.get('Tags', '').strip()
+            tags = [t.strip() for t in tags_raw.split(',') if t.strip()] if tags_raw else []
+            seen[rid]['tasks'].append({'label': task_label, 'tags': tags})
     return [seen[rid] for rid in order]
 
 
@@ -436,11 +556,27 @@ def save_tasks_raw(routines):
     with open(TASKS_FILE, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['Violet Tasks'])
-        writer.writerow(['Violet Tasks', '', '', '', '', ''])
-        writer.writerow(['Routine', 'ID', 'Icon', 'Time', 'Banner', 'Task'])
+        writer.writerow(['Violet Tasks', '', '', '', '', '', ''])
+        writer.writerow(['Routine', 'ID', 'Icon', 'Time', 'Banner', 'Task', 'Tags'])
         for r in routines:
             for task in r['tasks']:
-                writer.writerow([r['name'], r['id'], r['icon'], r['time'], r['banner'], task])
+                if isinstance(task, dict):
+                    label = task.get('label', '')
+                    tags  = ','.join(task.get('tags', []))
+                else:
+                    label = str(task)
+                    tags  = ''
+                writer.writerow([r['name'], r['id'], r['icon'], r['time'], r['banner'], label, tags])
+
+
+def compute_tag_breakdown(routines_raw):
+    """Return {tag: count} sorted by count desc from tasks with tags."""
+    counts = {}
+    for r in routines_raw:
+        for t in r['tasks']:
+            for tag in (t.get('tags') or []):
+                counts[tag] = counts.get(tag, 0) + 1
+    return dict(sorted(counts.items(), key=lambda x: -x[1]))
 
 
 @app.route('/admin/tasks')
@@ -507,6 +643,9 @@ def dashboard():
     next_ms = next(((int(k), v) for k, v in milestones_sorted if int(k) > streak), None)
     prev_ms_streak = max((int(k) for k, v in milestones_sorted if int(k) <= streak), default=0)
 
+    routines_raw   = load_tasks_raw()
+    tag_breakdown  = compute_tag_breakdown(routines_raw)
+
     return render_template(
         'dashboard.html',
         stats=s,
@@ -519,6 +658,7 @@ def dashboard():
         badges=BADGES,
         badges_json=json.dumps(BADGES),
         today_iso=date.today().isoformat(),
+        tag_breakdown=tag_breakdown,
     )
 
 
@@ -529,6 +669,58 @@ def stats():
     s = compute_stats(load_log())
     return render_template('stats.html', stats=s, routine_names=routine_names,
                            routines=routines, today_iso=date.today().isoformat())
+
+
+@app.route('/push/vapid-public-key')
+def push_vapid_public_key():
+    keys = get_vapid_keys()
+    return jsonify({'key': keys['public']})
+
+
+@app.route('/push/subscribe', methods=['POST'])
+def push_subscribe():
+    sub = request.get_json()
+    subs = load_push_subs()
+    if not any(s['endpoint'] == sub['endpoint'] for s in subs):
+        subs.append(sub)
+        save_push_subs(subs)
+    return jsonify({'ok': True})
+
+
+@app.route('/push/unsubscribe', methods=['POST'])
+def push_unsubscribe():
+    data = request.get_json()
+    endpoint = data.get('endpoint', '')
+    save_push_subs([s for s in load_push_subs() if s['endpoint'] != endpoint])
+    return jsonify({'ok': True})
+
+
+@app.route('/push/test', methods=['POST'])
+def push_test():
+    from pywebpush import webpush, WebPushException
+    payload = json.dumps({
+        'title': 'Test Notification ✦',
+        'body': "Reminders are working! 💜",
+        'icon': '/icon.svg',
+        'data': {'url': '/routines'},
+    })
+    vapid = get_vapid_keys()
+    subs = load_push_subs()
+    if not subs:
+        return jsonify({'ok': False, 'error': 'no subscriptions'})
+    sent = 0
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info={'endpoint': sub['endpoint'], 'keys': sub['keys']},
+                data=payload,
+                vapid_private_key=vapid['private'],
+                vapid_claims=VAPID_CLAIMS,
+            )
+            sent += 1
+        except WebPushException as ex:
+            print(f'[push] test error: {ex}')
+    return jsonify({'ok': sent > 0, 'sent': sent})
 
 
 if __name__ == '__main__':

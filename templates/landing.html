@@ -198,6 +198,8 @@
     .hub-card.levelup   { --accent: var(--pink); }
     .hub-card.badges    { --accent: #f59e0b; }
     .hub-card.dashboard { --accent: var(--green); }
+    .hub-card.bell      { --accent: #10b981; cursor: pointer; }
+    .hub-card.bell.on   { background: #f0fdf4; border-color: #10b981; }
 
     .hub-card.wide {
       grid-column: span 2;
@@ -302,6 +304,14 @@
       <span style="font-size:1.4rem; color:var(--purple); font-family:'Fredoka One',cursive">→</span>
     </a>
 
+    <div class="hub-card bell wide" id="bellCard" onclick="toggleNotifications()">
+      <div class="hub-card-icon" id="bellIcon">🔔</div>
+      <div class="hub-card-content">
+        <div class="hub-card-name" id="bellName">Enable Reminders</div>
+        <div class="hub-card-desc" id="bellDesc">Get notified when it's routine time</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -325,6 +335,57 @@
 
   function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
   function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  // ── Push notifications ──
+  function urlBase64ToUint8Array(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  async function checkSubscribed() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    return !!sub;
+  }
+
+  async function updateBellCard() {
+    const on = await checkSubscribed();
+    const card = document.getElementById('bellCard');
+    document.getElementById('bellIcon').textContent = on ? '🔔' : '🔕';
+    document.getElementById('bellName').textContent = on ? 'Reminders On' : 'Enable Reminders';
+    document.getElementById('bellDesc').textContent = on ? 'Tap to turn off alerts' : 'Get notified when it\'s routine time';
+    card.classList.toggle('on', on);
+  }
+
+  async function toggleNotifications() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Push notifications require this app to be installed to your home screen on iOS (Safari → Share → Add to Home Screen).');
+      return;
+    }
+    const on = await checkSubscribed();
+    if (on) {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch('/push/unsubscribe', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({endpoint: sub.endpoint}) });
+        await sub.unsubscribe();
+      }
+    } else {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return;
+      const reg = await navigator.serviceWorker.ready;
+      const { key } = await fetch('/push/vapid-public-key').then(r => r.json());
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) });
+      const obj = sub.toJSON();
+      obj.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await fetch('/push/subscribe', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(obj) });
+    }
+    updateBellCard();
+  }
+
+  updateBellCard();
 </script>
 
 </body>

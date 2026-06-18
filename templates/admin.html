@@ -30,6 +30,8 @@
     .save-status { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
     .save-status.saved { color: var(--green); }
     .save-status.dirty { color: #f59e0b; }
+    .btn-bell { background: none; border: 2px solid var(--border); border-radius: 10px; padding: 0.3rem 0.55rem; font-size: 1rem; cursor: pointer; color: var(--muted); transition: border-color 0.15s, color 0.15s; }
+    .btn-bell:hover { border-color: var(--green); color: var(--green); }
 
     /* ── Tabs ── */
     .tabs { display: flex; gap: 0.3rem; padding-bottom: 0; }
@@ -95,9 +97,16 @@
     }
     .routine-expand-btn:hover { background: var(--bg); color: var(--purple); }
     .task-list { padding: 0.4rem 0; }
-    .task-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 1rem; }
+    .task-row { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.35rem 1rem; }
     .task-row.dragging { opacity: 0.4; }
     .task-row.drag-over { border-top: 2px solid var(--purple); }
+    .task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+    .task-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; min-height: 1.4rem; }
+    .tag-chip { display: inline-flex; align-items: center; gap: 0.2rem; background: #ede9fe; color: #6d28d9; border-radius: 100px; padding: 0.12rem 0.35rem 0.12rem 0.5rem; font-size: 0.68rem; font-weight: 800; }
+    .tag-del { background: none; border: none; cursor: pointer; color: #9b87f5; font-size: 0.75rem; line-height: 1; padding: 0 0.1rem; }
+    .tag-del:hover { color: #f87171; }
+    .inp-tag { border: none; outline: none; background: none; font-family: 'Nunito', sans-serif; font-size: 0.68rem; font-weight: 700; color: var(--muted); width: 72px; }
+    .inp-tag::placeholder { color: #c4b5fd; }
     .add-task-wrap { padding: 0.35rem 1rem 0.75rem; }
     .tasks-body { display: none; }
     .tasks-body.open { display: block; }
@@ -153,6 +162,7 @@
     <h1>⚙️ Admin</h1>
     <div class="header-right">
       <span class="save-status" id="saveStatus">All saved ✓</span>
+      <button class="btn-bell" onclick="sendTestPush()" title="Send test notification">🔔</button>
       <button class="btn btn-primary" id="saveBtn" onclick="saveActive()" disabled>Save</button>
       <button class="menu-btn" onclick="openMenu()">☰</button>
     </div>
@@ -176,6 +186,19 @@
   <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
 </div>
 
+<datalist id="tag-suggestions">
+  <option value="hygiene">
+  <option value="health">
+  <option value="school">
+  <option value="organization">
+  <option value="self-care">
+  <option value="dressing">
+  <option value="nutrition">
+  <option value="mindfulness">
+  <option value="social">
+  <option value="creativity">
+</datalist>
+
 <!-- ══════════════════════════════════════════
      TAB 1 — ROUTINES
      ══════════════════════════════════════════ -->
@@ -185,6 +208,7 @@
     <ul>
       <li>Edit a routine's <strong>name</strong>, <strong>icon</strong>, or <strong>time</strong> directly in its header</li>
       <li>Tap <strong>▸ Tasks</strong> to expand the task list — click to edit, drag ⠿ to reorder, × to delete</li>
+      <li>Tag tasks with categories (e.g. <em>hygiene</em>, <em>school</em>) using the <strong>+ tag</strong> field — type and press Enter</li>
       <li>Changes don't save until you hit <strong>Save</strong></li>
     </ul>
   </div>
@@ -236,6 +260,18 @@
 </div>
 
 <script>
+  /* ── Push test ── */
+  async function sendTestPush() {
+    const res = await fetch('/push/test', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      document.querySelector('.btn-bell').textContent = '✓';
+      setTimeout(() => { document.querySelector('.btn-bell').textContent = '🔔'; }, 2000);
+    } else {
+      alert('No subscribers yet — enable reminders from the home screen first.');
+    }
+  }
+
   /* ── Data ── */
   let routines   = {{ routines_json | safe }};
   let levelup    = {{ data | tojson }};
@@ -331,6 +367,8 @@
       : `▸ Tasks (${body.querySelectorAll('.task-row').length})`;
   }
 
+  const TAG_SUGGESTIONS = ['hygiene','health','school','organization','self-care','dressing','nutrition','mindfulness'];
+
   function renderTasks(ri) {
     const list = document.getElementById('task-list-' + ri);
     list.innerHTML = '';
@@ -340,13 +378,26 @@
   }
 
   function makeTaskRow(ri, ti, task) {
+    // Normalize: task may be a legacy string or a {label,tags} object
+    if (typeof task === 'string') { task = {label: task, tags: []}; routines[ri].tasks[ti] = task; }
     const row = document.createElement('div');
     row.className = 'task-row'; row.draggable = true;
     row.dataset.ri = ri; row.dataset.ti = ti;
+    const chipHtml = (task.tags || []).map((t, i) =>
+      `<span class="tag-chip">${esc(t)}<button class="tag-del" onclick="removeTag(${ri},${ti},${i});event.stopPropagation()">×</button></span>`
+    ).join('');
     row.innerHTML = `
       <span class="drag-handle" title="Drag to reorder">⠿</span>
-      <input class="inp" value="${esc(task)}" placeholder="Task…"
-             oninput="routines[${ri}].tasks[${ti}]=this.value; markDirty('routines')">
+      <div class="task-body">
+        <input class="inp" value="${esc(task.label)}" placeholder="Task…"
+               oninput="routines[${ri}].tasks[${ti}].label=this.value; markDirty('routines')">
+        <div class="task-tags">
+          ${chipHtml}
+          <input class="inp-tag" list="tag-suggestions" placeholder="+ tag"
+                 onkeydown="if(event.key==='Enter'||event.key===','){addTagFromInput(${ri},${ti},this);event.preventDefault()}"
+                 onblur="addTagFromInput(${ri},${ti},this)">
+        </div>
+      </div>
       <button class="btn-del" onclick="removeTask(${ri},${ti})">×</button>
     `;
     row.addEventListener('dragstart', onDragStart);
@@ -357,12 +408,29 @@
     return row;
   }
 
+  function addTagFromInput(ri, ti, input) {
+    const val = input.value.trim().replace(/,+$/, '');
+    if (!val) return;
+    if (!Array.isArray(routines[ri].tasks[ti].tags)) routines[ri].tasks[ti].tags = [];
+    routines[ri].tasks[ti].tags.push(val);
+    input.value = '';
+    markDirty('routines');
+    renderTasks(ri);
+  }
+
+  function removeTag(ri, ti, idx) {
+    routines[ri].tasks[ti].tags.splice(idx, 1);
+    markDirty('routines');
+    renderTasks(ri);
+  }
+
   function addTask(ri) {
-    routines[ri].tasks.push('');
+    routines[ri].tasks.push({label: '', tags: []});
     markDirty('routines');
     renderTasks(ri);
     const list = document.getElementById('task-list-' + ri);
-    list.querySelectorAll('.inp')[list.querySelectorAll('.inp').length - 1]?.focus();
+    const inputs = list.querySelectorAll('.inp');
+    inputs[inputs.length - 1]?.focus();
   }
 
   function removeTask(ri, ti) {
