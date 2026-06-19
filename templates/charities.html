@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Family Giving</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #9b87f5;
+      --pink:   #f472b6;
+      --blue:   #4db8ff;
+      --green:  #34d399;
+      --text:   #1e1b4b;
+      --muted:  #9490c0;
+      --bg:     #f5f3ff;
+      --card:   #ffffff;
+      --border: #e5e0ff;
+      --r:      16px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(160deg, #cce8ff 0%, #e9e3ff 50%, #ffd6f0 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 4rem;
+    }
+
+    body::before {
+      content: '✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧';
+      position: fixed; top: 0; left: 0; right: 0;
+      font-size: 1rem; color: rgba(155,135,245,0.18);
+      letter-spacing: 2rem; word-spacing: 2rem; line-height: 3rem;
+      pointer-events: none; z-index: 0; word-break: break-all;
+    }
+
+    /* ── Header ── */
+    header {
+      background: rgba(255,255,255,0.7);
+      border-bottom: 1.5px solid var(--border);
+      padding: 1.1rem 1.25rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    header h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, #9b87f5, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+    /* ── Menu ── */
+    .menu-btn { background: rgba(255,255,255,0.7); border: none; font-size: 1.5rem; color: var(--purple); cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 8px; line-height: 1; }
+    .menu-btn:hover { background: white; }
+    .menu-backdrop { display: none; position: fixed; inset: 0; background: rgba(78,58,180,0.18); z-index: 200; backdrop-filter: blur(2px); }
+    .menu-backdrop.open { display: block; }
+    .menu-panel { position: fixed; top: 0; right: 0; width: min(280px,85vw); height: 100%; background: white; z-index: 201; transform: translateX(110%); transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1); padding: 2rem 1.5rem; display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(78,58,180,0.15); }
+    .menu-panel.open { transform: translateX(0); }
+    .menu-title { font-family: 'Fredoka One', cursive; font-size: 1.4rem; background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1.75rem; }
+    .menu-item { display: flex; align-items: center; gap: 0.9rem; padding: 0.95rem 0.5rem; border-bottom: 1.5px solid #f3f0ff; font-size: 0.95rem; font-weight: 700; color: #1e1b4b; border-radius: 8px; }
+    .menu-item:hover { background: #f8f5ff; }
+    .menu-item a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.9rem; width: 100%; }
+    .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
+
+    /* ── Edit toggle button ── */
+    .edit-btn {
+      background: rgba(255,255,255,0.7); border: 1.5px solid var(--border);
+      color: var(--purple); font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem; font-weight: 800;
+      padding: 0.35rem 0.8rem; border-radius: 20px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .edit-btn.active { background: var(--purple); color: white; border-color: var(--purple); }
+
+    /* ── Page ── */
+    .page { max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem; position: relative; z-index: 1; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex; gap: 1.5rem; justify-content: center;
+      margin-bottom: 1.75rem;
+    }
+    .stat-pill {
+      display: flex; flex-direction: column; align-items: center;
+      background: white; border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 0.75rem 1.25rem;
+      box-shadow: 0 2px 10px rgba(78,58,180,0.07);
+      min-width: 110px;
+    }
+    .stat-num {
+      font-family: 'Fredoka One', cursive; font-size: 2rem; line-height: 1;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label {
+      font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--muted); margin-top: 0.15rem;
+    }
+
+    /* ── Month card ── */
+    .month-card {
+      background: white; border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      box-shadow: 0 4px 20px rgba(78,58,180,0.07);
+      margin-bottom: 1rem; overflow: hidden;
+    }
+    .month-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.9rem 1.1rem;
+      background: linear-gradient(135deg, #ede9fe 0%, #fce7f3 100%);
+      border-bottom: 1.5px solid var(--border);
+    }
+    .month-name {
+      font-family: 'Fredoka One', cursive; font-size: 1.1rem;
+      background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .month-count { font-size: 0.78rem; font-weight: 800; color: var(--muted); }
+    .month-count .donated { color: var(--purple); }
+
+    /* ── Charity row ── */
+    .charity-row {
+      display: flex; align-items: center; gap: 0.8rem;
+      padding: 0.75rem 1.1rem;
+      border-bottom: 1px solid #f3f0ff;
+      transition: background 0.15s;
+    }
+    .charity-row:last-child { border-bottom: none; }
+    .charity-row:hover { background: #faf8ff; }
+
+    .status-btn {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--border); background: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; cursor: default; transition: all 0.2s;
+      user-select: none;
+    }
+    .status-btn.donated { border-color: var(--purple); background: #ede9fe; }
+    .status-btn.planned { border-color: #d1d5db; background: white; }
+    .status-btn.skipped { border-color: #e5e7eb; background: #f9fafb; }
+    .edit-mode .status-btn { cursor: pointer; }
+    .edit-mode .status-btn:hover { transform: scale(1.1); }
+
+    .charity-info { flex: 1; min-width: 0; }
+    .charity-name {
+      font-size: 0.92rem; font-weight: 700; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .charity-row.skipped .charity-name { text-decoration: line-through; color: var(--muted); }
+    .charity-cause {
+      display: inline-block; font-size: 0.68rem; font-weight: 800;
+      background: #ede9fe; color: #6d28d9;
+      padding: 0.1rem 0.5rem; border-radius: 10px;
+      margin-top: 0.2rem;
+    }
+    .charity-notes { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+
+    .delete-btn {
+      flex-shrink: 0; background: none; border: none;
+      color: #f87171; font-size: 1.1rem; cursor: pointer;
+      opacity: 0; padding: 0.2rem 0.3rem; border-radius: 6px;
+      transition: opacity 0.2s;
+    }
+    .edit-mode .delete-btn { opacity: 1; }
+    .delete-btn:hover { background: #fee2e2; }
+
+    /* ── Add charity form (edit mode only) ── */
+    .add-charity-form {
+      display: none; padding: 0.75rem 1.1rem;
+      border-top: 1.5px dashed var(--border);
+      background: #faf8ff;
+      gap: 0.5rem; flex-direction: column;
+    }
+    .edit-mode .add-charity-form { display: flex; }
+    .add-charity-row { display: flex; gap: 0.5rem; }
+    .add-input {
+      flex: 1; font-family: 'Nunito', sans-serif; font-size: 0.85rem;
+      font-weight: 600; color: var(--text);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 0.45rem 0.75rem; background: white; outline: none;
+    }
+    .add-input:focus { border-color: var(--purple); }
+    .add-input.cause-input { max-width: 120px; }
+    .add-submit-btn {
+      background: var(--purple); color: white; border: none;
+      border-radius: 10px; padding: 0.45rem 0.85rem;
+      font-family: 'Nunito', sans-serif; font-size: 0.85rem; font-weight: 800;
+      cursor: pointer; transition: opacity 0.2s; flex-shrink: 0;
+    }
+    .add-submit-btn:hover { opacity: 0.85; }
+
+    /* ── Add month form ── */
+    .add-month-section {
+      display: none; margin-top: 0.5rem;
+      background: white; border: 1.5px solid var(--border);
+      border-radius: var(--r); padding: 1rem 1.1rem;
+      box-shadow: 0 4px 20px rgba(78,58,180,0.07);
+    }
+    .edit-mode-global .add-month-section { display: block; }
+    .add-month-label { font-size: 0.78rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; }
+    .add-month-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .add-month-select {
+      font-family: 'Nunito', sans-serif; font-size: 0.85rem; font-weight: 600;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 0.45rem 0.75rem; background: white; color: var(--text);
+      outline: none; cursor: pointer;
+    }
+    .add-month-select:focus { border-color: var(--purple); }
+
+    /* ── Save banner ── */
+    .save-bar {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--purple); color: white; z-index: 100;
+      padding: 0.9rem 1.5rem; text-align: center;
+    }
+    .save-bar.visible { display: block; }
+    .save-bar-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .save-bar p { font-size: 0.9rem; font-weight: 700; }
+    .save-action-btn {
+      background: white; color: var(--purple); border: none;
+      border-radius: 20px; padding: 0.45rem 1.2rem;
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.88rem;
+      cursor: pointer;
+    }
+
+    .toast {
+      position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%);
+      background: #1e1b4b; color: white; border-radius: 20px;
+      padding: 0.6rem 1.4rem; font-size: 0.88rem; font-weight: 700;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 300;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>💜 Family Giving</h1>
+  <div class="header-actions">
+    <button class="edit-btn" id="editToggle" onclick="toggleEdit()">✏️ Edit</button>
+    <button class="menu-btn" onclick="openMenu()">☰</button>
+  </div>
+</header>
+
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-title">✦ Menu</div>
+  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
+  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
+  <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
+  <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
+  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
+  <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
+</div>
+
+<div class="page" id="mainPage">
+  <div class="stats-bar" id="statsBar"></div>
+  <div id="timeline"></div>
+
+  <div class="add-month-section" id="addMonthSection">
+    <div class="add-month-label">+ Add a month</div>
+    <div class="add-month-row">
+      <select class="add-month-select" id="newMonthName">
+        <option>January</option><option>February</option><option>March</option>
+        <option>April</option><option>May</option><option>June</option>
+        <option>July</option><option>August</option><option>September</option>
+        <option>October</option><option>November</option><option>December</option>
+      </select>
+      <select class="add-month-select" id="newMonthYear"></select>
+      <button class="add-submit-btn" onclick="addMonth()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div class="save-bar" id="saveBar">
+  <div class="save-bar-inner">
+    <p>You have unsaved changes</p>
+    <button class="save-action-btn" onclick="saveAll()">Save 💜</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const MONTH_ORDER = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+
+  let data = {{ charities_json | safe }};
+  let editMode = false;
+  let dirty = false;
+
+  // Group and sort: newest first
+  function groupByMonth(rows) {
+    const map = {};
+    rows.forEach(r => {
+      const key = `${r.month}|${r.year}`;
+      if (!map[key]) map[key] = { month: r.month, year: r.year, charities: [] };
+      map[key].charities.push(r);
+    });
+    return Object.values(map).sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year;
+      return MONTH_ORDER.indexOf(b.month) - MONTH_ORDER.indexOf(a.month);
+    });
+  }
+
+  function statusIcon(s) {
+    if (s === 'donated') return '💜';
+    if (s === 'skipped') return '✗';
+    return '';
+  }
+
+  function nextStatus(s) {
+    if (s === 'planned') return 'donated';
+    if (s === 'donated') return 'skipped';
+    return 'planned';
+  }
+
+  function markDirty() {
+    dirty = true;
+    document.getElementById('saveBar').classList.add('visible');
+  }
+
+  function renderStats() {
+    const total = data.filter(r => r.status === 'donated').length;
+    const groups = groupByMonth(data);
+    const months = groups.filter(g => g.charities.some(c => c.status === 'donated')).length;
+    document.getElementById('statsBar').innerHTML = `
+      <div class="stat-pill">
+        <div class="stat-num">${total}</div>
+        <div class="stat-label">charities given</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-num">${months}</div>
+        <div class="stat-label">months giving</div>
+      </div>
+    `;
+  }
+
+  function renderTimeline() {
+    const groups = groupByMonth(data);
+    const tl = document.getElementById('timeline');
+    tl.innerHTML = '';
+
+    groups.forEach(g => {
+      const donated = g.charities.filter(c => c.status === 'donated').length;
+      const total   = g.charities.length;
+
+      const card = document.createElement('div');
+      card.className = 'month-card';
+      card.innerHTML = `
+        <div class="month-header">
+          <div class="month-name">${g.month} ${g.year}</div>
+          <div class="month-count"><span class="donated">${donated}</span>/${total} given</div>
+        </div>
+      `;
+
+      g.charities.forEach((c, ci) => {
+        const globalIdx = data.indexOf(c);
+        const row = document.createElement('div');
+        row.className = `charity-row ${c.status}`;
+        row.dataset.idx = globalIdx;
+
+        row.innerHTML = `
+          <button class="status-btn ${c.status}" onclick="cycleStatus(${globalIdx})">${statusIcon(c.status)}</button>
+          <div class="charity-info">
+            <div class="charity-name">${escHtml(c.charity)}</div>
+            ${c.cause ? `<span class="charity-cause">${escHtml(c.cause)}</span>` : ''}
+            ${c.notes ? `<div class="charity-notes">${escHtml(c.notes)}</div>` : ''}
+          </div>
+          <button class="delete-btn" onclick="deleteCharity(${globalIdx})" title="Remove">✕</button>
+        `;
+        card.appendChild(row);
+      });
+
+      // Add charity form
+      const form = document.createElement('div');
+      form.className = 'add-charity-form';
+      form.innerHTML = `
+        <div class="add-charity-row">
+          <input class="add-input" placeholder="Charity name" data-month="${g.month}" data-year="${g.year}" id="name-${g.month}-${g.year}">
+          <input class="add-input cause-input" placeholder="Cause (optional)" id="cause-${g.month}-${g.year}">
+        </div>
+        <div class="add-charity-row">
+          <input class="add-input" placeholder="Notes (optional)" id="notes-${g.month}-${g.year}" style="flex:1">
+          <button class="add-submit-btn" onclick="addCharity('${g.month}',${g.year})">Add</button>
+        </div>
+      `;
+      card.appendChild(form);
+      tl.appendChild(card);
+    });
+
+    if (editMode) {
+      tl.querySelectorAll('.charity-row, .month-card').forEach(el => el.classList.add('edit-mode-row'));
+      document.getElementById('mainPage').classList.add('edit-mode-global');
+      tl.classList.add('edit-mode');
+    }
+
+    renderStats();
+  }
+
+  function cycleStatus(idx) {
+    if (!editMode) return;
+    data[idx].status = nextStatus(data[idx].status);
+    markDirty();
+    renderTimeline();
+  }
+
+  function deleteCharity(idx) {
+    if (!editMode) return;
+    data.splice(idx, 1);
+    markDirty();
+    renderTimeline();
+  }
+
+  function addCharity(month, year) {
+    const nameEl  = document.getElementById(`name-${month}-${year}`);
+    const causeEl = document.getElementById(`cause-${month}-${year}`);
+    const notesEl = document.getElementById(`notes-${month}-${year}`);
+    const name = (nameEl.value || '').trim();
+    if (!name) { nameEl.focus(); return; }
+    data.push({ month, year: parseInt(year), charity: name,
+                cause: (causeEl.value || '').trim(),
+                status: 'planned', notes: (notesEl.value || '').trim() });
+    nameEl.value = ''; causeEl.value = ''; notesEl.value = '';
+    markDirty();
+    renderTimeline();
+  }
+
+  function addMonth() {
+    const month = document.getElementById('newMonthName').value;
+    const year  = parseInt(document.getElementById('newMonthYear').value);
+    const exists = data.some(r => r.month === month && r.year === year);
+    if (exists) { showToast(`${month} ${year} already exists`); return; }
+    data.push({ month, year, charity: '', cause: '', status: 'planned', notes: '' });
+    data = data.filter(r => r.charity); // remove placeholder if any
+    // force the month to appear by adding a placeholder we'll show...
+    // Actually just add a real first entry via the form after month appears
+    // For now just push a visible placeholder
+    markDirty();
+    renderTimeline();
+    showToast(`${month} ${year} added — now add charities below`);
+  }
+
+  function toggleEdit() {
+    editMode = !editMode;
+    const btn = document.getElementById('editToggle');
+    btn.textContent = editMode ? '✓ Done' : '✏️ Edit';
+    btn.classList.toggle('active', editMode);
+    document.getElementById('mainPage').classList.toggle('edit-mode-global', editMode);
+    renderTimeline();
+    if (editMode) {
+      document.getElementById('timeline').classList.add('edit-mode');
+    }
+  }
+
+  async function saveAll() {
+    const resp = await fetch('/charities/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (resp.ok) {
+      dirty = false;
+      document.getElementById('saveBar').classList.remove('visible');
+      showToast('Saved! 💜');
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Populate year select
+  function initYearSelect() {
+    const sel = document.getElementById('newMonthYear');
+    const cur = new Date().getFullYear();
+    for (let y = cur; y >= cur - 5; y--) {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      sel.appendChild(opt);
+    }
+  }
+
+  function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
+  function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  initYearSelect();
+  renderTimeline();
+</script>
+</body>
+</html>

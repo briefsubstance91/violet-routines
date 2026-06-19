@@ -29,7 +29,44 @@ LEVELUP_LOG_FILE   = os.path.join(_DATA, 'Violet Levelup Log.csv')
 VAPID_FILE         = os.path.join(_DATA, 'vapid_keys.json')
 PUSH_SUBS_FILE     = os.path.join(_DATA, 'push_subscriptions.json')
 VAPID_CLAIMS       = {'sub': 'mailto:bgelineau@proton.me'}
-_already_notified  = {}  # {routine_id:date → True}
+_already_notified   = {}  # {routine_id:date → True}
+CHARITIES_FILE      = os.path.join(_DATA, 'Violet Charities.csv')
+CHARITIES_SEED_FILE = os.path.join(_BASE, 'Violet Charities.csv')
+
+
+_MONTH_NUM = {m: i for i, m in enumerate(
+    ['January','February','March','April','May','June',
+     'July','August','September','October','November','December'], 1)}
+
+
+def load_charities():
+    path = CHARITIES_FILE if os.path.exists(CHARITIES_FILE) else CHARITIES_SEED_FILE
+    rows = []
+    try:
+        with open(path, newline='', encoding='utf-8-sig') as f:
+            for row in csv.DictReader(f):
+                if row.get('Charity', '').strip():
+                    rows.append({
+                        'month':   row['Month'].strip(),
+                        'year':    int(row['Year'].strip() or 0),
+                        'charity': row['Charity'].strip(),
+                        'cause':   row.get('Cause', '').strip(),
+                        'status':  row.get('Status', 'planned').strip(),
+                        'notes':   row.get('Notes', '').strip(),
+                    })
+    except FileNotFoundError:
+        pass
+    return rows
+
+
+def save_charities(entries):
+    with open(CHARITIES_FILE, 'w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=['Month','Year','Charity','Cause','Status','Notes'])
+        w.writeheader()
+        for e in entries:
+            w.writerow({'Month': e.get('month',''), 'Year': e.get('year',''),
+                        'Charity': e.get('charity',''), 'Cause': e.get('cause',''),
+                        'Status': e.get('status','planned'), 'Notes': e.get('notes','')})
 
 
 def get_vapid_keys():
@@ -734,6 +771,17 @@ def push_test():
         except WebPushException as ex:
             print(f'[push] test error: {ex}')
     return jsonify({'ok': sent > 0, 'sent': sent})
+
+
+@app.route('/charities')
+def charities():
+    return render_template('charities.html', charities_json=json.dumps(load_charities()))
+
+
+@app.route('/charities/save', methods=['POST'])
+def charities_save():
+    save_charities(request.get_json() or [])
+    return jsonify({'ok': True})
 
 
 if __name__ == '__main__':
