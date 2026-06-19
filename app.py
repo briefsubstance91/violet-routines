@@ -41,6 +41,9 @@ SETTINGS_FILE       = os.path.join(_DATA, 'violet_settings.json')
 # Editable-at-runtime copies live on the volume; seeds in the repo are the fallback.
 TASKS_FILE          = os.path.join(_DATA, 'Violet Tasks.csv')
 MILESTONES_FILE     = os.path.join(_DATA, 'Violet Milestones.csv')
+TOONIES_FILE        = os.path.join(_DATA, 'violet_toonies.json')
+TOONIES_SEED_FILE   = os.path.join(_BASE, 'violet_toonies.json')
+DEFAULT_TZ          = 'America/Toronto'
 
 
 def _data_or_seed(data_path, seed_path):
@@ -312,6 +315,68 @@ def next_money_milestone(earned):
     nxt = next(((a, v) for a, v in ms if a > earned), None)
     prev = max((a for a, v in ms if a <= earned), default=0.0)
     return nxt, prev
+
+
+# ── Toonie tasks (weekly-planned $2 earners, unlocked per routine window) ──
+def load_toonies():
+    """Per-window toonie-task config. Prefer the volume copy, fall back to seed."""
+    for path in (TOONIES_FILE, TOONIES_SEED_FILE):
+        if os.path.isfile(path):
+            try:
+                with open(path, encoding='utf-8') as f:
+                    return json.load(f)
+            except (OSError, ValueError):
+                break
+    return {'timezone': DEFAULT_TZ, 'windows': {}, 'tasks': {}}
+
+
+def save_toonies(data):
+    with open(TOONIES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+def _now_local(cfg=None):
+    """Current time in the configured timezone (falls back to naive local)."""
+    tz_name = (cfg or load_toonies()).get('timezone') or DEFAULT_TZ
+    try:
+        return datetime.now(ZoneInfo(tz_name))
+    except Exception:
+        return datetime.now()
+
+
+def current_window(cfg=None):
+    """Window id (am/af/pm) whose [start, end) clock range contains 'now', else None."""
+    cfg = cfg or load_toonies()
+    now = _now_local(cfg)
+    mins = now.hour * 60 + now.minute
+    for wid, w in cfg.get('windows', {}).items():
+        try:
+            sh, sm = (int(x) for x in w['start'].split(':'))
+            eh, em = (int(x) for x in w['end'].split(':'))
+        except (ValueError, KeyError, AttributeError):
+            continue
+        if sh * 60 + sm <= mins < eh * 60 + em:
+            return wid
+    return None
+
+
+def routine_complete_today(routine_id, today=None):
+    """True if today's log shows the given routine fully completed."""
+    today = today or _now_local().date().isoformat()
+    for r in load_log():
+        if r.get('Date') == today and r.get('Routine') == routine_id:
+            try:
+                return int(r['Total']) > 0 and int(r['Completed']) == int(r['Total'])
+            except (ValueError, KeyError):
+                return False
+    return False
+
+
+def toonies_earned_today(today=None):
+    """Ledger keys of toonie tasks already earned today (one per window+task)."""
+    today = today or _now_local().date().isoformat()
+    return [r.get('Key') for r in load_earnings()
+            if r.get('Date') == today and (r.get('Key') or '').startswith('toonie:')]
 
 
 def get_vapid_keys():
@@ -815,6 +880,43 @@ def earn():
     return jsonify(resp)
 
 
+@app.route('/earn-toonie', methods=['POST'])
+def earn_toonie():
+    """Earn (or same-window reverse) one toonie task. Strictly gated server-side:
+    must be inside the task's window AND that window's routine done today."""
+    d = request.get_json() or {}
+    task_id = d.get('task_id')
+    want    = bool(d.get('earned', True))
+    cfg = load_toonies()
+    win = current_window(cfg)
+    if not win:
+        return jsonify({'ok': False, 'reason': 'closed'})
+    task = next((t for t in cfg.get('tasks', {}).get(win, []) if t.get('id') == task_id), None)
+    if not task:
+        return jsonify({'ok': False, 'reason': 'unknown'})
+    if want and not routine_complete_today(win):
+        return jsonify({'ok': False, 'reason': 'routine'})
+    today  = _now_local(cfg).date().isoformat()
+    key    = 'toonie:%s:%s' % (win, task_id)
+    before = compute_bank()['earned']
+    set_earning(today, key, task.get('label', 'Toonie task'),
+                task.get('value', DEFAULT_TASK_VALUE), want)
+    bank_after = compute_bank()
+    hit = None
+    if bank_after['earned'] > before:
+        for k, v in load_money_milestones().items():
+            try:
+                amt = float(k)
+            except ValueError:
+                continue
+            if before < amt <= bank_after['earned']:
+                if hit is None or amt < hit['amount']:
+                    hit = {'amount': amt, 'message': v['message'], 'category': v.get('category', '')}
+    resp = dict(bank_after)
+    resp.update({'ok': True, 'key': key, 'window': win, 'milestone': hit})
+    return jsonify(resp)
+
+
 @app.route('/bank')
 def bank():
     b = compute_bank()
@@ -843,6 +945,7 @@ def index():
     levelup_data = load_levelup_data()
     cel_routines, cel_milestones = list_celebration_images()
     extras = events_due_today()
+    toonie_cfg = load_toonies()
     return render_template(
         'index.html',
         routines=routines,
@@ -859,6 +962,8 @@ def index():
         levelup_categories_json=json.dumps(levelup_data.get('levelup_categories', [])),
         badges_json=json.dumps(BADGES),
         completed_dates_json=json.dumps(completed_dates(load_log())),
+        toonie_config_json=json.dumps(toonie_cfg),
+        toonie_earned_json=json.dumps(toonies_earned_today()),
     )
 
 
@@ -1044,6 +1149,22 @@ def admin_events():
 @app.route('/admin/events/save', methods=['POST'])
 def admin_events_save():
     save_events(request.get_json() or [])
+    return jsonify({'ok': True})
+
+
+@app.route('/admin/toonies')
+def admin_toonies():
+    return render_template('admin_toonies.html',
+                           toonies_json=json.dumps(load_toonies()))
+
+
+@app.route('/admin/toonies/save', methods=['POST'])
+def admin_toonies_save():
+    data = request.get_json() or {}
+    cfg = load_toonies()
+    # Preserve window/timezone config; only the weekly task lists are editable here.
+    cfg['tasks'] = data.get('tasks', {})
+    save_toonies(cfg)
     return jsonify({'ok': True})
 
 
