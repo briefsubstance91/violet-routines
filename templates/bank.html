@@ -99,45 +99,6 @@
     </div>
   </div>
 
-  {% if next_ms %}
-  {% set togo = (next_ms[0] - bank.earned) %}
-  {% set span = (next_ms[0] - prev_amt) %}
-  {% set pct = (((bank.earned - prev_amt) / span * 100) | round | int) if span > 0 else 0 %}
-  <div class="section-title">🎯 Next money reward</div>
-  <div class="ms-card">
-    <div class="ms-top">
-      <div>
-        <div class="ms-left">Reward at ${{ '%g'|format(next_ms[0]) }}</div>
-        <div class="ms-reward">{{ next_ms[1].message }}</div>
-      </div>
-      <div class="ms-togo">${{ '%g'|format(togo) }}<br><span style="font-size:0.6rem;color:var(--muted);font-weight:800">to go</span></div>
-    </div>
-    <div class="ms-bar-wrap"><div class="ms-bar" style="width: {{ pct }}%"></div></div>
-    <div class="ms-scale">
-      <span>${{ '%g'|format(prev_amt) }}</span>
-      <span>{{ pct }}% there</span>
-      <span>${{ '%g'|format(next_ms[0]) }}</span>
-    </div>
-  </div>
-  {% elif money_ms %}
-  <div class="ms-card" style="text-align:center">
-    <div class="ms-reward">🏆 Every money reward unlocked — incredible saving!</div>
-  </div>
-  {% endif %}
-
-  {% if money_ms %}
-  <div class="section-title">All money rewards</div>
-  <div class="ms-list">
-    {% for amt, info in money_ms %}
-    <div class="ms-chip {{ 'hit' if bank.earned >= amt }}">
-      <div class="ms-chip-amt">${{ '%g'|format(amt) }}</div>
-      <div class="ms-chip-msg">{{ info.message }}</div>
-      <div class="ms-chip-state">{{ '✅' if bank.earned >= amt else '🔒' }}</div>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
   <div class="section-title">Recent earnings</div>
   {% if recent %}
   <div class="txn-list">

@@ -688,11 +688,28 @@ def compute_stats(log_rows):
 
 
 def load_levelup_data():
+    data = None
     for path in (LEVELUP_DATA_FILE, LEVELUP_SEED_FILE):
         if os.path.isfile(path):
             with open(path, encoding='utf-8') as f:
-                return json.load(f)
-    return {'levelup_categories': []}
+                data = json.load(f)
+            break
+    if data is None:
+        return {'levelup_categories': []}
+    # Merge in any seed categories the saved copy is missing (matched by id), so
+    # newly shipped Level-Up sections appear even when a customised copy already
+    # lives on the volume. Idempotent: existing categories are left untouched.
+    if LEVELUP_DATA_FILE != LEVELUP_SEED_FILE and os.path.isfile(LEVELUP_SEED_FILE):
+        try:
+            with open(LEVELUP_SEED_FILE, encoding='utf-8') as f:
+                seed = json.load(f)
+            existing_ids = {c.get('id') for c in data.get('levelup_categories', [])}
+            for cat in seed.get('levelup_categories', []):
+                if cat.get('id') not in existing_ids:
+                    data.setdefault('levelup_categories', []).append(cat)
+        except (OSError, ValueError):
+            pass
+    return data
 
 
 def save_levelup_data(data):
