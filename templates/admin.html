@@ -171,6 +171,7 @@
     <button class="tab-btn active" id="tab-routines" onclick="switchTab('routines')">✦ Routines</button>
     <button class="tab-btn" id="tab-levelup" onclick="switchTab('levelup')">⚡ Level Up</button>
     <button class="tab-btn" id="tab-milestones" onclick="switchTab('milestones')">🏆 Milestones</button>
+    <button class="tab-btn" id="tab-money" onclick="switchTab('money')">💰 Money</button>
   </div>
 </header>
 
@@ -241,14 +242,14 @@
   <div class="help-box">
     <div class="help-title">🏆 How Milestones work</div>
     <ul>
-      <li>A milestone is a reward Violet earns when her streak hits a specific day count</li>
-      <li>Set the <strong>streak day</strong>, the <strong>reward</strong> (what she gets), and optionally a <strong>category</strong></li>
-      <li>Rows are auto-sorted by streak number when saved</li>
+      <li>A milestone is a reward Violet earns when her total <strong>days completed</strong> reaches a number. This count is cumulative and never resets — missing a day doesn't erase progress</li>
+      <li>Set the <strong>day count</strong>, the <strong>reward</strong> (what she gets), and optionally a <strong>category</strong></li>
+      <li>Rows are auto-sorted by day count when saved</li>
     </ul>
   </div>
   <div class="card">
     <div class="ms-header-row">
-      <div class="ms-streak">Day #</div>
+      <div class="ms-streak">Days</div>
       <div class="ms-message" style="flex:1">Reward</div>
       <div class="ms-category">Category</div>
       <div style="width:2rem"></div>
@@ -256,6 +257,42 @@
     <div id="milestonesList"></div>
     <div class="add-ms-wrap">
       <button class="btn-ghost" onclick="addMilestone()">+ Add milestone</button>
+    </div>
+  </div>
+</div>
+
+<div id="section-money" class="tab-content">
+  <div class="help-box">
+    <div class="help-title">💰 Money & Giving</div>
+    <ul>
+      <li>Bonus tasks earn money. A share goes to Violet's <strong>Giving Pot</strong> for a good cause — set that percentage below</li>
+      <li><strong>Money milestones</strong> are rewards Violet unlocks as her <strong>total earned</strong> grows (e.g. "$25: pick a book"). They show on her Bank page and celebrate when reached</li>
+      <li>Set the <strong>dollar amount</strong>, the <strong>reward</strong>, and an optional <strong>category</strong>. Rows auto-sort by amount</li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-bottom:1rem">
+    <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap">
+      <label style="font-weight:800; color:var(--text)">Giving share</label>
+      <div style="display:flex; align-items:center; gap:0.4rem">
+        <input id="givingPctInput" type="number" min="0" max="100" step="1"
+               style="width:80px; text-align:center; font-weight:800; color:var(--purple); border:2px solid var(--border); border-radius:8px; padding:0.4rem; background:#f0ebff;"
+               oninput="givingPct=this.value; markDirty('money')">
+        <span style="font-weight:800; color:var(--muted)">% of every dollar earned</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ms-header-row">
+      <div class="ms-streak">Amount $</div>
+      <div class="ms-message" style="flex:1">Reward</div>
+      <div class="ms-category">Category</div>
+      <div style="width:2rem"></div>
+    </div>
+    <div id="moneyList"></div>
+    <div class="add-ms-wrap">
+      <button class="btn-ghost" onclick="addMoneyMilestone()">+ Add money reward</button>
     </div>
   </div>
 </div>
@@ -277,13 +314,15 @@
   let routines   = {{ routines_json | safe }};
   let levelup    = {{ data | tojson }};
   let milestones = {{ milestones_json | safe }};
+  let moneyMilestones = {{ money_milestones_json | safe }};
+  let givingPct  = {{ giving_pct }};
 
   /* ── Tab state ── */
   let activeTab = 'routines';
-  let dirty = { routines: false, levelup: false, milestones: false };
+  let dirty = { routines: false, levelup: false, milestones: false, money: false };
 
   function switchTab(name) {
-    ['routines','levelup','milestones'].forEach(t => {
+    ['routines','levelup','milestones','money'].forEach(t => {
       document.getElementById('section-' + t).classList.toggle('active', t === name);
       document.getElementById('tab-' + t).classList.toggle('active', t === name);
     });
@@ -314,6 +353,7 @@
     if (activeTab === 'routines')   { url = '/admin/tasks/save';       body = routines; }
     if (activeTab === 'levelup')    { url = '/admin/save';              body = levelup; }
     if (activeTab === 'milestones') { url = '/admin/milestones/save';   body = milestones; }
+    if (activeTab === 'money')      { url = '/admin/money/save';        body = { giving_pct: givingPct, milestones: moneyMilestones }; }
     const res = await fetch(url, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(body)
@@ -574,6 +614,49 @@
     renderMilestones();
   }
 
+  /* ══════════════════════════════════════
+     MONEY TAB
+     ══════════════════════════════════════ */
+  function renderMoney() {
+    document.getElementById('givingPctInput').value = givingPct;
+    const list = document.getElementById('moneyList');
+    list.innerHTML = '';
+    moneyMilestones.forEach((ms, i) => {
+      const row = document.createElement('div');
+      row.className = 'milestone-row';
+      row.innerHTML = `
+        <div class="ms-streak">
+          <input type="number" min="0" step="0.01" value="${esc(ms.amount)}" placeholder="25"
+                 oninput="moneyMilestones[${i}].amount=this.value; markDirty('money')">
+        </div>
+        <div class="ms-message">
+          <input class="inp" value="${esc(ms.message)}" placeholder="Reward description…"
+                 oninput="moneyMilestones[${i}].message=this.value; markDirty('money')">
+        </div>
+        <div class="ms-category">
+          <input class="inp inp-sm" value="${esc(ms.category||'')}" placeholder="Category"
+                 oninput="moneyMilestones[${i}].category=this.value; markDirty('money')">
+        </div>
+        <button class="btn-del" onclick="removeMoneyMilestone(${i})">×</button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function addMoneyMilestone() {
+    moneyMilestones.push({amount:'', message:'', category:''});
+    markDirty('money');
+    renderMoney();
+    const rows = document.querySelectorAll('#moneyList .milestone-row');
+    rows[rows.length - 1]?.querySelector('input')?.focus();
+  }
+
+  function removeMoneyMilestone(i) {
+    moneyMilestones.splice(i, 1);
+    markDirty('money');
+    renderMoney();
+  }
+
   /* ── Helpers ── */
   function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
   function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
@@ -583,6 +666,7 @@
   renderRoutines();
   renderLevelUp();
   renderMilestones();
+  renderMoney();
   updateSaveBtn();
 </script>
 

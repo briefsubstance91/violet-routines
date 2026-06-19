@@ -376,15 +376,15 @@
 
 <div class="page">
 
-  <!-- Streak -->
-  <p class="section-label">🔥 Current Streak</p>
-  <div class="card streak-card{% if stats.streak == 0 %} streak-zero{% endif %}">
-    {% if stats.streak > 0 %}
-      <div class="streak-number">{{ stats.streak }}</div>
-      <div class="streak-label">day{{ 's' if stats.streak != 1 }} in a row!</div>
+  <!-- Days completed -->
+  <p class="section-label">🌟 Days Completed</p>
+  <div class="card streak-card{% if stats.days_completed == 0 %} streak-zero{% endif %}">
+    {% if stats.days_completed > 0 %}
+      <div class="streak-number">{{ stats.days_completed }}</div>
+      <div class="streak-label">day{{ 's' if stats.days_completed != 1 }} completed — and counting!</div>
     {% else %}
       <div class="streak-number">Start today! ✨</div>
-      <div class="streak-label">Complete a routine to begin your streak</div>
+      <div class="streak-label">Complete a routine to add your first day</div>
     {% endif %}
   </div>
 

@@ -307,9 +307,9 @@
   <!-- ── KPI row ── -->
   <div class="kpi-row">
     <div class="kpi-card">
-      <div class="kpi-label">🔥 Streak</div>
-      <div class="kpi-value" style="color:var(--purple)">{{ stats.streak }}</div>
-      <div class="kpi-sub">day{{ 's' if stats.streak != 1 }} in a row</div>
+      <div class="kpi-label">🌟 Days Done</div>
+      <div class="kpi-value" style="color:var(--purple)">{{ stats.days_completed }}</div>
+      <div class="kpi-sub">day{{ 's' if stats.days_completed != 1 }} completed</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">✅ Completion</div>
@@ -331,15 +331,15 @@
   <!-- ── Milestone ── -->
   <p class="section-label">🏆 Next Reward</p>
   {% if next_ms %}
-    {% set days_left = next_ms[0] - stats.streak %}
+    {% set days_left = next_ms[0] - stats.days_completed %}
     {% set range_size = next_ms[0] - prev_ms_streak %}
-    {% set progress = ((stats.streak - prev_ms_streak) / range_size * 100) | round | int %}
+    {% set progress = ((stats.days_completed - prev_ms_streak) / range_size * 100) | round | int %}
   <div class="card milestone-card">
     <div class="ms-header">
       <div class="ms-reward">{{ next_ms[1].message }}</div>
       <div>
         <div class="ms-days-left">{{ days_left }}</div>
-        <div class="ms-days-label">days left</div>
+        <div class="ms-days-label">days to go</div>
       </div>
     </div>
     <div class="ms-bar-wrap">
@@ -472,14 +472,14 @@
       <div class="hiw-section">
         <div class="hiw-section-title">The daily loop</div>
         <div class="hiw-item"><span class="hiw-item-icon">✦</span><span>Violet has <strong>three daily routines</strong> (Morning, Afternoon, Evening). She checks off tasks in each one on her phone.</span></div>
-        <div class="hiw-item"><span class="hiw-item-icon">🔥</span><span>Completing <em>any</em> routine on a given day counts toward her <strong>streak</strong>. Missing a full day breaks it.</span></div>
+        <div class="hiw-item"><span class="hiw-item-icon">🌟</span><span>Each day she finishes <em>any</em> routine adds one to her <strong>days completed</strong>. It's cumulative and never resets — missing a day just pauses progress, it doesn't erase it.</span></div>
         <div class="hiw-item"><span class="hiw-item-icon">⚡</span><span><strong>Level Up</strong> is her win log — after a routine she can tap ⚡ and record a small personal victory in a category you've set (School, Kindness, Health…).</span></div>
       </div>
 
       <div class="hiw-section">
         <div class="hiw-section-title">Rewards & recognition</div>
-        <div class="hiw-item"><span class="hiw-item-icon">🏆</span><span><strong>Milestones</strong> are custom rewards you set in Admin. When Violet's streak hits that day count, she sees the reward message.</span></div>
-        <div class="hiw-item"><span class="hiw-item-icon">🏅</span><span><strong>Badges</strong> are earned automatically — for streaks, completing each routine a certain number of times, logging wins, and getting a Triple Crown (all 3 routines in one day).</span></div>
+        <div class="hiw-item"><span class="hiw-item-icon">🏆</span><span><strong>Milestones</strong> are custom rewards you set in Admin. When Violet's total days completed reaches that number, she sees the reward message.</span></div>
+        <div class="hiw-item"><span class="hiw-item-icon">🏅</span><span><strong>Badges</strong> are earned automatically — for days completed, completing each routine a certain number of times, logging wins, and getting a Triple Crown (all 3 routines in one day).</span></div>
         <div class="hiw-item"><span class="hiw-item-icon">👑</span><span><strong>Triple Crown</strong> is awarded when Violet completes all three routines on the same day.</span></div>
       </div>
 

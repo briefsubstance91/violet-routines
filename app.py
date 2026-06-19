@@ -34,6 +34,10 @@ CHARITIES_FILE      = os.path.join(_DATA, 'Violet Charities.csv')
 CHARITIES_SEED_FILE = os.path.join(_BASE, 'Violet Charities.csv')
 EVENTS_FILE         = os.path.join(_DATA, 'Violet Events.csv')
 EVENTS_SEED_FILE    = os.path.join(_BASE, 'Violet Events.csv')
+LEDGER_FILE         = os.path.join(_DATA, 'Violet Earnings.csv')
+MONEY_MS_FILE       = os.path.join(_DATA, 'Violet Money Milestones.csv')
+MONEY_MS_SEED_FILE  = os.path.join(_BASE, 'Violet Money Milestones.csv')
+SETTINGS_FILE       = os.path.join(_DATA, 'violet_settings.json')
 
 
 _MONTH_NUM = {m: i for i, m in enumerate(
@@ -41,6 +45,49 @@ _MONTH_NUM = {m: i for i, m in enumerate(
      'July','August','September','October','November','December'], 1)}
 
 _WEEKDAY_ABBR = {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6}
+
+DEFAULT_TASK_VALUE = 2      # dollars earned per bonus task by default
+GIVING_RATE        = 0.10   # default share of earnings routed to the giving pot
+
+
+def load_settings():
+    """Parent-tunable settings, with sensible defaults."""
+    s = {'giving_rate': GIVING_RATE}
+    try:
+        with open(SETTINGS_FILE, encoding='utf-8') as f:
+            s.update(json.load(f))
+    except (FileNotFoundError, ValueError):
+        pass
+    return s
+
+
+def save_settings(updates):
+    s = load_settings()
+    s.update(updates)
+    with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(s, f, indent=2)
+    return s
+
+
+def giving_rate():
+    """Current giving rate as a fraction in [0, 1]."""
+    try:
+        r = float(load_settings().get('giving_rate', GIVING_RATE))
+    except (TypeError, ValueError):
+        r = GIVING_RATE
+    return min(max(r, 0.0), 1.0)
+
+
+def _parse_value(raw, etype):
+    """Dollar value for an event row. Events earn nothing; tasks default to
+    DEFAULT_TASK_VALUE when the Value cell is blank or unparseable."""
+    if etype != 'task':
+        return 0
+    raw = (raw or '').strip().lstrip('$')
+    try:
+        return float(raw) if raw else DEFAULT_TASK_VALUE
+    except ValueError:
+        return DEFAULT_TASK_VALUE
 
 
 def load_charities():
@@ -50,6 +97,10 @@ def load_charities():
         with open(path, newline='', encoding='utf-8-sig') as f:
             for row in csv.DictReader(f):
                 if row.get('Charity', '').strip():
+                    try:
+                        amount = float(row.get('Amount') or 0)
+                    except ValueError:
+                        amount = 0.0
                     rows.append({
                         'month':   row['Month'].strip(),
                         'year':    int(row['Year'].strip() or 0),
@@ -57,6 +108,7 @@ def load_charities():
                         'cause':   row.get('Cause', '').strip(),
                         'status':  row.get('Status', 'planned').strip(),
                         'notes':   row.get('Notes', '').strip(),
+                        'amount':  amount,
                     })
     except FileNotFoundError:
         pass
@@ -65,12 +117,17 @@ def load_charities():
 
 def save_charities(entries):
     with open(CHARITIES_FILE, 'w', newline='', encoding='utf-8') as f:
-        w = csv.DictWriter(f, fieldnames=['Month','Year','Charity','Cause','Status','Notes'])
+        w = csv.DictWriter(f, fieldnames=['Month','Year','Charity','Cause','Status','Notes','Amount'])
         w.writeheader()
         for e in entries:
+            try:
+                amount = float(e.get('amount') or 0)
+            except (TypeError, ValueError):
+                amount = 0.0
             w.writerow({'Month': e.get('month',''), 'Year': e.get('year',''),
                         'Charity': e.get('charity',''), 'Cause': e.get('cause',''),
-                        'Status': e.get('status','planned'), 'Notes': e.get('notes','')})
+                        'Status': e.get('status','planned'), 'Notes': e.get('notes',''),
+                        'Amount': ('%g' % amount) if amount else ''})
 
 
 def due_today(when, today):
@@ -112,13 +169,15 @@ def load_events():
                 title = row.get('Title', '').strip()
                 if title:
                     slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-') or 'item'
+                    etype = (row.get('Type', 'event').strip() or 'event').lower()
                     rows.append({
                         'key':    f'{slug}-{i}',
                         'title':  title,
                         'icon':   row.get('Icon', '').strip(),
                         'when':   row.get('When', '').strip(),
                         'time':   row.get('Time', '').strip(),
-                        'type':   (row.get('Type', 'event').strip() or 'event').lower(),
+                        'type':   etype,
+                        'value':  _parse_value(row.get('Value', ''), etype),
                         'banner': row.get('Banner', '').strip(),
                     })
     except FileNotFoundError:
@@ -133,18 +192,21 @@ def events_due_today(today=None):
 
 def save_events(events):
     with open(EVENTS_FILE, 'w', newline='', encoding='utf-8') as f:
-        w = csv.DictWriter(f, fieldnames=['Title', 'Icon', 'When', 'Time', 'Type', 'Banner'])
+        w = csv.DictWriter(f, fieldnames=['Title', 'Icon', 'When', 'Time', 'Type', 'Value', 'Banner'])
         w.writeheader()
         for e in events:
             title = (e.get('title') or '').strip()
             if not title:
                 continue
+            etype = (e.get('type') or 'event').lower()
+            value = _parse_value(e.get('value', ''), etype)
             w.writerow({
                 'Title':  title,
                 'Icon':   e.get('icon', ''),
                 'When':   e.get('when', ''),
                 'Time':   e.get('time', ''),
-                'Type':   (e.get('type') or 'event').lower(),
+                'Type':   etype,
+                'Value':  ('%g' % value) if etype == 'task' else '',
                 'Banner': e.get('banner', ''),
             })
 
@@ -167,6 +229,81 @@ def archive_past_events(today=None):
     if changed:
         save_events(kept)
     return changed
+
+
+def load_earnings():
+    try:
+        with open(LEDGER_FILE, newline='', encoding='utf-8-sig') as f:
+            return list(csv.DictReader(f))
+    except FileNotFoundError:
+        return []
+
+
+def set_earning(entry_date, key, title, amount, earned):
+    """Upsert (earned=True) or remove (earned=False) one (date, key) row.
+    Same-day reversible: unchecking a task pulls the money back out."""
+    rows = [r for r in load_earnings()
+            if not (r.get('Date') == entry_date and r.get('Key') == key)]
+    if earned:
+        try:
+            amt = float(amount)
+        except (TypeError, ValueError):
+            amt = 0.0
+        rows.append({'Date': entry_date, 'Key': key, 'Title': title, 'Amount': '%g' % amt})
+    rows.sort(key=lambda r: r.get('Date', ''))
+    with open(LEDGER_FILE, 'w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=['Date', 'Key', 'Title', 'Amount'])
+        w.writeheader()
+        w.writerows(rows)
+
+
+def compute_bank():
+    total = 0.0
+    for r in load_earnings():
+        try:
+            total += float(r.get('Amount', 0))
+        except ValueError:
+            continue
+    total = round(total, 2)
+    given = round(total * giving_rate(), 2)
+    return {'earned': total, 'given': given, 'spendable': round(total - given, 2)}
+
+
+def load_money_milestones():
+    """Money reward thresholds: {amount_str: {message, category}}."""
+    path = MONEY_MS_FILE if os.path.exists(MONEY_MS_FILE) else MONEY_MS_SEED_FILE
+    out = {}
+    for row in scan_csv(path, 'Amount'):
+        amount   = row.get('Amount', '').strip()
+        message  = (row.get('Reward Message') or row.get('Message', '')).strip()
+        category = (row.get('Category') or '').strip()
+        if amount and message:
+            out[amount] = {'message': message, 'category': category}
+    return out
+
+
+def save_money_milestones(items):
+    """Write money milestones back to CSV, sorted by amount."""
+    def amt(x):
+        try:
+            return float(x.get('amount', 0) or 0)
+        except (TypeError, ValueError):
+            return 0.0
+    with open(MONEY_MS_FILE, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Violet Money Milestones'])
+        writer.writerow(['Amount', 'Reward Message', 'Category'])
+        for item in sorted(items, key=amt):
+            writer.writerow([('%g' % amt(item)), item.get('message', ''), item.get('category', '')])
+
+
+def next_money_milestone(earned):
+    """(next_amount, info) tuple above `earned`, and the previous threshold."""
+    ms = sorted(((float(k), v) for k, v in load_money_milestones().items()),
+                key=lambda x: x[0])
+    nxt = next(((a, v) for a, v in ms if a > earned), None)
+    prev = max((a for a, v in ms if a <= earned), default=0.0)
+    return nxt, prev
 
 
 def get_vapid_keys():
@@ -454,6 +591,22 @@ def load_log():
     return scan_csv(LOG_FILE, 'Date')
 
 
+def completed_dates(log_rows):
+    """ISO dates (sorted) on which at least one routine was fully completed.
+    Used to seed/reconcile the client's cumulative 'days completed' list so it
+    survives device changes and migrates users from the old streak data."""
+    dates = set()
+    for row in log_rows:
+        if row.get('Routine') == 'extra':
+            continue
+        try:
+            if int(row['Total']) and int(row['Completed']) == int(row['Total']):
+                dates.add(row['Date'])
+        except (ValueError, KeyError):
+            continue
+    return sorted(dates)
+
+
 def compute_stats(log_rows):
     today = date.today()
     # 'extra' rows (recurring/one-off events) are logged separately and must
@@ -479,10 +632,12 @@ def compute_stats(log_rows):
         if not rows: return None
         return sum(e['pct'] for e in rows) / len(rows)
 
-    # Streak
-    streak, d = 0, today
-    while by_date.get(d):
-        streak += 1; d -= timedelta(days=1)
+    # Days completed — cumulative count of distinct days where Violet finished
+    # at least one routine. Unlike a streak, this never resets: missing a day
+    # just means you don't add to it, you never lose what you've earned.
+    completed_days = {e['date'] for e in entries
+                      if e['total'] and e['completed'] == e['total']}
+    days_completed = len(completed_days)
 
     # Last 7 days
     week = []
@@ -514,7 +669,7 @@ def compute_stats(log_rows):
     total_t = sum(e['total'] for e in entries)
 
     return {
-        'streak':      streak,
+        'days_completed': days_completed,
         'week':        week,
         'cal_days':    cal_days,
         'month_label': today.strftime('%B %Y'),
@@ -613,6 +768,40 @@ def log_entry():
     return '', 204
 
 
+@app.route('/earn', methods=['POST'])
+def earn():
+    d = request.get_json()
+    before = compute_bank()['earned']
+    set_earning(d['date'], d['key'], d.get('title', ''), d.get('amount', 0), bool(d.get('earned')))
+    bank_after = compute_bank()
+    # Did this earning newly cross a money milestone? (only on the way up)
+    hit = None
+    if bank_after['earned'] > before:
+        for k, v in load_money_milestones().items():
+            try:
+                amt = float(k)
+            except ValueError:
+                continue
+            if before < amt <= bank_after['earned']:
+                if hit is None or amt < hit['amount']:
+                    hit = {'amount': amt, 'message': v['message'], 'category': v.get('category', '')}
+    resp = dict(bank_after)
+    resp['milestone'] = hit
+    return jsonify(resp)
+
+
+@app.route('/bank')
+def bank():
+    b = compute_bank()
+    recent = list(reversed(load_earnings()))[:20]
+    nxt, prev = next_money_milestone(b['earned'])
+    money_ms = sorted(((float(k), v) for k, v in load_money_milestones().items()),
+                      key=lambda x: x[0])
+    return render_template('bank.html', bank=b, recent=recent,
+                           giving_pct=int(round(giving_rate() * 100)),
+                           next_ms=nxt, prev_amt=prev, money_ms=money_ms)
+
+
 @app.route('/routines')
 def index():
     routines   = load_routines()
@@ -633,7 +822,9 @@ def index():
         'index.html',
         routines=routines,
         extras=extras,
-        extras_keys_json=json.dumps([e['key'] for e in extras if e['type'] == 'task']),
+        extras_tasks_json=json.dumps(
+            [{'key': e['key'], 'value': e['value'], 'title': e['title']}
+             for e in extras if e['type'] == 'task']),
         phrases_json=json.dumps(phrases),
         routines_json=json.dumps(routines_cfg),
         milestones_json=json.dumps(milestones),
@@ -642,6 +833,7 @@ def index():
         cel_milestones_json=json.dumps(cel_milestones),
         levelup_categories_json=json.dumps(levelup_data.get('levelup_categories', [])),
         badges_json=json.dumps(BADGES),
+        completed_dates_json=json.dumps(completed_dates(load_log())),
     )
 
 
@@ -688,11 +880,17 @@ def admin():
         {'streak': k, 'message': v['message'], 'category': v.get('category', '')}
         for k, v in sorted(ms_dict.items(), key=lambda x: int(x[0]))
     ]
+    money_ms = [
+        {'amount': k, 'message': v['message'], 'category': v.get('category', '')}
+        for k, v in sorted(load_money_milestones().items(), key=lambda x: float(x[0]))
+    ]
     return render_template(
         'admin.html',
         data=data,
         routines_json=json.dumps(routines),
         milestones_json=json.dumps(milestones),
+        money_milestones_json=json.dumps(money_ms),
+        giving_pct=int(round(giving_rate() * 100)),
     )
 
 
@@ -701,6 +899,20 @@ def admin_milestones_save():
     items = request.get_json()
     save_milestones(items)
     return jsonify({'ok': True})
+
+
+@app.route('/admin/money/save', methods=['POST'])
+def admin_money_save():
+    """Save the giving % and money-milestone rewards together."""
+    payload = request.get_json() or {}
+    if 'giving_pct' in payload:
+        try:
+            pct = float(payload['giving_pct'])
+        except (TypeError, ValueError):
+            pct = GIVING_RATE * 100
+        save_settings({'giving_rate': min(max(pct, 0.0), 100.0) / 100.0})
+    save_money_milestones(payload.get('milestones', []))
+    return jsonify({'ok': True, 'giving_pct': int(round(giving_rate() * 100))})
 
 
 @app.route('/admin/save', methods=['POST'])
@@ -811,14 +1023,14 @@ def admin_events_save():
 
 
 BADGES = [
-    # ── Streak badges ──
-    {'id': 'first-step',   'name': 'First Step',      'desc': 'Complete your first routine',  'emoji': '✨', 'bg': '#ede9fe', 'ring': '#9b87f5', 'type': 'streak',  'threshold': 1},
-    {'id': 'spark',        'name': '3-Day Spark',      'desc': '3 days in a row',              'emoji': '🔥', 'bg': '#fef3c7', 'ring': '#f59e0b', 'type': 'streak',  'threshold': 3},
-    {'id': 'week-warrior', 'name': 'Week Warrior',     'desc': '7-day streak',                 'emoji': '⭐', 'bg': '#d1fae5', 'ring': '#10b981', 'type': 'streak',  'threshold': 7},
-    {'id': 'fortnight',    'name': 'Fortnight Hero',   'desc': '14 days in a row',             'emoji': '👑', 'bg': '#dbeafe', 'ring': '#3b82f6', 'type': 'streak',  'threshold': 14},
-    {'id': '3-week',       'name': '3-Week Wonder',    'desc': '21 days in a row',             'emoji': '💜', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'streak',  'threshold': 21},
-    {'id': 'month',        'name': 'Month Marvel',     'desc': '30-day streak',                'emoji': '🏆', 'bg': '#fce7f3', 'ring': '#ec4899', 'type': 'streak',  'threshold': 30},
-    {'id': 'diamond',      'name': 'Diamond Legend',   'desc': '60-day streak',                'emoji': '💎', 'bg': '#cffafe', 'ring': '#06b6d4', 'type': 'streak',  'threshold': 60},
+    # ── Days-completed badges (cumulative — never reset) ──
+    {'id': 'first-step',   'name': 'First Step',      'desc': 'Complete your first routine',  'emoji': '✨', 'bg': '#ede9fe', 'ring': '#9b87f5', 'type': 'days',  'threshold': 1},
+    {'id': 'spark',        'name': 'Getting Going',    'desc': '3 days completed',             'emoji': '🔥', 'bg': '#fef3c7', 'ring': '#f59e0b', 'type': 'days',  'threshold': 3},
+    {'id': 'week-warrior', 'name': 'Week of Wins',     'desc': '7 days completed',             'emoji': '⭐', 'bg': '#d1fae5', 'ring': '#10b981', 'type': 'days',  'threshold': 7},
+    {'id': 'fortnight',    'name': 'Fortnight Hero',   'desc': '14 days completed',            'emoji': '👑', 'bg': '#dbeafe', 'ring': '#3b82f6', 'type': 'days',  'threshold': 14},
+    {'id': '3-week',       'name': '3-Week Wonder',    'desc': '21 days completed',            'emoji': '💜', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'days',  'threshold': 21},
+    {'id': 'month',        'name': 'Month Marvel',     'desc': '30 days completed',            'emoji': '🏆', 'bg': '#fce7f3', 'ring': '#ec4899', 'type': 'days',  'threshold': 30},
+    {'id': 'diamond',      'name': 'Diamond Legend',   'desc': '60 days completed',            'emoji': '💎', 'bg': '#cffafe', 'ring': '#06b6d4', 'type': 'days',  'threshold': 60},
     # ── Routine badges ──
     {'id': 'morning-5',    'name': 'Morning Magic',    'desc': 'Morning routine ×5',           'emoji': '☁️', 'bg': '#fef9c3', 'ring': '#eab308', 'type': 'routine', 'routine': 'am', 'threshold': 5},
     {'id': 'morning-20',   'name': 'Rise & Shine',     'desc': 'Morning routine ×20',          'emoji': '🌅', 'bg': '#fef9c3', 'ring': '#f59e0b', 'type': 'routine', 'routine': 'am', 'threshold': 20},
@@ -826,6 +1038,8 @@ BADGES = [
     {'id': 'evening-5',    'name': 'Bedtime Boss',     'desc': 'Evening routine ×5',           'emoji': '🖤', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'routine', 'routine': 'pm', 'threshold': 5},
     {'id': 'evening-20',   'name': 'Dream Keeper',     'desc': 'Evening routine ×20',          'emoji': '🌙', 'bg': '#ede9fe', 'ring': '#9b87f5', 'type': 'routine', 'routine': 'pm', 'threshold': 20},
     {'id': 'triple-crown', 'name': 'Triple Crown',     'desc': 'All 3 routines in one day',   'emoji': '👑', 'bg': '#fef3c7', 'ring': '#f59e0b', 'type': 'triple',  'threshold': 1},
+    {'id': 'triple-7',     'name': 'Triple Threat',    'desc': 'All 3 routines on 7 days',    'emoji': '🌟', 'bg': '#fef3c7', 'ring': '#f59e0b', 'type': 'triple',  'threshold': 7},
+    {'id': 'triple-30',    'name': 'Perfect Day Pro',  'desc': 'All 3 routines on 30 days',   'emoji': '💯', 'bg': '#fce7f3', 'ring': '#ec4899', 'type': 'triple',  'threshold': 30},
     # ── Level Up badges ──
     {'id': 'levelup-1',    'name': 'Level Up!',        'desc': 'Log your first win',           'emoji': '⚡', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'levelup', 'threshold': 1},
     {'id': 'levelup-10',   'name': 'Win Collector',    'desc': '10 level-up wins',             'emoji': '💪', 'bg': '#fce7f3', 'ring': '#db2777', 'type': 'levelup', 'threshold': 10},
@@ -855,11 +1069,11 @@ def dashboard():
     recent_wins  = list(reversed(lu_log[-10:])) if lu_log else []
     lu_total     = len(lu_log)
 
-    # next milestone
-    streak = s['streak']
+    # next milestone — based on cumulative days completed
+    done = s['days_completed']
     milestones_sorted = sorted(milestones.items(), key=lambda x: int(x[0]))
-    next_ms = next(((int(k), v) for k, v in milestones_sorted if int(k) > streak), None)
-    prev_ms_streak = max((int(k) for k, v in milestones_sorted if int(k) <= streak), default=0)
+    next_ms = next(((int(k), v) for k, v in milestones_sorted if int(k) > done), None)
+    prev_ms_streak = max((int(k) for k, v in milestones_sorted if int(k) <= done), default=0)
 
     routines_raw   = load_tasks_raw()
     tag_breakdown  = compute_tag_breakdown(routines_raw)
@@ -943,7 +1157,10 @@ def push_test():
 
 @app.route('/charities')
 def charities():
-    return render_template('charities.html', charities_json=json.dumps(load_charities()))
+    return render_template('charities.html',
+                           charities_json=json.dumps(load_charities()),
+                           bank=compute_bank(),
+                           giving_pct=int(round(giving_rate() * 100)))
 
 
 @app.route('/charities/save', methods=['POST'])

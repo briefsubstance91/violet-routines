@@ -170,6 +170,10 @@
     .extra-item:active { transform: none; }
     .extra-icon { font-size: 1.4rem; min-width: 30px; text-align: center; line-height: 1; }
     .extra-time { margin-left: auto; font-size: 0.72rem; font-weight: 800; color: var(--muted); white-space: nowrap; }
+    .extra-meta { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+    .extra-meta .extra-time { margin-left: 0; }
+    .extra-value { font-size: 0.74rem; font-weight: 900; color: #15803d; background: #dcfce7; padding: 0.16rem 0.5rem; border-radius: 100px; white-space: nowrap; }
+    .extras-earned { margin-top: 1rem; padding: 0.7rem 1rem; border-radius: 14px; background: #dcfce7; color: #15803d; font-weight: 800; text-align: center; font-size: 0.95rem; }
 
     .card-inner { padding: 1.4rem 1.5rem 1.5rem; }
 
@@ -777,6 +781,9 @@
     <a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a>
   </div>
   <div class="menu-item">
+    <a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a>
+  </div>
+  <div class="menu-item">
     <a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a>
   </div>
   <div class="menu-item">
@@ -877,7 +884,10 @@
           <div class="task" id="extra-{{ e.key }}" onclick="toggleExtra('{{ e.key }}', event)">
             <div class="task-check"></div>
             <span class="task-label">{{ e.icon }} {{ e.title }}</span>
-            {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+            <span class="extra-meta">
+              {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+              <span class="extra-value">💲{{ '%g'|format(e.value) }}</span>
+            </span>
           </div>
           {% else %}
           <div class="task extra-item">
@@ -887,6 +897,9 @@
           </div>
           {% endif %}
         {% endfor %}
+      </div>
+      <div class="extras-earned" id="extrasEarned" style="display:none">
+        💰 Earned today: <strong id="extrasEarnedAmt">$0</strong>
       </div>
     </div>
   </div>
@@ -945,15 +958,15 @@
       </div>
     </div>
 
-    <!-- Slide 4: Streaks — Cinnamoroll GIF -->
+    <!-- Slide 4: Days completed — Cinnamoroll GIF -->
     <div class="ob-slide ob-slide-4">
       <div class="ob-char-wrap">
         <img class="ob-char-img ob-gif" src="/static/welcome/cinnamoroll/cinnamoroll-dance.gif" alt="Cinnamoroll dancing">
         <div class="ob-char-name">Cinnamoroll</div>
       </div>
       <div class="ob-text-block">
-        <div class="ob-title">Keep the streak 🔥</div>
-        <div class="ob-body">Show up every day and your streak grows. Long enough and you unlock a real-life reward. 🏆</div>
+        <div class="ob-title">Every day counts 🌟</div>
+        <div class="ob-body">Each day you finish a routine adds to your total — and it never resets, even if you miss a day. Reach a milestone and you unlock a real-life reward. 🏆</div>
         <div class="ob-voice">"Every day you come back… I'll be here waiting. I always am. 🩵"</div>
       </div>
     </div>
@@ -1038,13 +1051,27 @@
   }
   let state = getState() || Object.fromEntries(Object.keys(ROUTINES).map(k => [k, {}]));
 
-  function getStreaks() {
-    const raw = localStorage.getItem('violet-streaks');
-    return raw ? JSON.parse(raw) : Object.fromEntries(Object.keys(ROUTINES).map(k => [k, { count: 0, lastDate: '' }]));
-  }
-  function saveStreaks(streaks) {
-    localStorage.setItem('violet-streaks', JSON.stringify(streaks));
-  }
+  // Days completed: a cumulative list of dates where Violet finished at least
+  // one routine. It only ever grows — missing a day never erases progress.
+  function getDaysList() { return JSON.parse(localStorage.getItem('violet-days') || '[]'); }
+  function saveDaysList(l) { localStorage.setItem('violet-days', JSON.stringify(l)); }
+  function daysCompleted() { return getDaysList().length; }
+
+  // Migrate & reconcile: the server log is the source of truth for which days
+  // had a fully-completed routine. Fold any it knows about into the local list
+  // (matching TODAY's toDateString format). This seeds the new days-completed
+  // count for users coming from the old streak data, and keeps it correct
+  // across devices. Idempotent — runs every load, only adds missing dates.
+  (function reconcileDays() {
+    const serverDays = {{ completed_dates_json | safe }};  // ISO date strings
+    const local = new Set(getDaysList());
+    let changed = false;
+    for (const iso of serverDays) {
+      const d = new Date(iso + 'T00:00:00').toDateString();
+      if (!local.has(d)) { local.add(d); changed = true; }
+    }
+    if (changed) saveDaysList([...local]);
+  })();
 
   // ── Badge tracking ──
   const BADGE_DEFS = {{ badges_json | safe }};
@@ -1056,17 +1083,16 @@
 
   function checkBadges(routineId) {
     const earned = getEarned();
-    const streaks = getStreaks();
     const completions = getCompletions();
     const luTotal = parseInt(localStorage.getItem('violet-lu-total') || '0');
     const tripleCount = parseInt(localStorage.getItem('violet-triples') || '0');
-    const bestStreak = Math.max(...Object.values(streaks).map(s => s.count || 0), 0);
+    const days = daysCompleted();
 
     const newBadges = [];
     for (const b of BADGE_DEFS) {
       if (earned.has(b.id)) continue;
       let met = false;
-      if (b.type === 'streak')  met = bestStreak >= b.threshold;
+      if (b.type === 'days')    met = days >= b.threshold;
       if (b.type === 'routine') met = (completions[b.routine] || 0) >= b.threshold;
       if (b.type === 'triple')  met = tripleCount >= b.threshold;
       if (b.type === 'levelup') met = luTotal >= b.threshold;
@@ -1088,21 +1114,6 @@
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 4500);
   }
-  function incrementStreak(routine) {
-    const streaks = getStreaks();
-    const s = streaks[routine] || { count: 0, lastDate: '' };
-    if (s.lastDate === TODAY) return s.count;
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-    s.count = (s.lastDate === yesterday.toDateString()) ? s.count + 1 : 1;
-    s.lastDate = TODAY;
-    streaks[routine] = s;
-    saveStreaks(streaks);
-    return s.count;
-  }
-  function getStreak(routine) {
-    return (getStreaks()[routine] || { count: 0 }).count;
-  }
-
   const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const now = new Date();
@@ -1137,11 +1148,11 @@
         }
       }
 
-      const streak = getStreak(id);
-      const badge  = document.getElementById(`streak-${id}`);
+      const done  = getCompletions()[id] || 0;
+      const badge = document.getElementById(`streak-${id}`);
       if (badge) {
-        badge.textContent = streak > 1 ? `🔥 ${streak} day streak` : '';
-        badge.classList.toggle('visible', streak > 1);
+        badge.textContent = done > 0 ? `✅ done ${done}×` : '';
+        badge.classList.toggle('visible', done > 0);
       }
     }
   }
@@ -1194,8 +1205,14 @@
 
   // ── Today's Extras (recurring tasks / one-off events) ──
   // Self-contained: logged under routine 'extra', kept out of am/af/pm
-  // streak/badge math (compute_stats ignores 'extra' rows server-side).
-  const EXTRAS_KEYS = {{ extras_keys_json | safe }};
+  // days-completed/badge math (compute_stats ignores 'extra' rows server-side).
+  const EXTRAS_TASKS = {{ extras_tasks_json | safe }};
+  const EXTRAS_KEYS  = EXTRAS_TASKS.map(t => t.key);
+
+  function fmtMoney(n) { return '$' + (Number.isInteger(n) ? n : n.toFixed(2)); }
+  function earnedToday() {
+    return EXTRAS_TASKS.reduce((sum, t) => sum + (extrasState[t.key] ? t.value : 0), 0);
+  }
 
   function getExtras() {
     const raw = localStorage.getItem('violet-extras-v1');
@@ -1215,6 +1232,12 @@
       const el = document.getElementById(`extra-${k}`);
       if (el) el.classList.toggle('done', !!extrasState[k]);
     });
+    const box = document.getElementById('extrasEarned');
+    if (box) {
+      box.style.display = EXTRAS_TASKS.length ? 'block' : 'none';
+      const amt = document.getElementById('extrasEarnedAmt');
+      if (amt) amt.textContent = fmtMoney(earnedToday());
+    }
   }
 
   function logExtras() {
@@ -1226,32 +1249,61 @@
     });
   }
 
+  function syncEarning(key, earned) {
+    const t = EXTRAS_TASKS.find(x => x.key === key);
+    if (!t) return;
+    const today = new Date().toISOString().split('T')[0];
+    fetch('/earn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: today, key, title: t.title, amount: t.value, earned }),
+    })
+      .then(r => r.json())
+      .then(b => { if (b && b.milestone) celebrateMoney(b.milestone); })
+      .catch(() => {});
+  }
+
+  function celebrateMoney(ms) {
+    showBadgeToast({
+      emoji: '💰',
+      name: 'Money reward unlocked!',
+      desc: ms.message,
+      ring: '#16a34a',
+      bg: '#dcfce7',
+    });
+    launchConfetti();
+  }
+
   function toggleExtra(key, event) {
     const wasChecked = !!extrasState[key];
     extrasState = { ...extrasState, [key]: !wasChecked };
     saveExtras(extrasState);
     renderExtras();
     logExtras();
+    syncEarning(key, !wasChecked);
     if (!wasChecked && event) popTreat(event.currentTarget);
   }
 
   function celebrate(routine) {
     logToServer(routine);
-    const streak = incrementStreak(routine);
 
-    // track total completions per routine
+    // track total completions per routine (cumulative, never resets)
     const comp = getCompletions();
     comp[routine] = (comp[routine] || 0) + 1;
     saveCompletions(comp);
 
-    // track triple crown (all routines done today)
-    const st = getStreaks();
-    const allToday = Object.keys(ROUTINES).every(r => (st[r] || {}).lastDate === TODAY);
+    // count this day toward "days completed" — once per day, never lost
+    const dayList = getDaysList();
+    const firstFinishToday = !dayList.includes(TODAY);
+    if (firstFinishToday) { dayList.push(TODAY); saveDaysList(dayList); }
+    const days = dayList.length;
+
+    // track full days (all 3 routines done today) — once per day
+    const allToday = Object.keys(ROUTINES).every(r => topLevelDone(r) === ROUTINES[r].total);
     if (allToday) {
-      const prev = parseInt(localStorage.getItem('violet-triples') || '0');
-      // only count once per day
       const lastTriple = localStorage.getItem('violet-last-triple') || '';
       if (lastTriple !== TODAY) {
+        const prev = parseInt(localStorage.getItem('violet-triples') || '0');
         localStorage.setItem('violet-triples', prev + 1);
         localStorage.setItem('violet-last-triple', TODAY);
       }
@@ -1260,18 +1312,19 @@
     checkBadges(routine);
     const phrases  = PHRASES[routine] || [];
     const pick     = phrases[Math.floor(Math.random() * phrases.length)] || { title: 'Amazing!', reward: 'You did it!' };
-    const ms = MILESTONES[String(streak)];
+    // milestone rewards fire only when the day count newly crosses a threshold
+    const ms = firstFinishToday ? MILESTONES[String(days)] : null;
     const milestone = ms ? ms.message : null;
 
     document.getElementById('cel-emoji').textContent  = ROUTINES[routine].emoji;
     document.getElementById('cel-title').textContent  = pick.title;
     document.getElementById('cel-sub').textContent    = pick.reward;
-    document.getElementById('cel-streak').textContent = milestone || (streak > 1 ? `🔥 ${streak}-day streak!` : '');
+    document.getElementById('cel-streak').textContent = milestone || (days > 1 ? `🌟 ${days} days completed!` : '');
     const chars = (CEL_ROUTINES[routine] || []).length ? CEL_ROUTINES[routine] : TREAT_SRCS;
     document.getElementById('cel-treat-deco').src = chars[Math.floor(Math.random() * chars.length)];
 
     const photo = document.getElementById('cel-photo');
-    const milestoneImg = CEL_MILESTONES[String(streak)];
+    const milestoneImg = firstFinishToday ? CEL_MILESTONES[String(days)] : null;
     if (milestoneImg) {
       photo.src = milestoneImg;
       photo.classList.add('visible');
