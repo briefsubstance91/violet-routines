@@ -175,6 +175,34 @@
     .extra-value { font-size: 0.74rem; font-weight: 900; color: #15803d; background: #dcfce7; padding: 0.16rem 0.5rem; border-radius: 100px; white-space: nowrap; }
     .extras-earned { margin-top: 1rem; padding: 0.7rem 1rem; border-radius: 14px; background: #dcfce7; color: #15803d; font-weight: 800; text-align: center; font-size: 0.95rem; }
 
+    /* ── Today's extras, flowed inside a routine ── */
+    .extras-inline { margin: 0.35rem 0.75rem 0; padding-top: 0.5rem; border-top: 1.5px dashed #fde68a; }
+    .extras-inline-label { font-size: 0.7rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase;
+      color: #d97706; padding: 0.1rem 0.25rem 0.35rem; }
+    .extras-inline .task { border-left: 3px solid #fbbf24; background: #fffbeb; }
+    .extras-inline .extra-item { border-left: 3px solid #fbbf24; background: #fffbeb; }
+    .extra-badge { font-size: 0.64rem; font-weight: 900; letter-spacing: 0.03em; text-transform: uppercase;
+      color: #b45309; background: #fef3c7; padding: 0.14rem 0.45rem; border-radius: 100px; white-space: nowrap; }
+
+    /* ── Toonie tasks ── */
+    .routine-card.toonies { --accent: #16a34a; }
+    .routine-card.toonies .card-strip { background: linear-gradient(90deg, #34d399, #16a34a); }
+    .toonie-locked { display: flex; align-items: center; gap: 0.7rem; padding: 0.9rem 0.6rem; color: var(--muted);
+      font-weight: 700; font-size: 0.92rem; line-height: 1.3; }
+    .toonie-locked .tl-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .toonie-grid { display: flex; flex-direction: column; gap: 0.55rem; }
+    .toonie-card { display: flex; align-items: center; gap: 0.75rem; width: 100%; text-align: left;
+      padding: 0.7rem 0.85rem; border: 2px solid #d1fae5; border-radius: 16px; background: #f0fdf4;
+      font-family: inherit; cursor: pointer; transition: transform 0.1s, border-color 0.15s; }
+    .toonie-card:active { transform: scale(0.98); }
+    .toonie-card .toonie-icon { font-size: 1.5rem; min-width: 30px; text-align: center; line-height: 1; }
+    .toonie-card .toonie-label { flex: 1; font-weight: 800; color: var(--text); font-size: 0.95rem; }
+    .toonie-card .toonie-val { font-size: 0.8rem; font-weight: 900; color: #15803d; background: #dcfce7;
+      padding: 0.2rem 0.6rem; border-radius: 100px; white-space: nowrap; }
+    .toonie-card.done { border-color: #16a34a; background: #dcfce7; }
+    .toonie-card.done .toonie-label { color: #15803d; }
+    .toonie-card.done .toonie-val { background: #16a34a; color: #fff; }
+
     .card-inner { padding: 1.4rem 1.5rem 1.5rem; }
 
     .routine-header {
@@ -817,6 +845,29 @@
 <!-- hidden ribbon for JS ref -->
 <span id="badgeToastRibbon" style="display:none"></span>
 
+{% macro extra_item(e) %}
+  {% if e.type == 'task' %}
+  <div class="task extra-task" id="extra-{{ e.key }}" onclick="toggleExtra('{{ e.key }}', event)">
+    <div class="task-check"></div>
+    <span class="task-label">{{ e.icon }} {{ e.title }}</span>
+    <span class="extra-meta">
+      <span class="extra-badge">✨ Extra</span>
+      {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+      <span class="extra-value">💲{{ '%g'|format(e.value) }}</span>
+    </span>
+  </div>
+  {% else %}
+  <div class="task extra-item">
+    <span class="extra-icon">{{ e.icon or '•' }}</span>
+    <span class="task-label">{{ e.title }}</span>
+    <span class="extra-meta">
+      <span class="extra-badge">✨ Extra</span>
+      {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+    </span>
+  </div>
+  {% endif %}
+{% endmacro %}
+
 <div class="routines">
   {% for r in routines %}
   <div class="routine-card {{ r.id }}" id="card-{{ r.id }}">
@@ -862,48 +913,53 @@
           {% endif %}
         {% endfor %}
       </div>
+      {% if extras_by_routine.get(r.id) %}
+      <div class="extras-inline">
+        <div class="extras-inline-label"><span>✨ Today's extras</span></div>
+        {% for e in extras_by_routine[r.id] %}{{ extra_item(e) }}{% endfor %}
+      </div>
+      {% endif %}
       <div class="complete-banner">{{ r.banner }}</div>
     </div>
   </div>
   {% endfor %}
 
-  {% if extras %}
+  {% if extras_anytime %}
   <div class="routine-card extras" id="card-extras">
     <div class="card-strip"></div>
     <div class="card-inner">
       <div class="routine-header">
         <span class="routine-icon">✨</span>
         <div>
-          <div class="routine-title">Today's Extras</div>
-          <div class="routine-time">Just for today</div>
+          <div class="routine-title">Anytime today</div>
+          <div class="routine-time">Today's extras — no set time</div>
         </div>
       </div>
       <div class="task-list">
-        {% for e in extras %}
-          {% if e.type == 'task' %}
-          <div class="task" id="extra-{{ e.key }}" onclick="toggleExtra('{{ e.key }}', event)">
-            <div class="task-check"></div>
-            <span class="task-label">{{ e.icon }} {{ e.title }}</span>
-            <span class="extra-meta">
-              {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
-              <span class="extra-value">💲{{ '%g'|format(e.value) }}</span>
-            </span>
-          </div>
-          {% else %}
-          <div class="task extra-item">
-            <span class="extra-icon">{{ e.icon or '•' }}</span>
-            <span class="task-label">{{ e.title }}</span>
-            {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
-          </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-      <div class="extras-earned" id="extrasEarned" style="display:none">
-        💰 Earned today: <strong id="extrasEarnedAmt">$0</strong>
+        {% for e in extras_anytime %}{{ extra_item(e) }}{% endfor %}
       </div>
     </div>
   </div>
   {% endif %}
+
+  <div class="extras-earned" id="extrasEarned" style="display:none">
+    💰 Earned today: <strong id="extrasEarnedAmt">$0</strong>
+  </div>
+
+  <div class="routine-card toonies" id="card-toonies" style="display:none">
+    <div class="card-strip"></div>
+    <div class="card-inner">
+      <div class="routine-header">
+        <span class="routine-icon">🪙</span>
+        <div>
+          <div class="routine-title">Toonie Tasks</div>
+          <div class="routine-time" id="toonieSub">Earn $2 each</div>
+        </div>
+        <span class="routine-progress" id="toonieTally"></span>
+      </div>
+      <div id="toonieBody"></div>
+    </div>
+  </div>
 </div>
 
 <div class="reset-wrap">
@@ -1155,6 +1211,7 @@
         badge.classList.toggle('visible', done > 0);
       }
     }
+    renderToonies();
   }
 
   function toggle(routine, idx, event) {
@@ -1635,6 +1692,98 @@
       greetEl.innerHTML = `${salutation}, Violet! <strong>All done today — you're amazing! 🌟</strong>`;
     }
   }
+
+  // ── Toonie Tasks (weekly $2 earners, unlocked per routine window) ──
+  const TOONIE_CFG = {{ toonie_config_json | safe }};
+  let toonieEarned = new Set({{ toonie_earned_json | safe }});  // ledger keys earned today
+
+  function currentToonieWindow() {
+    const now  = new Date();
+    const mins = now.getHours() * 60 + now.getMinutes();
+    const wins = TOONIE_CFG.windows || {};
+    for (const wid in wins) {
+      const w = wins[wid];
+      const [sh, sm] = (w.start || '').split(':').map(Number);
+      const [eh, em] = (w.end   || '').split(':').map(Number);
+      if (Number.isFinite(sh) && Number.isFinite(eh) &&
+          sh * 60 + sm <= mins && mins < eh * 60 + em) return wid;
+    }
+    return null;
+  }
+
+  function lockedToonie(icon, msg) {
+    return `<div class="toonie-locked"><span class="tl-icon">${icon}</span><span>${msg}</span></div>`;
+  }
+
+  function renderToonies() {
+    const card  = document.getElementById('card-toonies');
+    if (!card) return;
+    const body  = document.getElementById('toonieBody');
+    const sub   = document.getElementById('toonieSub');
+    const tally = document.getElementById('toonieTally');
+    const wins  = TOONIE_CFG.windows || {};
+    const tasksByWin = TOONIE_CFG.tasks || {};
+    if (!Object.keys(wins).length) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    tally.textContent = '';
+
+    const win = currentToonieWindow();
+    if (!win) {
+      sub.textContent = 'Opens in your routine windows';
+      body.innerHTML  = lockedToonie('⏰', 'Toonie tasks open during your routine windows — finish that routine in time to unlock them.');
+      return;
+    }
+    const wlabel = (wins[win] && wins[win].label) || win;
+    const r = ROUTINES[win];
+    const routineDone = r && r.total > 0 && topLevelDone(win) === r.total;
+    if (!routineDone) {
+      sub.textContent = `${wlabel} window is open`;
+      body.innerHTML  = lockedToonie('🔒', `Finish your <b>${wlabel}</b> routine to unlock toonie tasks!`);
+      return;
+    }
+    const tasks = tasksByWin[win] || [];
+    if (!tasks.length) {
+      sub.textContent = `${wlabel} toonies`;
+      body.innerHTML  = lockedToonie('✨', 'No toonie tasks planned for this window yet.');
+      return;
+    }
+    let earnedSum = 0;
+    body.innerHTML = '<div class="toonie-grid">' + tasks.map(t => {
+      const key  = `toonie:${win}:${t.id}`;
+      const done = toonieEarned.has(key);
+      const val  = (t.value == null ? 2 : t.value);
+      if (done) earnedSum += Number(val) || 0;
+      return `<button class="toonie-card${done ? ' done' : ''}" onclick="tapToonie('${win}','${t.id}',this)">
+          <span class="toonie-icon">${t.icon || '🪙'}</span>
+          <span class="toonie-label">${t.label || ''}</span>
+          <span class="toonie-val">${done ? '✓ earned' : '$' + val}</span>
+        </button>`;
+    }).join('') + '</div>';
+    sub.textContent = `${wlabel} toonies unlocked!`;
+    tally.textContent = earnedSum ? `+$${earnedSum}` : '';
+  }
+
+  async function tapToonie(win, taskId, el) {
+    const key  = `toonie:${win}:${taskId}`;
+    const want = !toonieEarned.has(key);
+    if (want && el) popTreat(el);
+    try {
+      const res = await fetch('/earn-toonie', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: taskId, earned: want }),
+      });
+      const b = await res.json();
+      if (b.ok) {
+        if (want) { toonieEarned.add(b.key); if (b.milestone) celebrateMoney(b.milestone); }
+        else toonieEarned.delete(b.key);
+      }
+    } catch (e) {}
+    renderToonies();
+  }
+
+  // Re-check the window every 30s so the card locks/unlocks as time passes.
+  setInterval(renderToonies, 30000);
 
   render();
   renderExtras();
