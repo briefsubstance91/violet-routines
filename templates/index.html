@@ -870,11 +870,19 @@
       </div>
       <div class="task-list">
         {% for e in extras %}
-        <div class="task extra-item">
-          <span class="extra-icon">{{ e.icon or '•' }}</span>
-          <span class="task-label">{{ e.title }}</span>
-          {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
-        </div>
+          {% if e.type == 'task' %}
+          <div class="task" id="extra-{{ e.key }}" onclick="toggleExtra('{{ e.key }}', event)">
+            <div class="task-check"></div>
+            <span class="task-label">{{ e.icon }} {{ e.title }}</span>
+            {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+          </div>
+          {% else %}
+          <div class="task extra-item">
+            <span class="extra-icon">{{ e.icon or '•' }}</span>
+            <span class="task-label">{{ e.title }}</span>
+            {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+          </div>
+          {% endif %}
         {% endfor %}
       </div>
     </div>
@@ -1175,6 +1183,53 @@
     state = Object.fromEntries(Object.keys(ROUTINES).map(k => [k, {}]));
     saveState(state);
     render();
+    extrasState = { date: TODAY };
+    saveExtras(extrasState);
+    renderExtras();
+    if (EXTRAS_KEYS.length) logExtras();
+  }
+
+  // ── Today's Extras (recurring tasks / one-off events) ──
+  // Self-contained: logged under routine 'extra', kept out of am/af/pm
+  // streak/badge math (compute_stats ignores 'extra' rows server-side).
+  const EXTRAS_KEYS = {{ extras_keys_json | safe }};
+
+  function getExtras() {
+    const raw = localStorage.getItem('violet-extras-v1');
+    if (!raw) return { date: TODAY };
+    const s = JSON.parse(raw);
+    return s.date === TODAY ? s : { date: TODAY };
+  }
+  function saveExtras(s) {
+    localStorage.setItem('violet-extras-v1', JSON.stringify({ ...s, date: TODAY }));
+  }
+  let extrasState = getExtras();
+
+  function extrasDone() { return EXTRAS_KEYS.filter(k => extrasState[k]).length; }
+
+  function renderExtras() {
+    EXTRAS_KEYS.forEach(k => {
+      const el = document.getElementById(`extra-${k}`);
+      if (el) el.classList.toggle('done', !!extrasState[k]);
+    });
+  }
+
+  function logExtras() {
+    const today = new Date().toISOString().split('T')[0];
+    fetch('/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: today, routine: 'extra', completed: extrasDone(), total: EXTRAS_KEYS.length }),
+    });
+  }
+
+  function toggleExtra(key, event) {
+    const wasChecked = !!extrasState[key];
+    extrasState = { ...extrasState, [key]: !wasChecked };
+    saveExtras(extrasState);
+    renderExtras();
+    logExtras();
+    if (!wasChecked && event) popTreat(event.currentTarget);
   }
 
   function celebrate(routine) {
@@ -1526,6 +1581,7 @@
   }
 
   render();
+  renderExtras();
   updateGreetingAndBadge();
 
   if ('serviceWorker' in navigator) {

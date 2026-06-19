@@ -108,10 +108,13 @@ def load_events():
     rows = []
     try:
         with open(path, newline='', encoding='utf-8-sig') as f:
-            for row in csv.DictReader(f):
-                if row.get('Title', '').strip():
+            for i, row in enumerate(csv.DictReader(f)):
+                title = row.get('Title', '').strip()
+                if title:
+                    slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-') or 'item'
                     rows.append({
-                        'title':  row['Title'].strip(),
+                        'key':    f'{slug}-{i}',
+                        'title':  title,
                         'icon':   row.get('Icon', '').strip(),
                         'when':   row.get('When', '').strip(),
                         'time':   row.get('Time', '').strip(),
@@ -385,6 +388,9 @@ def load_log():
 
 def compute_stats(log_rows):
     today = date.today()
+    # 'extra' rows (recurring/one-off events) are logged separately and must
+    # not affect the am/af/pm streak, calendar, or overall stats.
+    log_rows = [r for r in log_rows if r.get('Routine') != 'extra']
     entries = []
     for row in log_rows:
         try:
@@ -554,10 +560,12 @@ def index():
     }
     levelup_data = load_levelup_data()
     cel_routines, cel_milestones = list_celebration_images()
+    extras = events_due_today()
     return render_template(
         'index.html',
         routines=routines,
-        extras=events_due_today(),
+        extras=extras,
+        extras_keys_json=json.dumps([e['key'] for e in extras if e['type'] == 'task']),
         phrases_json=json.dumps(phrases),
         routines_json=json.dumps(routines_cfg),
         milestones_json=json.dumps(milestones),
