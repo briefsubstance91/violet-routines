@@ -15,9 +15,9 @@ app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 _BASE           = os.path.dirname(os.path.abspath(__file__))
-TASKS_FILE      = os.path.join(_BASE, 'Violet Tasks.csv')
-PHRASES_FILE    = os.path.join(_BASE, 'Violet Phrases.csv')
-MILESTONES_FILE = os.path.join(_BASE, 'Violet Milestones.csv')
+TASKS_SEED_FILE = os.path.join(_BASE, 'Violet Tasks.csv')
+PHRASES_FILE    = os.path.join(_BASE, 'Violet Phrases.csv')   # read-only seed (never edited at runtime)
+MILESTONES_SEED_FILE = os.path.join(_BASE, 'Violet Milestones.csv')
 IMAGES_DIR      = os.path.join(_BASE, 'static', 'images')
 CEL_DIR         = os.path.join(_BASE, 'static', 'celebration')
 IMG_EXTS        = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
@@ -38,6 +38,14 @@ LEDGER_FILE         = os.path.join(_DATA, 'Violet Earnings.csv')
 MONEY_MS_FILE       = os.path.join(_DATA, 'Violet Money Milestones.csv')
 MONEY_MS_SEED_FILE  = os.path.join(_BASE, 'Violet Money Milestones.csv')
 SETTINGS_FILE       = os.path.join(_DATA, 'violet_settings.json')
+# Editable-at-runtime copies live on the volume; seeds in the repo are the fallback.
+TASKS_FILE          = os.path.join(_DATA, 'Violet Tasks.csv')
+MILESTONES_FILE     = os.path.join(_DATA, 'Violet Milestones.csv')
+
+
+def _data_or_seed(data_path, seed_path):
+    """Prefer the volume copy (edited at runtime); fall back to the repo seed."""
+    return data_path if os.path.exists(data_path) else seed_path
 
 
 _MONTH_NUM = {m: i for i, m in enumerate(
@@ -505,7 +513,7 @@ def scan_csv(path, header_col):
 
 
 def load_routines():
-    rows = scan_csv(TASKS_FILE, 'Routine')
+    rows = scan_csv(_data_or_seed(TASKS_FILE, TASKS_SEED_FILE), 'Routine')
     routines = []
     by_id = {}
     for row in rows:
@@ -564,7 +572,7 @@ def load_phrases():
 
 
 def load_milestones():
-    rows = scan_csv(MILESTONES_FILE, 'Streak')
+    rows = scan_csv(_data_or_seed(MILESTONES_FILE, MILESTONES_SEED_FILE), 'Streak')
     milestones = {}
     for row in rows:
         streak   = row.get('Streak', '').strip()
@@ -924,7 +932,7 @@ def admin_save():
 
 def load_tasks_raw():
     """Return routines as ordered list with metadata + task list (each task is {label, tags, subtasks})."""
-    rows = scan_csv(TASKS_FILE, 'Routine')
+    rows = scan_csv(_data_or_seed(TASKS_FILE, TASKS_SEED_FILE), 'Routine')
     seen = {}
     order = []
     for row in rows:
