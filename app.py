@@ -2,6 +2,7 @@ import csv
 import json
 import os
 import re
+import uuid
 import atexit
 from collections import defaultdict
 from datetime import date, datetime, timedelta
@@ -43,6 +44,7 @@ TASKS_FILE          = os.path.join(_DATA, 'Violet Tasks.csv')
 MILESTONES_FILE     = os.path.join(_DATA, 'Violet Milestones.csv')
 TOONIES_FILE        = os.path.join(_DATA, 'violet_toonies.json')
 TOONIES_SEED_FILE   = os.path.join(_BASE, 'violet_toonies.json')
+SURPRISES_FILE      = os.path.join(_DATA, 'violet_surprises.json')
 DEFAULT_TZ          = 'America/Toronto'
 
 
@@ -379,6 +381,58 @@ def toonies_earned_today(today=None):
             if r.get('Date') == today and (r.get('Key') or '').startswith('toonie:')]
 
 
+# ── Surprise rewards (parent-loaded, hidden from Violet until they trigger) ──
+def load_surprises():
+    try:
+        with open(SURPRISES_FILE, encoding='utf-8') as f:
+            data = json.load(f)
+            return data if isinstance(data, list) else []
+    except (OSError, ValueError):
+        return []
+
+
+def save_surprises(items):
+    with open(SURPRISES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(items, f, indent=2, ensure_ascii=False)
+
+
+def surprise_ready(s, today):
+    """Ready to reveal: not yet delivered and its trigger condition is met.
+    'now' fires when the parent flips it active; 'date' fires on/after its date."""
+    if s.get('delivered'):
+        return False
+    trig = s.get('trigger', 'now')
+    if trig == 'now':
+        return bool(s.get('active'))
+    if trig == 'date':
+        d = (s.get('date') or '').strip()
+        return bool(d) and today >= d
+    return False
+
+
+def pending_surprises(today=None):
+    today = today or _now_local().date().isoformat()
+    return [s for s in load_surprises() if surprise_ready(s, today)]
+
+
+def notify_ready_surprises():
+    """Push-notify any surprise that just became ready (once each)."""
+    today = _now_local().date().isoformat()
+    items = load_surprises()
+    changed = False
+    for s in items:
+        if not s.get('notified') and surprise_ready(s, today):
+            try:
+                _push_to_all('🎁 A surprise is waiting!',
+                             f"{s.get('icon', '🎁')} Open your app to see it, Violet! 💜")
+            except Exception as exc:
+                print(f'[push] surprise notify error: {exc}')
+            s['notified'] = True
+            changed = True
+    if changed:
+        save_surprises(items)
+
+
 def get_vapid_keys():
     env_priv = os.environ.get('VAPID_PRIVATE_KEY')
     env_pub  = os.environ.get('VAPID_PUBLIC_KEY')
@@ -537,6 +591,7 @@ def _check_and_notify():
                 if key not in _already_notified:
                     _already_notified[key] = True
                     _send_push_for_event(e)
+        notify_ready_surprises()   # date-based surprises that became ready
     except Exception as exc:
         print(f'[push] check_and_notify error: {exc}')
 
@@ -943,6 +998,22 @@ def earn_toonie():
     return jsonify(resp)
 
 
+@app.route('/surprises/delivered', methods=['POST'])
+def surprise_delivered():
+    """Mark a surprise as seen by Violet so it only reveals once."""
+    sid = (request.get_json() or {}).get('id')
+    items = load_surprises()
+    changed = False
+    for s in items:
+        if s.get('id') == sid and not s.get('delivered'):
+            s['delivered'] = True
+            s['delivered_at'] = _now_local().date().isoformat()
+            changed = True
+    if changed:
+        save_surprises(items)
+    return jsonify({'ok': True})
+
+
 @app.route('/bank')
 def bank():
     b = compute_bank()
@@ -993,6 +1064,7 @@ def index():
         completed_dates_json=json.dumps(completed_dates(load_log())),
         toonie_config_json=json.dumps(toonie_cfg),
         toonie_earned_json=json.dumps(toonies_earned_today()),
+        surprises_json=json.dumps(pending_surprises()),
     )
 
 
@@ -1194,6 +1266,33 @@ def admin_toonies_save():
     # Preserve window/timezone config; only the weekly task lists are editable here.
     cfg['tasks'] = data.get('tasks', {})
     save_toonies(cfg)
+    return jsonify({'ok': True})
+
+
+@app.route('/admin/surprises')
+def admin_surprises():
+    return render_template('admin_surprises.html',
+                           surprises_json=json.dumps(load_surprises()),
+                           today_iso=_now_local().date().isoformat())
+
+
+@app.route('/admin/surprises/save', methods=['POST'])
+def admin_surprises_save():
+    incoming = request.get_json() or []
+    existing = {s.get('id'): s for s in load_surprises()}
+    out = []
+    for s in incoming:
+        sid = (s.get('id') or '').strip() or 's-' + uuid.uuid4().hex[:10]
+        prev = existing.get(sid, {})
+        # Server-owned flags survive editing; resetting 'active' off re-arms nothing.
+        s['id']       = sid
+        s['notified'] = prev.get('notified', False)
+        s['delivered'] = prev.get('delivered', False)
+        if prev.get('delivered_at'):
+            s['delivered_at'] = prev['delivered_at']
+        out.append(s)
+    save_surprises(out)
+    notify_ready_surprises()   # push immediately for any now-active / past-date surprise
     return jsonify({'ok': True})
 
 
