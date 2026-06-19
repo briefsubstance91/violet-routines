@@ -185,16 +185,12 @@ _ROUTINE_MESSAGES = {
 }
 
 
-def _send_push_for_routine(routine):
+def _push_to_all(title, body, url='/routines'):
     from pywebpush import webpush, WebPushException
-    rid = routine['id']
-    title, body = _ROUTINE_MESSAGES.get(
-        rid, (f"{routine.get('name', 'Routine')} time!", "Time for your routine, Violet! 💜")
-    )
     payload = json.dumps({
         'title': title, 'body': body,
         'icon': '/icon.svg', 'badge': '/icon.svg',
-        'data': {'url': '/routines'},
+        'data': {'url': url},
     })
     vapid = get_vapid_keys()
     subs = load_push_subs()
@@ -216,6 +212,24 @@ def _send_push_for_routine(routine):
         save_push_subs([s for s in subs if s['endpoint'] not in dead])
 
 
+def _send_push_for_routine(routine):
+    rid = routine['id']
+    title, body = _ROUTINE_MESSAGES.get(
+        rid, (f"{routine.get('name', 'Routine')} time!", "Time for your routine, Violet! 💜")
+    )
+    _push_to_all(title, body)
+
+
+def _send_push_for_event(e):
+    icon = e.get('icon', '')
+    title = f"{icon} {e['title']}".strip()
+    if e.get('type') == 'task':
+        body = "Don't forget — check it off when it's done! 💜"
+    else:
+        body = "Heads up — that's happening today! 💜"
+    _push_to_all(title, body)
+
+
 def _check_and_notify():
     try:
         subs = load_push_subs()
@@ -233,6 +247,15 @@ def _check_and_notify():
                 if key not in _already_notified:
                     _already_notified[key] = True
                     _send_push_for_routine(r)
+        for e in events_due_today(now.date()):
+            eh, em = _parse_time_hm(e.get('time', ''))
+            if eh is None:
+                continue
+            if now.hour == eh and now.minute == em:
+                key = f"event:{e['key']}:{today_key}"
+                if key not in _already_notified:
+                    _already_notified[key] = True
+                    _send_push_for_event(e)
     except Exception as exc:
         print(f'[push] check_and_notify error: {exc}')
 
