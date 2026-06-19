@@ -53,6 +53,7 @@
     .txn-date { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
     .txn-amt { margin-left: auto; font-weight: 900; color: var(--green); white-space: nowrap; }
     .empty { background: var(--card); border-radius: 16px; padding: 2rem 1rem; text-align: center; color: var(--muted); font-weight: 700; box-shadow: 0 4px 16px rgba(78,58,180,0.08); }
+    .paid-note { margin: 0.25rem 0 0.5rem; padding: 0.6rem 1rem; border-radius: 12px; background: #ede9fe; color: #6d28d9; font-weight: 700; text-align: center; font-size: 0.9rem; }
 
     /* ── Money milestone ── */
     .ms-card { background: var(--card); border-radius: 20px; padding: 1.25rem 1.25rem; box-shadow: 0 8px 24px rgba(78,58,180,0.1); margin-bottom: 1.5rem; }
@@ -93,11 +94,15 @@
     </a>
     <div class="split-card">
       <div class="split-icon">💰</div>
-      <div class="split-amt">${{ '%g'|format(bank.spendable) }}</div>
-      <div class="split-label">Yours to keep</div>
-      <div class="split-note">spend or save</div>
+      <div class="split-amt">${{ '%g'|format(bank.balance) }}</div>
+      <div class="split-label">In your bank now</div>
+      <div class="split-note">paid out on planning night</div>
     </div>
   </div>
+
+  {% if bank.paid_out %}
+  <div class="paid-note">💵 Cash paid out so far: <strong>${{ '%g'|format(bank.paid_out) }}</strong></div>
+  {% endif %}
 
   <div class="section-title">Recent earnings</div>
   {% if recent %}
