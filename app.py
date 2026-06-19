@@ -66,6 +66,10 @@ def load_charities():
         with open(path, newline='', encoding='utf-8-sig') as f:
             for row in csv.DictReader(f):
                 if row.get('Charity', '').strip():
+                    try:
+                        amount = float(row.get('Amount') or 0)
+                    except ValueError:
+                        amount = 0.0
                     rows.append({
                         'month':   row['Month'].strip(),
                         'year':    int(row['Year'].strip() or 0),
@@ -73,6 +77,7 @@ def load_charities():
                         'cause':   row.get('Cause', '').strip(),
                         'status':  row.get('Status', 'planned').strip(),
                         'notes':   row.get('Notes', '').strip(),
+                        'amount':  amount,
                     })
     except FileNotFoundError:
         pass
@@ -81,12 +86,17 @@ def load_charities():
 
 def save_charities(entries):
     with open(CHARITIES_FILE, 'w', newline='', encoding='utf-8') as f:
-        w = csv.DictWriter(f, fieldnames=['Month','Year','Charity','Cause','Status','Notes'])
+        w = csv.DictWriter(f, fieldnames=['Month','Year','Charity','Cause','Status','Notes','Amount'])
         w.writeheader()
         for e in entries:
+            try:
+                amount = float(e.get('amount') or 0)
+            except (TypeError, ValueError):
+                amount = 0.0
             w.writerow({'Month': e.get('month',''), 'Year': e.get('year',''),
                         'Charity': e.get('charity',''), 'Cause': e.get('cause',''),
-                        'Status': e.get('status','planned'), 'Notes': e.get('notes','')})
+                        'Status': e.get('status','planned'), 'Notes': e.get('notes',''),
+                        'Amount': ('%g' % amount) if amount else ''})
 
 
 def due_today(when, today):
@@ -513,6 +523,22 @@ def load_log():
     return scan_csv(LOG_FILE, 'Date')
 
 
+def completed_dates(log_rows):
+    """ISO dates (sorted) on which at least one routine was fully completed.
+    Used to seed/reconcile the client's cumulative 'days completed' list so it
+    survives device changes and migrates users from the old streak data."""
+    dates = set()
+    for row in log_rows:
+        if row.get('Routine') == 'extra':
+            continue
+        try:
+            if int(row['Total']) and int(row['Completed']) == int(row['Total']):
+                dates.add(row['Date'])
+        except (ValueError, KeyError):
+            continue
+    return sorted(dates)
+
+
 def compute_stats(log_rows):
     today = date.today()
     # 'extra' rows (recurring/one-off events) are logged separately and must
@@ -719,6 +745,7 @@ def index():
         cel_milestones_json=json.dumps(cel_milestones),
         levelup_categories_json=json.dumps(levelup_data.get('levelup_categories', [])),
         badges_json=json.dumps(BADGES),
+        completed_dates_json=json.dumps(completed_dates(load_log())),
     )
 
 
@@ -1022,7 +1049,10 @@ def push_test():
 
 @app.route('/charities')
 def charities():
-    return render_template('charities.html', charities_json=json.dumps(load_charities()))
+    return render_template('charities.html',
+                           charities_json=json.dumps(load_charities()),
+                           bank=compute_bank(),
+                           giving_pct=int(round(GIVING_RATE * 100)))
 
 
 @app.route('/charities/save', methods=['POST'])

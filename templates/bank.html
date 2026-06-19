@@ -69,12 +69,12 @@
   </div>
 
   <div class="split">
-    <div class="split-card">
+    <a class="split-card" href="/charities" style="text-decoration:none">
       <div class="split-icon">💜</div>
       <div class="split-amt">${{ '%g'|format(bank.given) }}</div>
       <div class="split-label">Giving</div>
-      <div class="split-note">{{ giving_pct }}% to a good cause</div>
-    </div>
+      <div class="split-note">{{ giving_pct }}% — tap to give →</div>
+    </a>
     <div class="split-card">
       <div class="split-icon">💰</div>
       <div class="split-amt">${{ '%g'|format(bank.spendable) }}</div>

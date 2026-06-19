@@ -84,6 +84,20 @@
     /* ── Page ── */
     .page { max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem; position: relative; z-index: 1; }
 
+    /* ── Giving pot ── */
+    .pot-card {
+      background: linear-gradient(135deg, #9b87f5, #f472b6);
+      color: white; border-radius: 22px; padding: 1.5rem 1.4rem;
+      box-shadow: 0 10px 32px rgba(155,135,245,0.32); margin-bottom: 1.5rem;
+    }
+    .pot-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+    .pot-label { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9; }
+    .pot-amt { font-family: 'Fredoka One', cursive; font-size: 2.6rem; line-height: 1; margin-top: 0.15rem; }
+    .pot-sub { font-size: 0.82rem; font-weight: 700; opacity: 0.92; }
+    .pot-bar-wrap { height: 10px; background: rgba(255,255,255,0.3); border-radius: 99px; margin: 1rem 0 0.5rem; overflow: hidden; }
+    .pot-bar { height: 100%; background: white; border-radius: 99px; transition: width 0.4s ease; }
+    .pot-foot { display: flex; justify-content: space-between; font-size: 0.74rem; font-weight: 800; opacity: 0.95; }
+
     /* ── Stats bar ── */
     .stats-bar {
       display: flex; gap: 1.5rem; justify-content: center;
@@ -165,6 +179,18 @@
       margin-top: 0.2rem;
     }
     .charity-notes { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+    .charity-amt {
+      flex-shrink: 0; font-family: 'Fredoka One', cursive; font-size: 0.95rem;
+      color: var(--purple); white-space: nowrap;
+    }
+    .add-input.amt-input { max-width: 90px; }
+    .row-amt-input {
+      flex-shrink: 0; width: 72px; font-family: 'Nunito', sans-serif;
+      font-weight: 800; font-size: 0.85rem; color: var(--purple); text-align: right;
+      border: 1.5px solid var(--border); border-radius: 8px; padding: 0.3rem 0.4rem;
+      background: white; outline: none;
+    }
+    .row-amt-input:focus { border-color: var(--purple); }
 
     .delete-btn {
       flex-shrink: 0; background: none; border: none;
@@ -261,6 +287,7 @@
   <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
   <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
   <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
   <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
   <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
   <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
@@ -268,6 +295,21 @@
 </div>
 
 <div class="page" id="mainPage">
+  <div class="pot-card" id="potCard">
+    <div class="pot-top">
+      <div>
+        <div class="pot-label">💜 Giving Pot</div>
+        <div class="pot-amt" id="potReady">$0</div>
+      </div>
+      <div class="pot-sub" id="potNote">ready to share</div>
+    </div>
+    <div class="pot-bar-wrap"><div class="pot-bar" id="potBar" style="width:0%"></div></div>
+    <div class="pot-foot">
+      <span id="potGiven">$0 given</span>
+      <span id="potEarned">$0 earned</span>
+    </div>
+  </div>
+
   <div class="stats-bar" id="statsBar"></div>
   <div id="timeline"></div>
 
@@ -300,8 +342,29 @@
                        'July','August','September','October','November','December'];
 
   let data = {{ charities_json | safe }};
+  const POT_EARNED = {{ '%g'|format(bank.given) }};   // 10% of all earnings
+  const GIVING_PCT = {{ giving_pct }};
   let editMode = false;
   let dirty = false;
+
+  function fmtMoney(n) {
+    n = Math.round(n * 100) / 100;
+    return '$' + (Number.isInteger(n) ? n : n.toFixed(2));
+  }
+
+  function renderPot() {
+    const given = data.filter(r => r.status === 'donated')
+                      .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+    const ready = Math.max(0, POT_EARNED - given);
+    const pct   = POT_EARNED > 0 ? Math.min(100, Math.round(given / POT_EARNED * 100)) : 0;
+    document.getElementById('potReady').textContent  = fmtMoney(ready);
+    document.getElementById('potGiven').textContent  = fmtMoney(given) + ' given';
+    document.getElementById('potEarned').textContent = fmtMoney(POT_EARNED) + ' earned';
+    document.getElementById('potBar').style.width     = pct + '%';
+    document.getElementById('potNote').textContent =
+      POT_EARNED === 0 ? `${GIVING_PCT}% of earnings lands here`
+      : ready > 0 ? 'ready to share 💜' : 'all shared — amazing! 🌟';
+  }
 
   // Group and sort: newest first
   function groupByMonth(rows) {
@@ -381,6 +444,9 @@
             ${c.cause ? `<span class="charity-cause">${escHtml(c.cause)}</span>` : ''}
             ${c.notes ? `<div class="charity-notes">${escHtml(c.notes)}</div>` : ''}
           </div>
+          ${editMode
+            ? `<input class="row-amt-input" type="number" min="0" step="0.01" value="${(parseFloat(c.amount) || 0) || ''}" placeholder="$" onfocus="this.select()" oninput="setAmount(${globalIdx}, this.value)">`
+            : ((parseFloat(c.amount) || 0) ? `<div class="charity-amt">${fmtMoney(parseFloat(c.amount))}</div>` : '')}
           <button class="delete-btn" onclick="deleteCharity(${globalIdx})" title="Remove">✕</button>
         `;
         card.appendChild(row);
@@ -396,6 +462,7 @@
         </div>
         <div class="add-charity-row">
           <input class="add-input" placeholder="Notes (optional)" id="notes-${g.month}-${g.year}" style="flex:1">
+          <input class="add-input amt-input" type="number" min="0" step="0.01" placeholder="$ amt" id="amt-${g.month}-${g.year}">
           <button class="add-submit-btn" onclick="addCharity('${g.month}',${g.year})">Add</button>
         </div>
       `;
@@ -410,6 +477,13 @@
     }
 
     renderStats();
+    renderPot();
+  }
+
+  function setAmount(idx, val) {
+    data[idx].amount = parseFloat(val) || 0;
+    markDirty();
+    renderPot();          // live pot update without re-rendering (keeps input focus)
   }
 
   function cycleStatus(idx) {
@@ -430,12 +504,14 @@
     const nameEl  = document.getElementById(`name-${month}-${year}`);
     const causeEl = document.getElementById(`cause-${month}-${year}`);
     const notesEl = document.getElementById(`notes-${month}-${year}`);
+    const amtEl   = document.getElementById(`amt-${month}-${year}`);
     const name = (nameEl.value || '').trim();
     if (!name) { nameEl.focus(); return; }
     data.push({ month, year: parseInt(year), charity: name,
                 cause: (causeEl.value || '').trim(),
-                status: 'planned', notes: (notesEl.value || '').trim() });
-    nameEl.value = ''; causeEl.value = ''; notesEl.value = '';
+                status: 'planned', notes: (notesEl.value || '').trim(),
+                amount: parseFloat(amtEl.value) || 0 });
+    nameEl.value = ''; causeEl.value = ''; notesEl.value = ''; amtEl.value = '';
     markDirty();
     renderTimeline();
   }

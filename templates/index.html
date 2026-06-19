@@ -1057,6 +1057,22 @@
   function saveDaysList(l) { localStorage.setItem('violet-days', JSON.stringify(l)); }
   function daysCompleted() { return getDaysList().length; }
 
+  // Migrate & reconcile: the server log is the source of truth for which days
+  // had a fully-completed routine. Fold any it knows about into the local list
+  // (matching TODAY's toDateString format). This seeds the new days-completed
+  // count for users coming from the old streak data, and keeps it correct
+  // across devices. Idempotent — runs every load, only adds missing dates.
+  (function reconcileDays() {
+    const serverDays = {{ completed_dates_json | safe }};  // ISO date strings
+    const local = new Set(getDaysList());
+    let changed = false;
+    for (const iso of serverDays) {
+      const d = new Date(iso + 'T00:00:00').toDateString();
+      if (!local.has(d)) { local.add(d); changed = true; }
+    }
+    if (changed) saveDaysList([...local]);
+  })();
+
   // ── Badge tracking ──
   const BADGE_DEFS = {{ badges_json | safe }};
 
