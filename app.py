@@ -32,11 +32,15 @@ VAPID_CLAIMS       = {'sub': 'mailto:bgelineau@proton.me'}
 _already_notified   = {}  # {routine_id:date → True}
 CHARITIES_FILE      = os.path.join(_DATA, 'Violet Charities.csv')
 CHARITIES_SEED_FILE = os.path.join(_BASE, 'Violet Charities.csv')
+EVENTS_FILE         = os.path.join(_DATA, 'Violet Events.csv')
+EVENTS_SEED_FILE    = os.path.join(_BASE, 'Violet Events.csv')
 
 
 _MONTH_NUM = {m: i for i, m in enumerate(
     ['January','February','March','April','May','June',
      'July','August','September','October','November','December'], 1)}
+
+_WEEKDAY_ABBR = {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6}
 
 
 def load_charities():
@@ -67,6 +71,102 @@ def save_charities(entries):
             w.writerow({'Month': e.get('month',''), 'Year': e.get('year',''),
                         'Charity': e.get('charity',''), 'Cause': e.get('cause',''),
                         'Status': e.get('status','planned'), 'Notes': e.get('notes','')})
+
+
+def due_today(when, today):
+    """Return True if a 'When' spec is due on `today` (a date).
+
+    Recurring: daily | weekdays | weekends | monthly:N | a weekday list
+    like "Mon,Wed,Fri". One-off: an ISO date like "2026-06-25".
+    """
+    w = (when or '').strip()
+    if not w:
+        return False
+    wl = w.lower()
+    if wl == 'daily':
+        return True
+    if wl == 'weekdays':
+        return today.weekday() < 5
+    if wl == 'weekends':
+        return today.weekday() >= 5
+    if wl.startswith('monthly:'):
+        try:
+            return today.day == int(wl.split(':', 1)[1])
+        except ValueError:
+            return False
+    parts = [p.strip()[:3].lower() for p in w.split(',') if p.strip()]
+    if parts and all(p in _WEEKDAY_ABBR for p in parts):
+        return today.weekday() in {_WEEKDAY_ABBR[p] for p in parts}
+    try:
+        return date.fromisoformat(w) == today
+    except ValueError:
+        return False
+
+
+def load_events():
+    path = EVENTS_FILE if os.path.exists(EVENTS_FILE) else EVENTS_SEED_FILE
+    rows = []
+    try:
+        with open(path, newline='', encoding='utf-8-sig') as f:
+            for i, row in enumerate(csv.DictReader(f)):
+                title = row.get('Title', '').strip()
+                if title:
+                    slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-') or 'item'
+                    rows.append({
+                        'key':    f'{slug}-{i}',
+                        'title':  title,
+                        'icon':   row.get('Icon', '').strip(),
+                        'when':   row.get('When', '').strip(),
+                        'time':   row.get('Time', '').strip(),
+                        'type':   (row.get('Type', 'event').strip() or 'event').lower(),
+                        'banner': row.get('Banner', '').strip(),
+                    })
+    except FileNotFoundError:
+        pass
+    return rows
+
+
+def events_due_today(today=None):
+    today = today or date.today()
+    return [e for e in load_events() if due_today(e['when'], today)]
+
+
+def save_events(events):
+    with open(EVENTS_FILE, 'w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=['Title', 'Icon', 'When', 'Time', 'Type', 'Banner'])
+        w.writeheader()
+        for e in events:
+            title = (e.get('title') or '').strip()
+            if not title:
+                continue
+            w.writerow({
+                'Title':  title,
+                'Icon':   e.get('icon', ''),
+                'When':   e.get('when', ''),
+                'Time':   e.get('time', ''),
+                'Type':   (e.get('type') or 'event').lower(),
+                'Banner': e.get('banner', ''),
+            })
+
+
+def archive_past_events(today=None):
+    """Drop one-off (ISO-date) events whose date is in the past. Recurring
+    events are always kept. Returns True if the file was rewritten."""
+    today = today or date.today()
+    kept, changed = [], False
+    for e in load_events():
+        try:
+            d = date.fromisoformat(e['when'].strip())
+        except ValueError:
+            kept.append(e)          # recurring spec → keep
+            continue
+        if d < today:
+            changed = True          # past one-off → archive (drop)
+        else:
+            kept.append(e)
+    if changed:
+        save_events(kept)
+    return changed
 
 
 def get_vapid_keys():
@@ -123,16 +223,12 @@ _ROUTINE_MESSAGES = {
 }
 
 
-def _send_push_for_routine(routine):
+def _push_to_all(title, body, url='/routines'):
     from pywebpush import webpush, WebPushException
-    rid = routine['id']
-    title, body = _ROUTINE_MESSAGES.get(
-        rid, (f"{routine.get('name', 'Routine')} time!", "Time for your routine, Violet! 💜")
-    )
     payload = json.dumps({
         'title': title, 'body': body,
         'icon': '/icon.svg', 'badge': '/icon.svg',
-        'data': {'url': '/routines'},
+        'data': {'url': url},
     })
     vapid = get_vapid_keys()
     subs = load_push_subs()
@@ -154,13 +250,38 @@ def _send_push_for_routine(routine):
         save_push_subs([s for s in subs if s['endpoint'] not in dead])
 
 
+def _send_push_for_routine(routine):
+    rid = routine['id']
+    title, body = _ROUTINE_MESSAGES.get(
+        rid, (f"{routine.get('name', 'Routine')} time!", "Time for your routine, Violet! 💜")
+    )
+    _push_to_all(title, body)
+
+
+def _send_push_for_event(e):
+    icon = e.get('icon', '')
+    title = f"{icon} {e['title']}".strip()
+    if e.get('type') == 'task':
+        body = "Don't forget — check it off when it's done! 💜"
+    else:
+        body = "Heads up — that's happening today! 💜"
+    _push_to_all(title, body)
+
+
+_last_archive_date = None
+
+
 def _check_and_notify():
+    global _last_archive_date
     try:
         subs = load_push_subs()
+        tz_name = subs[0].get('timezone', 'America/Toronto') if subs else 'America/Toronto'
+        now = datetime.now(ZoneInfo(tz_name))
+        if _last_archive_date != now.date():
+            _last_archive_date = now.date()
+            archive_past_events(now.date())
         if not subs:
             return
-        tz_name = subs[0].get('timezone', 'America/Toronto')
-        now = datetime.now(ZoneInfo(tz_name))
         today_key = now.strftime('%Y-%m-%d')
         for r in load_tasks_raw():
             rh, rm = _parse_time_hm(r.get('time', ''))
@@ -171,6 +292,15 @@ def _check_and_notify():
                 if key not in _already_notified:
                     _already_notified[key] = True
                     _send_push_for_routine(r)
+        for e in events_due_today(now.date()):
+            eh, em = _parse_time_hm(e.get('time', ''))
+            if eh is None:
+                continue
+            if now.hour == eh and now.minute == em:
+                key = f"event:{e['key']}:{today_key}"
+                if key not in _already_notified:
+                    _already_notified[key] = True
+                    _send_push_for_event(e)
     except Exception as exc:
         print(f'[push] check_and_notify error: {exc}')
 
@@ -326,6 +456,9 @@ def load_log():
 
 def compute_stats(log_rows):
     today = date.today()
+    # 'extra' rows (recurring/one-off events) are logged separately and must
+    # not affect the am/af/pm streak, calendar, or overall stats.
+    log_rows = [r for r in log_rows if r.get('Routine') != 'extra']
     entries = []
     for row in log_rows:
         try:
@@ -495,9 +628,12 @@ def index():
     }
     levelup_data = load_levelup_data()
     cel_routines, cel_milestones = list_celebration_images()
+    extras = events_due_today()
     return render_template(
         'index.html',
         routines=routines,
+        extras=extras,
+        extras_keys_json=json.dumps([e['key'] for e in extras if e['type'] == 'task']),
         phrases_json=json.dumps(phrases),
         routines_json=json.dumps(routines_cfg),
         milestones_json=json.dumps(milestones),
@@ -658,6 +794,19 @@ def admin_tasks():
 def admin_tasks_save():
     routines = request.get_json()
     save_tasks_raw(routines)
+    return jsonify({'ok': True})
+
+
+@app.route('/admin/events')
+def admin_events():
+    return render_template('admin_events.html',
+                           events_json=json.dumps(load_events()),
+                           today_iso=date.today().isoformat())
+
+
+@app.route('/admin/events/save', methods=['POST'])
+def admin_events_save():
+    save_events(request.get_json() or [])
     return jsonify({'ok': True})
 
 

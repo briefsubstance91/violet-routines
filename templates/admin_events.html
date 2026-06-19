@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Violet's App — Events</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --purple: #9b87f5; --blue: #4db8ff; --pink: #f472b6;
+      --text: #1e1b4b; --muted: #9490c0; --bg: #f5f3ff;
+      --card: #ffffff; --border: #e5e0ff; --r: 14px;
+    }
+    body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 4rem; }
+    header { background: white; border-bottom: 2px solid var(--border); padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    header h1 { font-size: 1.25rem; font-weight: 800; background: linear-gradient(135deg, var(--blue), var(--purple), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+    .btn { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.9rem; padding: 0.5rem 1.1rem; border-radius: 100px; border: none; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+    .btn:active { transform: scale(0.96); }
+    .btn-save { background: linear-gradient(135deg, var(--purple), var(--pink)); color: white; }
+    .btn-save:disabled { opacity: 0.45; cursor: default; }
+    .btn-danger { background: none; border: none; color: #f87171; font-size: 1.1rem; cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 6px; line-height: 1; }
+    .btn-danger:hover { background: #fff1f1; }
+    .save-status { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+    .save-status.saved { color: #34d399; }
+    .container { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 0.85rem; }
+    .event-card { background: var(--card); border: 2px solid var(--border); border-radius: var(--r); padding: 0.85rem 1rem; }
+    .event-top { display: flex; align-items: center; gap: 0.5rem; }
+    .event-grid { display: grid; grid-template-columns: 3.2rem 1fr; gap: 0.5rem; margin-top: 0.5rem; }
+    .event-grid.cols { grid-template-columns: 1fr 1fr 1fr; }
+    .fld { display: flex; flex-direction: column; gap: 0.2rem; }
+    .fld label { font-size: 0.68rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    input, select { font-family: 'Nunito', sans-serif; font-size: 0.92rem; font-weight: 600; color: var(--text); border: 2px solid var(--border); border-radius: 8px; padding: 0.4rem 0.55rem; background: white; width: 100%; }
+    input:focus, select:focus { outline: none; border-color: var(--purple); }
+    .title-input { flex: 1; font-weight: 800; }
+    .icon-input { width: 3.2rem; text-align: center; }
+    .btn-add { font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--purple); background: none; border: 2px dashed var(--border); border-radius: var(--r); padding: 0.7rem; cursor: pointer; width: 100%; }
+    .btn-add:hover { border-color: var(--purple); background: #faf8ff; }
+    .help-box { background: #f0ebff; border: 1.5px solid var(--border); border-radius: var(--r); padding: 1rem 1.25rem; font-size: 0.88rem; color: var(--text); line-height: 1.55; max-width: 720px; margin: 1.5rem auto; }
+    .help-title { font-weight: 800; font-size: 0.92rem; margin-bottom: 0.5rem; color: var(--purple); }
+    .help-box ul { padding-left: 1.2rem; margin: 0.35rem 0 0; }
+    .help-box li { margin-bottom: 0.25rem; }
+    .help-box code { background: white; border: 1px solid var(--border); border-radius: 4px; padding: 0 0.3rem; font-size: 0.82rem; }
+    .menu-btn { background: none; border: none; font-size: 1.5rem; color: var(--muted); cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 8px; line-height: 1; }
+    .menu-btn:hover { background: var(--bg); color: var(--purple); }
+    .menu-backdrop { display: none; position: fixed; inset: 0; background: rgba(78,58,180,0.18); z-index: 200; backdrop-filter: blur(2px); }
+    .menu-backdrop.open { display: block; }
+    .menu-panel { position: fixed; top: 0; right: 0; width: min(280px, 85vw); height: 100%; background: white; z-index: 201; transform: translateX(110%); transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1); padding: 2rem 1.5rem; display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(78,58,180,0.15); }
+    .menu-panel.open { transform: translateX(0); }
+    .menu-title { font-family: 'Fredoka One', cursive; font-size: 1.4rem; background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1.75rem; }
+    .menu-item { display: flex; align-items: center; gap: 0.9rem; padding: 0.95rem 0.5rem; border-bottom: 1.5px solid #f3f0ff; font-size: 0.95rem; font-weight: 700; color: var(--text); border-radius: 8px; }
+    .menu-item:hover { background: #f8f5ff; }
+    .menu-item a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.9rem; width: 100%; }
+    .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✦ Events</h1>
+  <div class="header-actions">
+    <span class="save-status" id="saveStatus">Saved ✓</span>
+    <button class="btn btn-save" id="saveBtn" onclick="saveAll()" disabled>Save</button>
+    <button class="menu-btn" onclick="openMenu()">☰</button>
+  </div>
+</header>
+
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-title">✦ Menu</div>
+  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
+  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
+  <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin ⚡</a></div>
+  <div class="menu-item"><a href="/admin/tasks"><span class="menu-item-icon">📋</span> Tasks</a></div>
+  <div class="menu-item"><a href="/admin/events"><span class="menu-item-icon">✨</span> Events</a></div>
+</div>
+
+<div class="help-box">
+  <div class="help-title">✨ How Events work</div>
+  <p>These show up in the <strong>Today's Extras</strong> card on Violet's home page when they're due.</p>
+  <ul>
+    <li><strong>When</strong> — recurring: <code>daily</code>, <code>weekdays</code>, <code>weekends</code>, a day list like <code>Mon,Wed,Fri</code>, or <code>monthly:15</code>. One-off: a date like <code>2026-06-25</code>.</li>
+    <li><strong>Type</strong> — <code>task</code> shows a checkbox Violet can tick off; <code>event</code> is a friendly heads-up only.</li>
+    <li><strong>Time</strong> (optional) — like <code>4:00 PM</code>; if set, a reminder is pushed at that time on days it's due.</li>
+    <li>Past one-off dates are tidied up automatically. Click <strong>Save</strong> when done.</li>
+  </ul>
+</div>
+
+<div class="container" id="eventsList"></div>
+<div class="container" style="padding-top:0;">
+  <button class="btn-add" onclick="addEvent()">+ Add event</button>
+</div>
+
+<script>
+  let events = {{ events_json | safe }};
+  let dirty = false;
+
+  function markDirty() {
+    dirty = true;
+    document.getElementById('saveStatus').textContent = 'Unsaved changes';
+    document.getElementById('saveStatus').className = 'save-status';
+    document.getElementById('saveBtn').disabled = false;
+  }
+  function markSaved() {
+    dirty = false;
+    document.getElementById('saveStatus').textContent = 'Saved ✓';
+    document.getElementById('saveStatus').className = 'save-status saved';
+    document.getElementById('saveBtn').disabled = true;
+  }
+  function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+  function render() {
+    const c = document.getElementById('eventsList');
+    c.innerHTML = '';
+    events.forEach((e, i) => {
+      const card = document.createElement('div');
+      card.className = 'event-card';
+      const isTask = (e.type || 'event') === 'task';
+      card.innerHTML = `
+        <div class="event-top">
+          <input class="icon-input" value="${esc(e.icon)}" placeholder="✨" oninput="upd(${i},'icon',this.value)">
+          <input class="title-input" value="${esc(e.title)}" placeholder="Event name…" oninput="upd(${i},'title',this.value)">
+          <button class="btn-danger" onclick="removeEvent(${i})" title="Delete">×</button>
+        </div>
+        <div class="event-grid cols">
+          <div class="fld">
+            <label>When</label>
+            <input value="${esc(e.when)}" placeholder="Mon,Wed or 2026-06-25" oninput="upd(${i},'when',this.value)">
+          </div>
+          <div class="fld">
+            <label>Time (optional)</label>
+            <input value="${esc(e.time)}" placeholder="4:00 PM" oninput="upd(${i},'time',this.value)">
+          </div>
+          <div class="fld">
+            <label>Type</label>
+            <select onchange="upd(${i},'type',this.value)">
+              <option value="event" ${isTask ? '' : 'selected'}>Event (heads-up)</option>
+              <option value="task" ${isTask ? 'selected' : ''}>Task (checkbox)</option>
+            </select>
+          </div>
+        </div>
+      `;
+      c.appendChild(card);
+    });
+  }
+
+  function upd(i, field, val) { events[i][field] = val; markDirty(); }
+
+  function addEvent() {
+    events.push({ title: '', icon: '✨', when: '', time: '', type: 'event', banner: '' });
+    markDirty();
+    render();
+    const inputs = document.querySelectorAll('.title-input');
+    inputs[inputs.length - 1]?.focus();
+  }
+
+  function removeEvent(i) { events.splice(i, 1); markDirty(); render(); }
+
+  async function saveAll() {
+    const btn = document.getElementById('saveBtn');
+    btn.textContent = 'Saving…'; btn.disabled = true;
+    const res = await fetch('/admin/events/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(events.filter(e => (e.title || '').trim())),
+    });
+    btn.textContent = 'Save';
+    if (res.ok) markSaved();
+  }
+
+  window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+  function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
+  function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  render();
+</script>
+
+</body>
+</html>
