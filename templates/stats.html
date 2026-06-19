@@ -13,16 +13,17 @@
       --am:    #4db8ff;
       --af:    #9b87f5;
       --pm:    #7c3aed;
-      --text:  #1e1b4b;
-      --muted: #9490c0;
-      --card:  #ffffff;
+      --text:  #ffffff;
+      --muted: rgba(255,255,255,0.55);
+      --card:  rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.12);
       --r:     22px;
     }
 
     html, body {
       min-height: 100%;
       font-family: 'Nunito', sans-serif;
-      background: linear-gradient(160deg, #cce8ff 0%, #e9e3ff 50%, #ffd6f0 100%);
+      background: linear-gradient(150deg, #120e2e 0%, #2d1060 45%, #7c3aed 80%, #c084fc 100%);
       background-attachment: fixed;
       color: var(--text);
       overflow-x: hidden;
@@ -31,7 +32,7 @@
     body::before {
       content: '✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧';
       position: fixed; top: 0; left: 0; right: 0;
-      font-size: 1rem; color: rgba(155,135,245,0.18);
+      font-size: 1rem; color: rgba(255,255,255,0.08);
       letter-spacing: 2rem; word-spacing: 2rem; line-height: 3rem;
       pointer-events: none; z-index: 0; word-break: break-all;
     }
@@ -72,10 +73,12 @@
     /* ── Card ── */
     .card {
       background: var(--card);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border-radius: var(--r);
       padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(78,58,180,0.1);
-      border: 2px solid rgba(155,135,245,0.15);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
     }
 
     /* ── Streak ── */
@@ -129,7 +132,7 @@
       transition: height 0.4s ease;
     }
     .week-bar.full { background: linear-gradient(to top, #4db8ff, #9b87f5, #f472b6); }
-    .week-bar.empty { background: #ede9fe; }
+    .week-bar.empty { background: rgba(255,255,255,0.12); }
     .week-day-label {
       font-size: 0.7rem;
       font-weight: 800;
@@ -142,16 +145,18 @@
       font-weight: 700;
       color: var(--muted);
     }
-    .week-bar.no-data { background: #f3f0ff; min-height: 4px; }
+    .week-bar.no-data { background: rgba(255,255,255,0.08); min-height: 4px; }
 
     /* ── Routine cards ── */
     .routine-grid { display: flex; flex-direction: column; gap: 1rem; }
     .routine-stat-card {
       background: var(--card);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border-radius: 18px;
       overflow: hidden;
-      box-shadow: 0 4px 20px rgba(78,58,180,0.08);
-      border: 2px solid rgba(155,135,245,0.15);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
     }
     .rs-header {
       padding: 1.25rem 1.25rem 1rem;
@@ -165,7 +170,7 @@
       font-size: 1.05rem; color: var(--text);
       margin-bottom: 0.5rem;
     }
-    .rs-bar-wrap { height: 8px; background: #ede9fe; border-radius: 100px; overflow: hidden; }
+    .rs-bar-wrap { height: 8px; background: rgba(255,255,255,0.1); border-radius: 100px; overflow: hidden; }
     .rs-bar { height: 100%; border-radius: 100px; transition: width 0.6s ease; }
     .rs-pct {
       font-family: 'Fredoka One', cursive;
@@ -180,13 +185,13 @@
     .rs-tasks {
       display: none;
       padding: 0 1.25rem 1.25rem;
-      border-top: 1.5px solid #f3f0ff;
+      border-top: 1px solid rgba(255,255,255,0.1);
     }
     .routine-stat-card.open .rs-tasks { display: block; }
     .rs-task-row {
       display: flex; align-items: center; gap: 0.75rem;
       padding: 0.55rem 0;
-      border-bottom: 1px solid #f3f0ff;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
       font-size: 0.88rem; font-weight: 700; color: var(--text);
     }
     .rs-task-row:last-child { border-bottom: none; }
@@ -236,7 +241,7 @@
     .cal-cell {
       aspect-ratio: 1;
       border-radius: 6px;
-      background: #f3f0ff;
+      background: rgba(255,255,255,0.06);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -262,7 +267,7 @@
     .overall-stat {
       text-align: center;
       padding: 1.25rem;
-      background: #f8f5ff;
+      background: rgba(255,255,255,0.08);
       border-radius: 14px;
     }
     .overall-number {
