@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Violet's App — Pay Out</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --purple: #9b87f5; --green: #16a34a; --text: #1e1b4b; --muted: #9490c0; --bg: #f5f3ff; --card: #fff; --border: #e5e0ff; }
+    body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 0 0 4rem; }
+    header { background: white; border-bottom: 2px solid var(--border); padding: 1.25rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    header h1 { font-size: 1.25rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--green), var(--purple)); -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; background-clip: text; }
+    .menu-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; }
+    .container { max-width: 560px; margin: 0 auto; padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .balance-card { background: linear-gradient(160deg, #16a34a, #15803d); color: white; border-radius: 22px;
+      padding: 1.6rem 1.25rem; text-align: center; box-shadow: 0 12px 30px rgba(22,163,74,0.3); }
+    .balance-label { font-size: 0.85rem; font-weight: 800; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.05em; }
+    .balance-amt { font-family: 'Fredoka One', cursive; font-size: 3rem; line-height: 1.1; margin: 0.2rem 0; }
+    .balance-sub { font-size: 0.85rem; opacity: 0.9; font-weight: 700; }
+    .pay-btn { margin-top: 1rem; width: 100%; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.05rem; color: var(--green);
+      background: white; border: none; border-radius: 100px; padding: 0.85rem; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+    .pay-btn:active { transform: scale(0.97); }
+    .pay-btn:disabled { opacity: 0.55; cursor: default; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+    .stat { background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 0.8rem 0.5rem; text-align: center; }
+    .stat-amt { font-weight: 800; font-size: 1.1rem; }
+    .stat-label { font-size: 0.72rem; color: var(--muted); font-weight: 700; margin-top: 0.15rem; }
+    .section-title { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 1.1rem; margin: 0.5rem 0 0.25rem; }
+    .pay-row { background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.75rem; }
+    .pay-row .pr-amt { font-weight: 800; color: var(--green); }
+    .pay-row .pr-date { font-size: 0.8rem; color: var(--muted); font-weight: 700; }
+    .pay-row .pr-note { font-size: 0.8rem; color: var(--muted); margin-left: auto; }
+    .empty { background: var(--card); border-radius: 14px; padding: 1.5rem 1rem; text-align: center; color: var(--muted); font-weight: 700; }
+    .undo { background: none; border: none; color: var(--muted); font-weight: 700; font-size: 0.82rem; cursor: pointer; text-decoration: underline; padding: 0.4rem; }
+    .help-box { background: #f0fdf4; border: 2px solid #d1fae5; border-radius: 16px; padding: 0.9rem 1.1rem; font-size: 0.85rem; color: #3f6212; line-height: 1.5; }
+    .menu-backdrop { position: fixed; inset: 0; background: rgba(30,27,75,0.4); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 40; }
+    .menu-backdrop.open { opacity: 1; pointer-events: auto; }
+    .menu-panel { position: fixed; top: 0; right: 0; height: 100%; width: 270px; background: white; box-shadow: -8px 0 24px rgba(78,58,180,0.15);
+      transform: translateX(100%); transition: transform 0.25s; z-index: 50; padding: 1.5rem 1rem; }
+    .menu-panel.open { transform: translateX(0); }
+    .menu-title { font-weight: 800; margin-bottom: 1rem; }
+    .menu-item a { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.6rem; border-radius: 10px; color: var(--text); text-decoration: none; font-weight: 700; }
+    .menu-item a:hover { background: var(--bg); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>💵 Pay Out</h1>
+  <button class="menu-btn" onclick="openMenu()">☰</button>
+</header>
+
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-title">✦ Menu</div>
+  <div class="menu-item"><a href="/routines"><span>✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/bank"><span>🏦</span> Violet's Bank</a></div>
+  <div class="menu-item"><a href="/admin"><span>⚙️</span> Admin ⚡</a></div>
+  <div class="menu-item"><a href="/admin/toonies"><span>🪙</span> Toonie Tasks</a></div>
+  <div class="menu-item"><a href="/admin/surprises"><span>🎁</span> Surprises</a></div>
+</div>
+
+<div class="container">
+  <div class="balance-card">
+    <div class="balance-label">In Violet's bank now</div>
+    <div class="balance-amt" id="balanceAmt">${{ '%g'|format(bank.balance) }}</div>
+    <div class="balance-sub">cash to hand over on planning night</div>
+    <button class="pay-btn" id="payBtn" onclick="payOut()" {{ 'disabled' if bank.balance <= 0 }}>
+      {% if bank.balance > 0 %}Pay Violet ${{ '%g'|format(bank.balance) }} 💵{% else %}Nothing to pay yet{% endif %}
+    </button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-amt">${{ '%g'|format(bank.earned) }}</div><div class="stat-label">Total earned</div></div>
+    <div class="stat"><div class="stat-amt">${{ '%g'|format(bank.given) }}</div><div class="stat-label">Giving ({{ giving_pct }}%)</div></div>
+    <div class="stat"><div class="stat-amt">${{ '%g'|format(bank.paid_out) }}</div><div class="stat-label">Paid out</div></div>
+  </div>
+
+  <div class="help-box">
+    Paying out records the cash you handed over and resets her bank to $0 for the new week.
+    Her <strong>total earned</strong> and milestone progress are kept — only the current balance clears.
+    The {{ giving_pct }}% Giving share is tracked separately on the Family Giving page.
+  </div>
+
+  <div class="section-title">Payout history</div>
+  {% if payouts %}
+  {% for p in payouts %}
+  <div class="pay-row">
+    <span class="pr-amt">${{ '%g'|format(p.Amount|float) }}</span>
+    <span class="pr-date">{{ p.Date }}</span>
+    {% if p.Note %}<span class="pr-note">{{ p.Note }}</span>{% endif %}
+  </div>
+  {% endfor %}
+  <button class="undo" onclick="undoLast()">↩ Undo last payout (correction)</button>
+  {% else %}
+  <div class="empty">No payouts yet.</div>
+  {% endif %}
+</div>
+
+<script>
+  async function payOut() {
+    const btn = document.getElementById('payBtn');
+    const amt = document.getElementById('balanceAmt').textContent;
+    if (!confirm(`Record paying Violet ${amt} in cash? This clears her current bank balance.`)) return;
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const res = await fetch('/admin/payout/pay', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    if (res.ok) location.reload(); else { btn.disabled = false; btn.textContent = 'Try again'; }
+  }
+  async function undoLast() {
+    if (!confirm('Undo the most recent payout? This adds that amount back to her bank.')) return;
+    const res = await fetch('/admin/payout/undo', { method: 'POST' });
+    if (res.ok) location.reload();
+  }
+  function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
+  function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+</script>
+
+</body>
+</html>

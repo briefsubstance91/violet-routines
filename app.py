@@ -36,6 +36,7 @@ CHARITIES_SEED_FILE = os.path.join(_BASE, 'Violet Charities.csv')
 EVENTS_FILE         = os.path.join(_DATA, 'Violet Events.csv')
 EVENTS_SEED_FILE    = os.path.join(_BASE, 'Violet Events.csv')
 LEDGER_FILE         = os.path.join(_DATA, 'Violet Earnings.csv')
+PAYOUTS_FILE        = os.path.join(_DATA, 'Violet Payouts.csv')
 MONEY_MS_FILE       = os.path.join(_DATA, 'Violet Money Milestones.csv')
 MONEY_MS_SEED_FILE  = os.path.join(_BASE, 'Violet Money Milestones.csv')
 SETTINGS_FILE       = os.path.join(_DATA, 'violet_settings.json')
@@ -279,7 +280,64 @@ def compute_bank():
             continue
     total = round(total, 2)
     given = round(total * giving_rate(), 2)
-    return {'earned': total, 'given': given, 'spendable': round(total - given, 2)}
+    spendable = round(total - given, 2)
+    paid = total_paid_out()
+    return {
+        'earned': total,            # lifetime earned (drives milestones/stats)
+        'given': given,             # lifetime giving-pot cut
+        'spendable': spendable,     # lifetime spendable (earned - giving)
+        'paid_out': paid,           # total cash already handed over
+        'balance': round(spendable - paid, 2),   # what's still owed to Violet now
+    }
+
+
+def load_payouts():
+    try:
+        with open(PAYOUTS_FILE, newline='', encoding='utf-8-sig') as f:
+            return list(csv.DictReader(f))
+    except FileNotFoundError:
+        return []
+
+
+def total_paid_out():
+    total = 0.0
+    for r in load_payouts():
+        try:
+            total += float(r.get('Amount', 0))
+        except (TypeError, ValueError):
+            continue
+    return round(total, 2)
+
+
+def add_payout(amount, note=''):
+    """Append a cash payout. Returns the recorded row, or None if amount <= 0."""
+    try:
+        amt = round(float(amount), 2)
+    except (TypeError, ValueError):
+        return None
+    if amt <= 0:
+        return None
+    rows = load_payouts()
+    row = {'Date': _now_local().date().isoformat(), 'Amount': '%g' % amt, 'Note': note or ''}
+    rows.append(row)
+    with open(PAYOUTS_FILE, 'w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=['Date', 'Amount', 'Note'])
+        w.writeheader()
+        w.writerows(rows)
+    return row
+
+
+def undo_last_payout():
+    """Remove the most recent payout (for corrections). Returns True if removed."""
+    rows = load_payouts()
+    if not rows:
+        return False
+    rows = rows[:-1]
+    with open(PAYOUTS_FILE, 'w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=['Date', 'Amount', 'Note'])
+        w.writeheader()
+        w.writerows(rows)
+    return True
 
 
 def load_money_milestones():
@@ -1294,6 +1352,31 @@ def admin_surprises_save():
     save_surprises(out)
     notify_ready_surprises()   # push immediately for any now-active / past-date surprise
     return jsonify({'ok': True})
+
+
+@app.route('/admin/payout')
+def admin_payout():
+    return render_template('admin_payout.html',
+                           bank=compute_bank(),
+                           payouts=list(reversed(load_payouts())),
+                           giving_pct=int(round(giving_rate() * 100)))
+
+
+@app.route('/admin/payout/pay', methods=['POST'])
+def admin_payout_pay():
+    """Record a cash payout. Defaults to the current balance owed."""
+    d = request.get_json() or {}
+    bank = compute_bank()
+    amount = d.get('amount', bank['balance'])
+    note = (d.get('note') or '').strip()
+    row = add_payout(amount, note)
+    return jsonify({'ok': bool(row), 'row': row, 'bank': compute_bank()})
+
+
+@app.route('/admin/payout/undo', methods=['POST'])
+def admin_payout_undo():
+    undone = undo_last_payout()
+    return jsonify({'ok': undone, 'bank': compute_bank()})
 
 
 BADGES = [
