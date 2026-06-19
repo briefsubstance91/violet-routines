@@ -53,6 +53,22 @@
     .txn-date { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
     .txn-amt { margin-left: auto; font-weight: 900; color: var(--green); white-space: nowrap; }
     .empty { background: var(--card); border-radius: 16px; padding: 2rem 1rem; text-align: center; color: var(--muted); font-weight: 700; box-shadow: 0 4px 16px rgba(78,58,180,0.08); }
+
+    /* ── Money milestone ── */
+    .ms-card { background: var(--card); border-radius: 20px; padding: 1.25rem 1.25rem; box-shadow: 0 8px 24px rgba(78,58,180,0.1); margin-bottom: 1.5rem; }
+    .ms-reward { font-weight: 800; font-size: 0.98rem; color: var(--text); }
+    .ms-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; margin-bottom: 0.85rem; }
+    .ms-left { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--purple); }
+    .ms-togo { font-family: 'Fredoka One', cursive; font-size: 1.4rem; color: var(--green); white-space: nowrap; }
+    .ms-bar-wrap { height: 12px; background: #f0ebff; border-radius: 99px; overflow: hidden; }
+    .ms-bar { height: 100%; background: linear-gradient(90deg, #22c55e, #16a34a); border-radius: 99px; transition: width 0.4s ease; }
+    .ms-scale { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--muted); margin-top: 0.4rem; }
+    .ms-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .ms-chip { background: var(--card); border-radius: 14px; padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 16px rgba(78,58,180,0.08); }
+    .ms-chip.hit { background: #dcfce7; }
+    .ms-chip-amt { font-family: 'Fredoka One', cursive; font-size: 1.05rem; color: var(--green); width: 56px; flex-shrink: 0; }
+    .ms-chip-msg { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+    .ms-chip-state { margin-left: auto; font-size: 1.1rem; }
   </style>
 </head>
 <body>
@@ -82,6 +98,45 @@
       <div class="split-note">spend or save</div>
     </div>
   </div>
+
+  {% if next_ms %}
+  {% set togo = (next_ms[0] - bank.earned) %}
+  {% set span = (next_ms[0] - prev_amt) %}
+  {% set pct = (((bank.earned - prev_amt) / span * 100) | round | int) if span > 0 else 0 %}
+  <div class="section-title">🎯 Next money reward</div>
+  <div class="ms-card">
+    <div class="ms-top">
+      <div>
+        <div class="ms-left">Reward at ${{ '%g'|format(next_ms[0]) }}</div>
+        <div class="ms-reward">{{ next_ms[1].message }}</div>
+      </div>
+      <div class="ms-togo">${{ '%g'|format(togo) }}<br><span style="font-size:0.6rem;color:var(--muted);font-weight:800">to go</span></div>
+    </div>
+    <div class="ms-bar-wrap"><div class="ms-bar" style="width: {{ pct }}%"></div></div>
+    <div class="ms-scale">
+      <span>${{ '%g'|format(prev_amt) }}</span>
+      <span>{{ pct }}% there</span>
+      <span>${{ '%g'|format(next_ms[0]) }}</span>
+    </div>
+  </div>
+  {% elif money_ms %}
+  <div class="ms-card" style="text-align:center">
+    <div class="ms-reward">🏆 Every money reward unlocked — incredible saving!</div>
+  </div>
+  {% endif %}
+
+  {% if money_ms %}
+  <div class="section-title">All money rewards</div>
+  <div class="ms-list">
+    {% for amt, info in money_ms %}
+    <div class="ms-chip {{ 'hit' if bank.earned >= amt }}">
+      <div class="ms-chip-amt">${{ '%g'|format(amt) }}</div>
+      <div class="ms-chip-msg">{{ info.message }}</div>
+      <div class="ms-chip-state">{{ '✅' if bank.earned >= amt else '🔒' }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <div class="section-title">Recent earnings</div>
   {% if recent %}

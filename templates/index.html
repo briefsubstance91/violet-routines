@@ -1257,7 +1257,21 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ date: today, key, title: t.title, amount: t.value, earned }),
+    })
+      .then(r => r.json())
+      .then(b => { if (b && b.milestone) celebrateMoney(b.milestone); })
+      .catch(() => {});
+  }
+
+  function celebrateMoney(ms) {
+    showBadgeToast({
+      emoji: '💰',
+      name: 'Money reward unlocked!',
+      desc: ms.message,
+      ring: '#16a34a',
+      bg: '#dcfce7',
     });
+    launchConfetti();
   }
 
   function toggleExtra(key, event) {

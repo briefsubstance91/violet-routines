@@ -35,6 +35,9 @@ CHARITIES_SEED_FILE = os.path.join(_BASE, 'Violet Charities.csv')
 EVENTS_FILE         = os.path.join(_DATA, 'Violet Events.csv')
 EVENTS_SEED_FILE    = os.path.join(_BASE, 'Violet Events.csv')
 LEDGER_FILE         = os.path.join(_DATA, 'Violet Earnings.csv')
+MONEY_MS_FILE       = os.path.join(_DATA, 'Violet Money Milestones.csv')
+MONEY_MS_SEED_FILE  = os.path.join(_BASE, 'Violet Money Milestones.csv')
+SETTINGS_FILE       = os.path.join(_DATA, 'violet_settings.json')
 
 
 _MONTH_NUM = {m: i for i, m in enumerate(
@@ -44,7 +47,35 @@ _MONTH_NUM = {m: i for i, m in enumerate(
 _WEEKDAY_ABBR = {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6}
 
 DEFAULT_TASK_VALUE = 2      # dollars earned per bonus task by default
-GIVING_RATE        = 0.10   # share of earnings routed to the giving pot
+GIVING_RATE        = 0.10   # default share of earnings routed to the giving pot
+
+
+def load_settings():
+    """Parent-tunable settings, with sensible defaults."""
+    s = {'giving_rate': GIVING_RATE}
+    try:
+        with open(SETTINGS_FILE, encoding='utf-8') as f:
+            s.update(json.load(f))
+    except (FileNotFoundError, ValueError):
+        pass
+    return s
+
+
+def save_settings(updates):
+    s = load_settings()
+    s.update(updates)
+    with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(s, f, indent=2)
+    return s
+
+
+def giving_rate():
+    """Current giving rate as a fraction in [0, 1]."""
+    try:
+        r = float(load_settings().get('giving_rate', GIVING_RATE))
+    except (TypeError, ValueError):
+        r = GIVING_RATE
+    return min(max(r, 0.0), 1.0)
 
 
 def _parse_value(raw, etype):
@@ -234,8 +265,45 @@ def compute_bank():
         except ValueError:
             continue
     total = round(total, 2)
-    given = round(total * GIVING_RATE, 2)
+    given = round(total * giving_rate(), 2)
     return {'earned': total, 'given': given, 'spendable': round(total - given, 2)}
+
+
+def load_money_milestones():
+    """Money reward thresholds: {amount_str: {message, category}}."""
+    path = MONEY_MS_FILE if os.path.exists(MONEY_MS_FILE) else MONEY_MS_SEED_FILE
+    out = {}
+    for row in scan_csv(path, 'Amount'):
+        amount   = row.get('Amount', '').strip()
+        message  = (row.get('Reward Message') or row.get('Message', '')).strip()
+        category = (row.get('Category') or '').strip()
+        if amount and message:
+            out[amount] = {'message': message, 'category': category}
+    return out
+
+
+def save_money_milestones(items):
+    """Write money milestones back to CSV, sorted by amount."""
+    def amt(x):
+        try:
+            return float(x.get('amount', 0) or 0)
+        except (TypeError, ValueError):
+            return 0.0
+    with open(MONEY_MS_FILE, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Violet Money Milestones'])
+        writer.writerow(['Amount', 'Reward Message', 'Category'])
+        for item in sorted(items, key=amt):
+            writer.writerow([('%g' % amt(item)), item.get('message', ''), item.get('category', '')])
+
+
+def next_money_milestone(earned):
+    """(next_amount, info) tuple above `earned`, and the previous threshold."""
+    ms = sorted(((float(k), v) for k, v in load_money_milestones().items()),
+                key=lambda x: x[0])
+    nxt = next(((a, v) for a, v in ms if a > earned), None)
+    prev = max((a for a, v in ms if a <= earned), default=0.0)
+    return nxt, prev
 
 
 def get_vapid_keys():
@@ -703,15 +771,35 @@ def log_entry():
 @app.route('/earn', methods=['POST'])
 def earn():
     d = request.get_json()
+    before = compute_bank()['earned']
     set_earning(d['date'], d['key'], d.get('title', ''), d.get('amount', 0), bool(d.get('earned')))
-    return jsonify(compute_bank())
+    bank_after = compute_bank()
+    # Did this earning newly cross a money milestone? (only on the way up)
+    hit = None
+    if bank_after['earned'] > before:
+        for k, v in load_money_milestones().items():
+            try:
+                amt = float(k)
+            except ValueError:
+                continue
+            if before < amt <= bank_after['earned']:
+                if hit is None or amt < hit['amount']:
+                    hit = {'amount': amt, 'message': v['message'], 'category': v.get('category', '')}
+    resp = dict(bank_after)
+    resp['milestone'] = hit
+    return jsonify(resp)
 
 
 @app.route('/bank')
 def bank():
+    b = compute_bank()
     recent = list(reversed(load_earnings()))[:20]
-    return render_template('bank.html', bank=compute_bank(), recent=recent,
-                           giving_pct=int(round(GIVING_RATE * 100)))
+    nxt, prev = next_money_milestone(b['earned'])
+    money_ms = sorted(((float(k), v) for k, v in load_money_milestones().items()),
+                      key=lambda x: x[0])
+    return render_template('bank.html', bank=b, recent=recent,
+                           giving_pct=int(round(giving_rate() * 100)),
+                           next_ms=nxt, prev_amt=prev, money_ms=money_ms)
 
 
 @app.route('/routines')
@@ -792,11 +880,17 @@ def admin():
         {'streak': k, 'message': v['message'], 'category': v.get('category', '')}
         for k, v in sorted(ms_dict.items(), key=lambda x: int(x[0]))
     ]
+    money_ms = [
+        {'amount': k, 'message': v['message'], 'category': v.get('category', '')}
+        for k, v in sorted(load_money_milestones().items(), key=lambda x: float(x[0]))
+    ]
     return render_template(
         'admin.html',
         data=data,
         routines_json=json.dumps(routines),
         milestones_json=json.dumps(milestones),
+        money_milestones_json=json.dumps(money_ms),
+        giving_pct=int(round(giving_rate() * 100)),
     )
 
 
@@ -805,6 +899,20 @@ def admin_milestones_save():
     items = request.get_json()
     save_milestones(items)
     return jsonify({'ok': True})
+
+
+@app.route('/admin/money/save', methods=['POST'])
+def admin_money_save():
+    """Save the giving % and money-milestone rewards together."""
+    payload = request.get_json() or {}
+    if 'giving_pct' in payload:
+        try:
+            pct = float(payload['giving_pct'])
+        except (TypeError, ValueError):
+            pct = GIVING_RATE * 100
+        save_settings({'giving_rate': min(max(pct, 0.0), 100.0) / 100.0})
+    save_money_milestones(payload.get('milestones', []))
+    return jsonify({'ok': True, 'giving_pct': int(round(giving_rate() * 100))})
 
 
 @app.route('/admin/save', methods=['POST'])
@@ -1052,7 +1160,7 @@ def charities():
     return render_template('charities.html',
                            charities_json=json.dumps(load_charities()),
                            bank=compute_bank(),
-                           giving_pct=int(round(GIVING_RATE * 100)))
+                           giving_pct=int(round(giving_rate() * 100)))
 
 
 @app.route('/charities/save', methods=['POST'])
