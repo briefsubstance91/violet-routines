@@ -193,18 +193,18 @@
         How do I complete a routine? <span class="faq-chevron">▼</span>
       </button>
       <div class="faq-a">
-        Tap a routine card (Morning, Afternoon, or Evening) to open it. You'll see a checklist of tasks — tap each one as you finish it. When you've done enough, a <strong>Done!</strong> button appears at the bottom. Tap it to celebrate and save your streak. 🎉
+        Tap a routine card (Morning, Afternoon, or Evening) to open it. You'll see a checklist of tasks — tap each one as you finish it. When you've done enough, a <strong>Done!</strong> button appears at the bottom. Tap it to celebrate and add to your progress. 🎉
         <div class="tip">💡 You don't have to do every single task — just your best effort counts.</div>
       </div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q" onclick="toggle(this)">
-        What is a streak? <span class="faq-chevron">▼</span>
+        What does "days completed" mean? <span class="faq-chevron">▼</span>
       </button>
       <div class="faq-a">
-        A streak is how many days in a row you've completed at least one routine. The 🔥 number on your home screen shows your current streak. Even one routine a day keeps the streak alive — you don't have to do all three.
-        <div class="tip">💡 Try to do at least one routine every day to keep your streak going!</div>
+        It's the total number of days you've finished at least one routine — and it never resets. The 🌟 number on your home screen shows your total. Even one routine a day adds to it; you don't have to do all three. Miss a day? No problem — your total stays exactly where it was, ready for you to pick back up.
+        <div class="tip">💡 Every day you show up adds one more — it all adds up over time!</div>
       </div>
     </div>
 
@@ -225,9 +225,9 @@
       <div class="faq-a">
         Badges unlock automatically as you reach milestones. There are four types:
         <br><br>
-        🔥 <strong>Streak badges</strong> — build a 3, 7, 14, 21, 30, or 60-day streak<br>
+        🌟 <strong>Days badges</strong> — reach 1, 3, 7, 14, 21, 30, or 60 days completed<br>
         ✨ <strong>Routine badges</strong> — complete a specific routine 5 or 20 times<br>
-        👑 <strong>Triple Crown</strong> — do all three routines in one day<br>
+        👑 <strong>Triple Crown badges</strong> — do all three routines in one day (and on 7 or 30 days total)<br>
         ⚡ <strong>Level Up badges</strong> — log 1, 10, or 25 wins<br><br>
         When you unlock one, a little pop-up appears. Visit <a href="/badges">My Badges</a> to see them all.
       </div>
@@ -247,8 +247,8 @@
         What happens if I miss a day? <span class="faq-chevron">▼</span>
       </button>
       <div class="faq-a">
-        Your streak resets to zero — but that's okay! Every day is a fresh start. Your badges and total completion history are still saved, and a new streak starts the moment you do a routine again.
-        <div class="tip">💡 Missing one day doesn't erase all the work you've done. You've got this. 💜</div>
+        Nothing is lost! Your "days completed" total stays exactly where it was — it never goes backwards. That's the whole idea: real life has off days, and missing one shouldn't erase all your hard work. Just pick up again whenever you're ready and your total keeps growing.
+        <div class="tip">💡 Missing a day doesn't undo a thing. You've got this. 💜</div>
       </div>
     </div>
 
@@ -286,9 +286,9 @@
         What are milestones and how do I set them? <span class="faq-chevron">▼</span>
       </button>
       <div class="faq-a">
-        Milestones are streak rewards — prizes or experiences Violet earns at specific streak counts (e.g., "7-day streak: pick an outfit at H&M"). The <a href="/dashboard">Parent Dashboard</a> shows which milestone is next and how many days away it is.
+        Milestones are rewards — prizes or experiences Violet earns when her total <strong>days completed</strong> reaches a number (e.g., "7 days: pick an outfit at H&M"). Because the count never resets, milestones are something she builds toward steadily rather than something she can lose. The <a href="/dashboard">Parent Dashboard</a> shows which milestone is next and how many days away it is.
         <br><br>
-        Milestones are stored in <strong>Violet Milestones.csv</strong> on the server. To edit them, update that file and redeploy, or ask for help adding an admin UI for it.
+        Edit them anytime in <a href="/admin">Admin → Milestones</a> — set the day count, the reward, and an optional category.
       </div>
     </div>
 
@@ -299,18 +299,18 @@
       <div class="faq-a">
         There are two views:
         <br><br>
-        📊 <a href="/dashboard"><strong>Parent Dashboard</strong></a> — KPIs at a glance: streak, completion %, level-up wins, routine breakdown, this week's chart, and recent wins.<br><br>
+        📊 <a href="/dashboard"><strong>Parent Dashboard</strong></a> — KPIs at a glance: days completed, completion %, level-up wins, routine breakdown, this week's chart, and recent wins.<br><br>
         ⭐ <a href="/stats"><strong>Stats page</strong></a> — more detail including a full monthly calendar view and Violet's celebration images.
       </div>
     </div>
 
     <div class="faq-item">
       <button class="faq-q" onclick="toggle(this)">
-        How does the streak calculation work? <span class="faq-chevron">▼</span>
+        How is "days completed" calculated? <span class="faq-chevron">▼</span>
       </button>
       <div class="faq-a">
-        Each time Violet taps <strong>Done!</strong> on a routine, it logs a completion to the server with today's date. A streak counts consecutive days where at least one routine was logged. The streak is calculated from server data — it persists across devices and browser clears.
-        <div class="tip">💡 The streak badge in the app uses localStorage for speed, but the server log is the source of truth for the Stats and Dashboard pages.</div>
+        Each time Violet taps <strong>Done!</strong> on a routine, it logs a completion to the server with today's date. "Days completed" counts how many distinct days had at least one finished routine — cumulative, with no resets. It's calculated from server data, so it persists across devices and browser clears.
+        <div class="tip">💡 The day count in the app uses localStorage for speed, but the server log is the source of truth for the Stats and Dashboard pages.</div>
       </div>
     </div>
 

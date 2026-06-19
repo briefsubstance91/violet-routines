@@ -261,7 +261,7 @@
     <div class="hero-title">Violet's<br>Life OS ✦</div>
     <div class="hero-sub">Your routines, wins &<br>everything in between.</div>
     <div class="hero-streak" id="heroStreak" style="display:none">
-      🔥 <span id="streakVal">0</span>-day streak
+      🌟 <span id="streakVal">0</span> days completed
     </div>
   </div>
   <div class="hero-curve"></div>
@@ -282,7 +282,7 @@
     <a href="/stats" class="hub-card stats">
       <div class="hub-card-icon">⭐</div>
       <div class="hub-card-name">Stats</div>
-      <div class="hub-card-desc">Streaks, completion & calendar</div>
+      <div class="hub-card-desc">Days, completion & calendar</div>
     </a>
 
     <a href="/badges" class="hub-card badges">
@@ -334,15 +334,10 @@
   document.getElementById('heroGreeting').textContent =
     h < 12 ? 'Good morning ☁️' : h < 17 ? 'Good afternoon 🌸' : 'Good evening 🌙';
 
-  // Streak from localStorage
-  const streaks = JSON.parse(localStorage.getItem('violet-streaks') || '{}');
-  const today = new Date().toISOString().slice(0, 10);
-  const best = Math.max(...Object.values(streaks).map(s => {
-    return (s.lastDate === today || s.lastDate === new Date(Date.now() - 864e5).toISOString().slice(0,10))
-      ? (s.count || 0) : 0;
-  }), 0);
-  if (best > 0) {
-    document.getElementById('streakVal').textContent = best;
+  // Days completed from localStorage (cumulative, never resets)
+  const daysDone = JSON.parse(localStorage.getItem('violet-days') || '[]').length;
+  if (daysDone > 0) {
+    document.getElementById('streakVal').textContent = daysDone;
     document.getElementById('heroStreak').style.display = 'inline-flex';
   }
 

@@ -538,10 +538,12 @@ def compute_stats(log_rows):
         if not rows: return None
         return sum(e['pct'] for e in rows) / len(rows)
 
-    # Streak
-    streak, d = 0, today
-    while by_date.get(d):
-        streak += 1; d -= timedelta(days=1)
+    # Days completed — cumulative count of distinct days where Violet finished
+    # at least one routine. Unlike a streak, this never resets: missing a day
+    # just means you don't add to it, you never lose what you've earned.
+    completed_days = {e['date'] for e in entries
+                      if e['total'] and e['completed'] == e['total']}
+    days_completed = len(completed_days)
 
     # Last 7 days
     week = []
@@ -573,7 +575,7 @@ def compute_stats(log_rows):
     total_t = sum(e['total'] for e in entries)
 
     return {
-        'streak':      streak,
+        'days_completed': days_completed,
         'week':        week,
         'cal_days':    cal_days,
         'month_label': today.strftime('%B %Y'),
@@ -886,14 +888,14 @@ def admin_events_save():
 
 
 BADGES = [
-    # ── Streak badges ──
-    {'id': 'first-step',   'name': 'First Step',      'desc': 'Complete your first routine',  'emoji': '✨', 'bg': '#ede9fe', 'ring': '#9b87f5', 'type': 'streak',  'threshold': 1},
-    {'id': 'spark',        'name': '3-Day Spark',      'desc': '3 days in a row',              'emoji': '🔥', 'bg': '#fef3c7', 'ring': '#f59e0b', 'type': 'streak',  'threshold': 3},
-    {'id': 'week-warrior', 'name': 'Week Warrior',     'desc': '7-day streak',                 'emoji': '⭐', 'bg': '#d1fae5', 'ring': '#10b981', 'type': 'streak',  'threshold': 7},
-    {'id': 'fortnight',    'name': 'Fortnight Hero',   'desc': '14 days in a row',             'emoji': '👑', 'bg': '#dbeafe', 'ring': '#3b82f6', 'type': 'streak',  'threshold': 14},
-    {'id': '3-week',       'name': '3-Week Wonder',    'desc': '21 days in a row',             'emoji': '💜', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'streak',  'threshold': 21},
-    {'id': 'month',        'name': 'Month Marvel',     'desc': '30-day streak',                'emoji': '🏆', 'bg': '#fce7f3', 'ring': '#ec4899', 'type': 'streak',  'threshold': 30},
-    {'id': 'diamond',      'name': 'Diamond Legend',   'desc': '60-day streak',                'emoji': '💎', 'bg': '#cffafe', 'ring': '#06b6d4', 'type': 'streak',  'threshold': 60},
+    # ── Days-completed badges (cumulative — never reset) ──
+    {'id': 'first-step',   'name': 'First Step',      'desc': 'Complete your first routine',  'emoji': '✨', 'bg': '#ede9fe', 'ring': '#9b87f5', 'type': 'days',  'threshold': 1},
+    {'id': 'spark',        'name': 'Getting Going',    'desc': '3 days completed',             'emoji': '🔥', 'bg': '#fef3c7', 'ring': '#f59e0b', 'type': 'days',  'threshold': 3},
+    {'id': 'week-warrior', 'name': 'Week of Wins',     'desc': '7 days completed',             'emoji': '⭐', 'bg': '#d1fae5', 'ring': '#10b981', 'type': 'days',  'threshold': 7},
+    {'id': 'fortnight',    'name': 'Fortnight Hero',   'desc': '14 days completed',            'emoji': '👑', 'bg': '#dbeafe', 'ring': '#3b82f6', 'type': 'days',  'threshold': 14},
+    {'id': '3-week',       'name': '3-Week Wonder',    'desc': '21 days completed',            'emoji': '💜', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'days',  'threshold': 21},
+    {'id': 'month',        'name': 'Month Marvel',     'desc': '30 days completed',            'emoji': '🏆', 'bg': '#fce7f3', 'ring': '#ec4899', 'type': 'days',  'threshold': 30},
+    {'id': 'diamond',      'name': 'Diamond Legend',   'desc': '60 days completed',            'emoji': '💎', 'bg': '#cffafe', 'ring': '#06b6d4', 'type': 'days',  'threshold': 60},
     # ── Routine badges ──
     {'id': 'morning-5',    'name': 'Morning Magic',    'desc': 'Morning routine ×5',           'emoji': '☁️', 'bg': '#fef9c3', 'ring': '#eab308', 'type': 'routine', 'routine': 'am', 'threshold': 5},
     {'id': 'morning-20',   'name': 'Rise & Shine',     'desc': 'Morning routine ×20',          'emoji': '🌅', 'bg': '#fef9c3', 'ring': '#f59e0b', 'type': 'routine', 'routine': 'am', 'threshold': 20},
@@ -901,6 +903,8 @@ BADGES = [
     {'id': 'evening-5',    'name': 'Bedtime Boss',     'desc': 'Evening routine ×5',           'emoji': '🖤', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'routine', 'routine': 'pm', 'threshold': 5},
     {'id': 'evening-20',   'name': 'Dream Keeper',     'desc': 'Evening routine ×20',          'emoji': '🌙', 'bg': '#ede9fe', 'ring': '#9b87f5', 'type': 'routine', 'routine': 'pm', 'threshold': 20},
     {'id': 'triple-crown', 'name': 'Triple Crown',     'desc': 'All 3 routines in one day',   'emoji': '👑', 'bg': '#fef3c7', 'ring': '#f59e0b', 'type': 'triple',  'threshold': 1},
+    {'id': 'triple-7',     'name': 'Triple Threat',    'desc': 'All 3 routines on 7 days',    'emoji': '🌟', 'bg': '#fef3c7', 'ring': '#f59e0b', 'type': 'triple',  'threshold': 7},
+    {'id': 'triple-30',    'name': 'Perfect Day Pro',  'desc': 'All 3 routines on 30 days',   'emoji': '💯', 'bg': '#fce7f3', 'ring': '#ec4899', 'type': 'triple',  'threshold': 30},
     # ── Level Up badges ──
     {'id': 'levelup-1',    'name': 'Level Up!',        'desc': 'Log your first win',           'emoji': '⚡', 'bg': '#ede9fe', 'ring': '#7c3aed', 'type': 'levelup', 'threshold': 1},
     {'id': 'levelup-10',   'name': 'Win Collector',    'desc': '10 level-up wins',             'emoji': '💪', 'bg': '#fce7f3', 'ring': '#db2777', 'type': 'levelup', 'threshold': 10},
@@ -930,11 +934,11 @@ def dashboard():
     recent_wins  = list(reversed(lu_log[-10:])) if lu_log else []
     lu_total     = len(lu_log)
 
-    # next milestone
-    streak = s['streak']
+    # next milestone — based on cumulative days completed
+    done = s['days_completed']
     milestones_sorted = sorted(milestones.items(), key=lambda x: int(x[0]))
-    next_ms = next(((int(k), v) for k, v in milestones_sorted if int(k) > streak), None)
-    prev_ms_streak = max((int(k) for k, v in milestones_sorted if int(k) <= streak), default=0)
+    next_ms = next(((int(k), v) for k, v in milestones_sorted if int(k) > done), None)
+    prev_ms_streak = max((int(k) for k, v in milestones_sorted if int(k) <= done), default=0)
 
     routines_raw   = load_tasks_raw()
     tag_breakdown  = compute_tag_breakdown(routines_raw)

@@ -250,15 +250,14 @@
 <script>
   const ALL_BADGES  = {{ badges_json | safe }};
   const earned      = new Set(JSON.parse(localStorage.getItem('violet-badges') || '[]'));
-  const streaks     = JSON.parse(localStorage.getItem('violet-streaks') || '{}');
+  const daysDone    = JSON.parse(localStorage.getItem('violet-days') || '[]').length;
   const completions = JSON.parse(localStorage.getItem('violet-completions') || '{}');
   const tripleCount = parseInt(localStorage.getItem('violet-triples') || '0');
   const luWins      = parseInt(localStorage.getItem('violet-lu-total') || '0');
 
   function getProgress(badge) {
-    if (badge.type === 'streak') {
-      const best = Math.max(...Object.values(streaks).map(s => s.count || 0), 0);
-      return { val: best, max: badge.threshold };
+    if (badge.type === 'days') {
+      return { val: daysDone, max: badge.threshold };
     }
     if (badge.type === 'routine') {
       return { val: completions[badge.routine] || 0, max: badge.threshold };
