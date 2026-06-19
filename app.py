@@ -426,6 +426,32 @@ def _parse_time_hm(time_str):
     return h, mn
 
 
+def _routine_for_time(time_str):
+    """Which routine's part of the day a clock time falls in (am/af/pm), or
+    None when there's no parseable time. Mirrors the client's time-of-day split."""
+    h, _ = _parse_time_hm(time_str)
+    if h is None:
+        return None
+    if h < 12:
+        return 'am'
+    if h < 18:
+        return 'af'
+    return 'pm'
+
+
+def bucket_extras(extras):
+    """Group today's extras by routine (am/af/pm) sorted by time, plus an
+    'anytime' list for untimed ones, so they flow into the day as a schedule."""
+    buckets = {'am': [], 'af': [], 'pm': []}
+    anytime = []
+    for e in extras:
+        rid = _routine_for_time(e.get('time'))
+        (buckets[rid] if rid else anytime).append(e)
+    for rid in buckets:
+        buckets[rid].sort(key=lambda e: _parse_time_hm(e.get('time')) or (0, 0))
+    return buckets, anytime
+
+
 _ROUTINE_MESSAGES = {
     'am': ('Morning Routine ☁️', "Hey Violet! Time for your morning routine. You've got this 💜"),
     'af': ('Afternoon Routine 🌸', "Afternoon check-in! Keep the momentum going, Violet 💜"),
@@ -945,11 +971,14 @@ def index():
     levelup_data = load_levelup_data()
     cel_routines, cel_milestones = list_celebration_images()
     extras = events_due_today()
+    extras_by_routine, extras_anytime = bucket_extras(extras)
     toonie_cfg = load_toonies()
     return render_template(
         'index.html',
         routines=routines,
         extras=extras,
+        extras_by_routine=extras_by_routine,
+        extras_anytime=extras_anytime,
         extras_tasks_json=json.dumps(
             [{'key': e['key'], 'value': e['value'], 'title': e['title']}
              for e in extras if e['type'] == 'task']),

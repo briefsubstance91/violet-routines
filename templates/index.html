@@ -175,6 +175,15 @@
     .extra-value { font-size: 0.74rem; font-weight: 900; color: #15803d; background: #dcfce7; padding: 0.16rem 0.5rem; border-radius: 100px; white-space: nowrap; }
     .extras-earned { margin-top: 1rem; padding: 0.7rem 1rem; border-radius: 14px; background: #dcfce7; color: #15803d; font-weight: 800; text-align: center; font-size: 0.95rem; }
 
+    /* ── Today's extras, flowed inside a routine ── */
+    .extras-inline { margin: 0.35rem 0.75rem 0; padding-top: 0.5rem; border-top: 1.5px dashed #fde68a; }
+    .extras-inline-label { font-size: 0.7rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase;
+      color: #d97706; padding: 0.1rem 0.25rem 0.35rem; }
+    .extras-inline .task { border-left: 3px solid #fbbf24; background: #fffbeb; }
+    .extras-inline .extra-item { border-left: 3px solid #fbbf24; background: #fffbeb; }
+    .extra-badge { font-size: 0.64rem; font-weight: 900; letter-spacing: 0.03em; text-transform: uppercase;
+      color: #b45309; background: #fef3c7; padding: 0.14rem 0.45rem; border-radius: 100px; white-space: nowrap; }
+
     /* ── Toonie tasks ── */
     .routine-card.toonies { --accent: #16a34a; }
     .routine-card.toonies .card-strip { background: linear-gradient(90deg, #34d399, #16a34a); }
@@ -836,6 +845,29 @@
 <!-- hidden ribbon for JS ref -->
 <span id="badgeToastRibbon" style="display:none"></span>
 
+{% macro extra_item(e) %}
+  {% if e.type == 'task' %}
+  <div class="task extra-task" id="extra-{{ e.key }}" onclick="toggleExtra('{{ e.key }}', event)">
+    <div class="task-check"></div>
+    <span class="task-label">{{ e.icon }} {{ e.title }}</span>
+    <span class="extra-meta">
+      <span class="extra-badge">✨ Extra</span>
+      {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+      <span class="extra-value">💲{{ '%g'|format(e.value) }}</span>
+    </span>
+  </div>
+  {% else %}
+  <div class="task extra-item">
+    <span class="extra-icon">{{ e.icon or '•' }}</span>
+    <span class="task-label">{{ e.title }}</span>
+    <span class="extra-meta">
+      <span class="extra-badge">✨ Extra</span>
+      {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+    </span>
+  </div>
+  {% endif %}
+{% endmacro %}
+
 <div class="routines">
   {% for r in routines %}
   <div class="routine-card {{ r.id }}" id="card-{{ r.id }}">
@@ -881,48 +913,38 @@
           {% endif %}
         {% endfor %}
       </div>
+      {% if extras_by_routine.get(r.id) %}
+      <div class="extras-inline">
+        <div class="extras-inline-label"><span>✨ Today's extras</span></div>
+        {% for e in extras_by_routine[r.id] %}{{ extra_item(e) }}{% endfor %}
+      </div>
+      {% endif %}
       <div class="complete-banner">{{ r.banner }}</div>
     </div>
   </div>
   {% endfor %}
 
-  {% if extras %}
+  {% if extras_anytime %}
   <div class="routine-card extras" id="card-extras">
     <div class="card-strip"></div>
     <div class="card-inner">
       <div class="routine-header">
         <span class="routine-icon">✨</span>
         <div>
-          <div class="routine-title">Today's Extras</div>
-          <div class="routine-time">Just for today</div>
+          <div class="routine-title">Anytime today</div>
+          <div class="routine-time">Today's extras — no set time</div>
         </div>
       </div>
       <div class="task-list">
-        {% for e in extras %}
-          {% if e.type == 'task' %}
-          <div class="task" id="extra-{{ e.key }}" onclick="toggleExtra('{{ e.key }}', event)">
-            <div class="task-check"></div>
-            <span class="task-label">{{ e.icon }} {{ e.title }}</span>
-            <span class="extra-meta">
-              {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
-              <span class="extra-value">💲{{ '%g'|format(e.value) }}</span>
-            </span>
-          </div>
-          {% else %}
-          <div class="task extra-item">
-            <span class="extra-icon">{{ e.icon or '•' }}</span>
-            <span class="task-label">{{ e.title }}</span>
-            {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
-          </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-      <div class="extras-earned" id="extrasEarned" style="display:none">
-        💰 Earned today: <strong id="extrasEarnedAmt">$0</strong>
+        {% for e in extras_anytime %}{{ extra_item(e) }}{% endfor %}
       </div>
     </div>
   </div>
   {% endif %}
+
+  <div class="extras-earned" id="extrasEarned" style="display:none">
+    💰 Earned today: <strong id="extrasEarnedAmt">$0</strong>
+  </div>
 
   <div class="routine-card toonies" id="card-toonies" style="display:none">
     <div class="card-strip"></div>
