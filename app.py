@@ -32,11 +32,15 @@ VAPID_CLAIMS       = {'sub': 'mailto:bgelineau@proton.me'}
 _already_notified   = {}  # {routine_id:date → True}
 CHARITIES_FILE      = os.path.join(_DATA, 'Violet Charities.csv')
 CHARITIES_SEED_FILE = os.path.join(_BASE, 'Violet Charities.csv')
+EVENTS_FILE         = os.path.join(_DATA, 'Violet Events.csv')
+EVENTS_SEED_FILE    = os.path.join(_BASE, 'Violet Events.csv')
 
 
 _MONTH_NUM = {m: i for i, m in enumerate(
     ['January','February','March','April','May','June',
      'July','August','September','October','November','December'], 1)}
+
+_WEEKDAY_ABBR = {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6}
 
 
 def load_charities():
@@ -67,6 +71,61 @@ def save_charities(entries):
             w.writerow({'Month': e.get('month',''), 'Year': e.get('year',''),
                         'Charity': e.get('charity',''), 'Cause': e.get('cause',''),
                         'Status': e.get('status','planned'), 'Notes': e.get('notes','')})
+
+
+def due_today(when, today):
+    """Return True if a 'When' spec is due on `today` (a date).
+
+    Recurring: daily | weekdays | weekends | monthly:N | a weekday list
+    like "Mon,Wed,Fri". One-off: an ISO date like "2026-06-25".
+    """
+    w = (when or '').strip()
+    if not w:
+        return False
+    wl = w.lower()
+    if wl == 'daily':
+        return True
+    if wl == 'weekdays':
+        return today.weekday() < 5
+    if wl == 'weekends':
+        return today.weekday() >= 5
+    if wl.startswith('monthly:'):
+        try:
+            return today.day == int(wl.split(':', 1)[1])
+        except ValueError:
+            return False
+    parts = [p.strip()[:3].lower() for p in w.split(',') if p.strip()]
+    if parts and all(p in _WEEKDAY_ABBR for p in parts):
+        return today.weekday() in {_WEEKDAY_ABBR[p] for p in parts}
+    try:
+        return date.fromisoformat(w) == today
+    except ValueError:
+        return False
+
+
+def load_events():
+    path = EVENTS_FILE if os.path.exists(EVENTS_FILE) else EVENTS_SEED_FILE
+    rows = []
+    try:
+        with open(path, newline='', encoding='utf-8-sig') as f:
+            for row in csv.DictReader(f):
+                if row.get('Title', '').strip():
+                    rows.append({
+                        'title':  row['Title'].strip(),
+                        'icon':   row.get('Icon', '').strip(),
+                        'when':   row.get('When', '').strip(),
+                        'time':   row.get('Time', '').strip(),
+                        'type':   (row.get('Type', 'event').strip() or 'event').lower(),
+                        'banner': row.get('Banner', '').strip(),
+                    })
+    except FileNotFoundError:
+        pass
+    return rows
+
+
+def events_due_today(today=None):
+    today = today or date.today()
+    return [e for e in load_events() if due_today(e['when'], today)]
 
 
 def get_vapid_keys():
@@ -498,6 +557,7 @@ def index():
     return render_template(
         'index.html',
         routines=routines,
+        extras=events_due_today(),
         phrases_json=json.dumps(phrases),
         routines_json=json.dumps(routines_cfg),
         milestones_json=json.dumps(milestones),

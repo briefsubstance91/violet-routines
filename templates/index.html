@@ -164,6 +164,12 @@
     .routine-card.af  .card-strip { background: linear-gradient(90deg, #9b87f5, #c4b5fd); }
     .routine-card.pm  { --accent: var(--pm-acc); }
     .routine-card.pm  .card-strip { background: linear-gradient(90deg, #2e1a6e, #7c3aed); }
+    .routine-card.extras { --accent: #f59e0b; }
+    .routine-card.extras .card-strip { background: linear-gradient(90deg, #fbbf24, #f472b6); }
+    .extra-item { cursor: default; }
+    .extra-item:active { transform: none; }
+    .extra-icon { font-size: 1.4rem; min-width: 30px; text-align: center; line-height: 1; }
+    .extra-time { margin-left: auto; font-size: 0.72rem; font-weight: 800; color: var(--muted); white-space: nowrap; }
 
     .card-inner { padding: 1.4rem 1.5rem 1.5rem; }
 
@@ -850,6 +856,30 @@
     </div>
   </div>
   {% endfor %}
+
+  {% if extras %}
+  <div class="routine-card extras" id="card-extras">
+    <div class="card-strip"></div>
+    <div class="card-inner">
+      <div class="routine-header">
+        <span class="routine-icon">✨</span>
+        <div>
+          <div class="routine-title">Today's Extras</div>
+          <div class="routine-time">Just for today</div>
+        </div>
+      </div>
+      <div class="task-list">
+        {% for e in extras %}
+        <div class="task extra-item">
+          <span class="extra-icon">{{ e.icon or '•' }}</span>
+          <span class="task-label">{{ e.title }}</span>
+          {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <div class="reset-wrap">
