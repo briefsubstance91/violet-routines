@@ -131,6 +131,44 @@ def events_due_today(today=None):
     return [e for e in load_events() if due_today(e['when'], today)]
 
 
+def save_events(events):
+    with open(EVENTS_FILE, 'w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=['Title', 'Icon', 'When', 'Time', 'Type', 'Banner'])
+        w.writeheader()
+        for e in events:
+            title = (e.get('title') or '').strip()
+            if not title:
+                continue
+            w.writerow({
+                'Title':  title,
+                'Icon':   e.get('icon', ''),
+                'When':   e.get('when', ''),
+                'Time':   e.get('time', ''),
+                'Type':   (e.get('type') or 'event').lower(),
+                'Banner': e.get('banner', ''),
+            })
+
+
+def archive_past_events(today=None):
+    """Drop one-off (ISO-date) events whose date is in the past. Recurring
+    events are always kept. Returns True if the file was rewritten."""
+    today = today or date.today()
+    kept, changed = [], False
+    for e in load_events():
+        try:
+            d = date.fromisoformat(e['when'].strip())
+        except ValueError:
+            kept.append(e)          # recurring spec → keep
+            continue
+        if d < today:
+            changed = True          # past one-off → archive (drop)
+        else:
+            kept.append(e)
+    if changed:
+        save_events(kept)
+    return changed
+
+
 def get_vapid_keys():
     env_priv = os.environ.get('VAPID_PRIVATE_KEY')
     env_pub  = os.environ.get('VAPID_PUBLIC_KEY')
@@ -230,13 +268,20 @@ def _send_push_for_event(e):
     _push_to_all(title, body)
 
 
+_last_archive_date = None
+
+
 def _check_and_notify():
+    global _last_archive_date
     try:
         subs = load_push_subs()
+        tz_name = subs[0].get('timezone', 'America/Toronto') if subs else 'America/Toronto'
+        now = datetime.now(ZoneInfo(tz_name))
+        if _last_archive_date != now.date():
+            _last_archive_date = now.date()
+            archive_past_events(now.date())
         if not subs:
             return
-        tz_name = subs[0].get('timezone', 'America/Toronto')
-        now = datetime.now(ZoneInfo(tz_name))
         today_key = now.strftime('%Y-%m-%d')
         for r in load_tasks_raw():
             rh, rm = _parse_time_hm(r.get('time', ''))
@@ -749,6 +794,19 @@ def admin_tasks():
 def admin_tasks_save():
     routines = request.get_json()
     save_tasks_raw(routines)
+    return jsonify({'ok': True})
+
+
+@app.route('/admin/events')
+def admin_events():
+    return render_template('admin_events.html',
+                           events_json=json.dumps(load_events()),
+                           today_iso=date.today().isoformat())
+
+
+@app.route('/admin/events/save', methods=['POST'])
+def admin_events_save():
+    save_events(request.get_json() or [])
     return jsonify({'ok': True})
 
 
