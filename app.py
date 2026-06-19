@@ -575,7 +575,7 @@ def admin_save():
 
 
 def load_tasks_raw():
-    """Return routines as ordered list with metadata + task list (each task is {label, tags})."""
+    """Return routines as ordered list with metadata + task list (each task is {label, tags, subtasks})."""
     rows = scan_csv(TASKS_FILE, 'Routine')
     seen = {}
     order = []
@@ -591,14 +591,28 @@ def load_tasks_raw():
                 'time':   row.get('Time', '').strip(),
                 'banner': row.get('Banner', '').strip(),
                 'tasks':  [],
+                '_map':   {},
             }
             order.append(rid)
         task_label = row.get('Task', '').strip()
-        if task_label:
-            tags_raw = row.get('Tags', '').strip()
-            tags = [t.strip() for t in tags_raw.split(',') if t.strip()] if tags_raw else []
-            seen[rid]['tasks'].append({'label': task_label, 'tags': tags})
-    return [seen[rid] for rid in order]
+        parent     = row.get('Parent', '').strip()
+        if not task_label:
+            continue
+        tags_raw = row.get('Tags', '').strip()
+        tags = [t.strip() for t in tags_raw.split(',') if t.strip()] if tags_raw else []
+        r = seen[rid]
+        if parent and parent in r['_map']:
+            r['_map'][parent]['subtasks'].append({'label': task_label})
+        else:
+            task = {'label': task_label, 'tags': tags, 'subtasks': []}
+            r['tasks'].append(task)
+            r['_map'][task_label] = task
+    result = []
+    for rid in order:
+        r = seen[rid]
+        del r['_map']
+        result.append(r)
+    return result
 
 
 def save_tasks_raw(routines):
@@ -606,17 +620,22 @@ def save_tasks_raw(routines):
     with open(TASKS_FILE, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['Violet Tasks'])
-        writer.writerow(['Violet Tasks', '', '', '', '', '', ''])
-        writer.writerow(['Routine', 'ID', 'Icon', 'Time', 'Banner', 'Task', 'Tags'])
+        writer.writerow(['Violet Tasks', '', '', '', '', '', '', ''])
+        writer.writerow(['Routine', 'ID', 'Icon', 'Time', 'Banner', 'Task', 'Tags', 'Parent'])
         for r in routines:
             for task in r['tasks']:
                 if isinstance(task, dict):
-                    label = task.get('label', '')
-                    tags  = ','.join(task.get('tags', []))
+                    label    = task.get('label', '')
+                    tags     = ','.join(task.get('tags', []))
+                    subtasks = task.get('subtasks', [])
                 else:
-                    label = str(task)
-                    tags  = ''
-                writer.writerow([r['name'], r['id'], r['icon'], r['time'], r['banner'], label, tags])
+                    label    = str(task)
+                    tags     = ''
+                    subtasks = []
+                writer.writerow([r['name'], r['id'], r['icon'], r['time'], r['banner'], label, tags, ''])
+                for sub in subtasks:
+                    sub_label = sub.get('label', '') if isinstance(sub, dict) else str(sub)
+                    writer.writerow([r['name'], r['id'], r['icon'], r['time'], r['banner'], sub_label, '', label])
 
 
 def compute_tag_breakdown(routines_raw):

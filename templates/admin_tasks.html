@@ -201,6 +201,25 @@
     .task-row.dragging { opacity: 0.4; }
     .task-row.drag-over { border-top: 2px solid var(--purple); }
 
+    .task-group { }
+    .task-group.dragging { opacity: 0.4; }
+    .task-group.drag-over { border-top: 2px solid var(--purple); }
+
+    .subtasks { padding: 0 1rem 0.25rem 2.5rem; display: flex; flex-direction: column; gap: 0; }
+    .subtask-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.2rem 0;
+    }
+    .subtask-indent { color: var(--muted); font-size: 0.9rem; flex-shrink: 0; width: 16px; }
+    .subtask-input { font-size: 0.85rem; color: var(--muted); }
+    .btn-add-sub {
+      background: none; border: none; color: var(--purple);
+      font-size: 1.05rem; cursor: pointer; padding: 0.1rem 0.3rem;
+      border-radius: 6px; line-height: 1; flex-shrink: 0;
+      opacity: 0.6; transition: opacity 0.15s;
+    }
+    .btn-add-sub:hover { opacity: 1; background: #ede9fe; }
+
     .help-box {
       background: #f0ebff;
       border: 1.5px solid var(--border);
@@ -260,7 +279,8 @@
   <ul>
     <li>Click any task text to edit it inline</li>
     <li>Drag the <strong>⠿</strong> handle to reorder tasks within a routine</li>
-    <li>Hit <strong>×</strong> to delete a task, <strong>+ Add task</strong> to create one</li>
+    <li>Hit <strong>⊕</strong> on a task to add a sub-task nested underneath it</li>
+    <li>Hit <strong>×</strong> to delete a task or sub-task, <strong>+ Add task</strong> to create one</li>
     <li>Always click <strong>Save</strong> when you're done — unsaved changes are lost on refresh</li>
   </ul>
 </div>
@@ -312,45 +332,76 @@
 
       const taskList = card.querySelector(`#tasks-${ri}`);
       r.tasks.forEach((task, ti) => {
-        taskList.appendChild(makeTaskRow(ri, ti, task));
+        taskList.appendChild(makeTaskGroup(ri, ti));
       });
     });
   }
 
-  function makeTaskRow(ri, ti, task) {
+  function makeTaskGroup(ri, ti) {
+    const task = routines[ri].tasks[ti];
+    if (typeof task === 'string') { routines[ri].tasks[ti] = {label: task, tags: [], subtasks: []}; }
+    const t = routines[ri].tasks[ti];
+    if (!Array.isArray(t.subtasks)) t.subtasks = [];
+
+    const group = document.createElement('div');
+    group.className = 'task-group';
+    group.draggable = true;
+    group.dataset.ri = ri;
+    group.dataset.ti = ti;
+
     const row = document.createElement('div');
     row.className = 'task-row';
-    row.draggable = true;
-    row.dataset.ri = ri;
-    row.dataset.ti = ti;
-
     row.innerHTML = `
       <span class="drag-handle" title="Drag to reorder">⠿</span>
-      <input class="task-input" value="${esc(task.label||task)}" placeholder="Task name…"
-             oninput="updateTask(${ri},${ti},this.value)">
+      <input class="task-input" value="${esc(t.label)}" placeholder="Task name…"
+             oninput="updateTaskLabel(${ri},${ti},this.value)">
+      <button class="btn-add-sub" onclick="addSubtask(${ri},${ti})" title="Add sub-task">⊕</button>
       <button class="btn-danger" onclick="removeTask(${ri},${ti})" title="Delete">×</button>
     `;
+    group.appendChild(row);
 
-    row.addEventListener('dragstart', onDragStart);
-    row.addEventListener('dragover', onDragOver);
-    row.addEventListener('dragleave', onDragLeave);
-    row.addEventListener('drop', onDrop);
-    row.addEventListener('dragend', onDragEnd);
+    if (t.subtasks.length > 0) {
+      const subsEl = document.createElement('div');
+      subsEl.className = 'subtasks';
+      t.subtasks.forEach((_, si) => subsEl.appendChild(makeSubtaskRow(ri, ti, si)));
+      group.appendChild(subsEl);
+    }
 
+    group.addEventListener('dragstart', onDragStart);
+    group.addEventListener('dragover',  onDragOver);
+    group.addEventListener('dragleave', onDragLeave);
+    group.addEventListener('drop',      onDrop);
+    group.addEventListener('dragend',   onDragEnd);
+
+    return group;
+  }
+
+  function makeSubtaskRow(ri, ti, si) {
+    const sub = routines[ri].tasks[ti].subtasks[si];
+    const row = document.createElement('div');
+    row.className = 'subtask-row';
+    row.innerHTML = `
+      <span class="subtask-indent">↳</span>
+      <input class="task-input subtask-input" value="${esc(typeof sub === 'string' ? sub : (sub.label||''))}" placeholder="Sub-task…"
+             oninput="updateSubtaskLabel(${ri},${ti},${si},this.value)">
+      <button class="btn-danger" onclick="removeSubtask(${ri},${ti},${si})" title="Delete">×</button>
+    `;
     return row;
   }
 
-  function updateTask(ri, ti, val) {
-    if (typeof routines[ri].tasks[ti] === 'object') {
-      routines[ri].tasks[ti].label = val;
-    } else {
-      routines[ri].tasks[ti] = {label: val, tags: []};
-    }
+  function updateTaskLabel(ri, ti, val) {
+    const t = routines[ri].tasks[ti];
+    if (typeof t === 'object') t.label = val; else routines[ri].tasks[ti] = {label: val, tags: [], subtasks: []};
+    markDirty();
+  }
+
+  function updateSubtaskLabel(ri, ti, si, val) {
+    routines[ri].tasks[ti].subtasks[si].label = val;
     markDirty();
   }
 
   function addTask(ri) {
-    routines[ri].tasks.push({label: '', tags: []});
+    routines[ri].tasks.push({label: '', tags: [], subtasks: []});
     markDirty();
     render();
     const taskList = document.getElementById(`tasks-${ri}`);
@@ -364,19 +415,45 @@
     render();
   }
 
-  // ── Drag to reorder ──
+  function addSubtask(ri, ti) {
+    if (!Array.isArray(routines[ri].tasks[ti].subtasks)) routines[ri].tasks[ti].subtasks = [];
+    routines[ri].tasks[ti].subtasks.push({label: ''});
+    markDirty();
+    render();
+    // Focus the new subtask input
+    const taskList = document.getElementById(`tasks-${ri}`);
+    const groups = taskList.querySelectorAll('.task-group');
+    const group = groups[ti];
+    if (group) {
+      const subInputs = group.querySelectorAll('.subtask-input');
+      subInputs[subInputs.length - 1]?.focus();
+    }
+  }
+
+  function removeSubtask(ri, ti, si) {
+    routines[ri].tasks[ti].subtasks.splice(si, 1);
+    markDirty();
+    render();
+  }
+
+  // ── Drag to reorder (task groups only) ──
   let dragSrc = null;
 
   function onDragStart(e) {
+    if (e.target !== this && !this.querySelector('.drag-handle')?.contains(e.target) && e.target.className !== 'drag-handle') {
+      // only drag from handle
+    }
     dragSrc = this;
     this.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
+    e.stopPropagation();
   }
 
   function onDragOver(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     this.classList.add('drag-over');
+    e.stopPropagation();
   }
 
   function onDragLeave() {
@@ -385,6 +462,7 @@
 
   function onDrop(e) {
     e.preventDefault();
+    e.stopPropagation();
     this.classList.remove('drag-over');
     if (dragSrc === this) return;
 
@@ -393,7 +471,7 @@
     const dstRi = parseInt(this.dataset.ri);
     const dstTi = parseInt(this.dataset.ti);
 
-    if (srcRi !== dstRi) return; // only reorder within same routine for now
+    if (srcRi !== dstRi) return;
 
     const tasks = routines[srcRi].tasks;
     const [moved] = tasks.splice(srcTi, 1);
