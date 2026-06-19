@@ -1,7 +1,8 @@
-Title,Icon,When,Time,Type,Banner
-Library books,📚,Mon,,event,
-Soccer practice,⚽,"Tue,Thu",4:00 PM,event,
-Pizza night,🍕,weekends,,event,
-Show & tell,🎤,Fri,,event,
-Allowance day,💰,monthly:1,,task,
-Dentist appointment,🦷,2026-06-25,10:00 AM,event,
+Title,Icon,When,Time,Type,Value,Banner
+Library books,📚,Mon,,event,,
+Soccer practice,⚽,"Tue,Thu",4:00 PM,event,,
+Pizza night,🍕,weekends,,event,,
+Show & tell,🎤,Fri,,event,,
+Tidy your room,🧹,daily,,task,2,
+Help with the dishes,🍽️,weekdays,,task,2,
+Dentist appointment,🦷,2026-06-25,10:00 AM,event,,

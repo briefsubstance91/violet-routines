@@ -42,6 +42,21 @@ _MONTH_NUM = {m: i for i, m in enumerate(
 
 _WEEKDAY_ABBR = {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6}
 
+DEFAULT_TASK_VALUE = 2      # dollars earned per bonus task by default
+GIVING_RATE        = 0.10   # share of earnings routed to the giving pot
+
+
+def _parse_value(raw, etype):
+    """Dollar value for an event row. Events earn nothing; tasks default to
+    DEFAULT_TASK_VALUE when the Value cell is blank or unparseable."""
+    if etype != 'task':
+        return 0
+    raw = (raw or '').strip().lstrip('$')
+    try:
+        return float(raw) if raw else DEFAULT_TASK_VALUE
+    except ValueError:
+        return DEFAULT_TASK_VALUE
+
 
 def load_charities():
     path = CHARITIES_FILE if os.path.exists(CHARITIES_FILE) else CHARITIES_SEED_FILE
@@ -112,13 +127,15 @@ def load_events():
                 title = row.get('Title', '').strip()
                 if title:
                     slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-') or 'item'
+                    etype = (row.get('Type', 'event').strip() or 'event').lower()
                     rows.append({
                         'key':    f'{slug}-{i}',
                         'title':  title,
                         'icon':   row.get('Icon', '').strip(),
                         'when':   row.get('When', '').strip(),
                         'time':   row.get('Time', '').strip(),
-                        'type':   (row.get('Type', 'event').strip() or 'event').lower(),
+                        'type':   etype,
+                        'value':  _parse_value(row.get('Value', ''), etype),
                         'banner': row.get('Banner', '').strip(),
                     })
     except FileNotFoundError:
@@ -133,18 +150,21 @@ def events_due_today(today=None):
 
 def save_events(events):
     with open(EVENTS_FILE, 'w', newline='', encoding='utf-8') as f:
-        w = csv.DictWriter(f, fieldnames=['Title', 'Icon', 'When', 'Time', 'Type', 'Banner'])
+        w = csv.DictWriter(f, fieldnames=['Title', 'Icon', 'When', 'Time', 'Type', 'Value', 'Banner'])
         w.writeheader()
         for e in events:
             title = (e.get('title') or '').strip()
             if not title:
                 continue
+            etype = (e.get('type') or 'event').lower()
+            value = _parse_value(e.get('value', ''), etype)
             w.writerow({
                 'Title':  title,
                 'Icon':   e.get('icon', ''),
                 'When':   e.get('when', ''),
                 'Time':   e.get('time', ''),
-                'Type':   (e.get('type') or 'event').lower(),
+                'Type':   etype,
+                'Value':  ('%g' % value) if etype == 'task' else '',
                 'Banner': e.get('banner', ''),
             })
 
@@ -633,7 +653,8 @@ def index():
         'index.html',
         routines=routines,
         extras=extras,
-        extras_keys_json=json.dumps([e['key'] for e in extras if e['type'] == 'task']),
+        extras_tasks_json=json.dumps(
+            [{'key': e['key'], 'value': e['value']} for e in extras if e['type'] == 'task']),
         phrases_json=json.dumps(phrases),
         routines_json=json.dumps(routines_cfg),
         milestones_json=json.dumps(milestones),

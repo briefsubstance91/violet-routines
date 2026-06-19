@@ -29,7 +29,7 @@
     .event-card { background: var(--card); border: 2px solid var(--border); border-radius: var(--r); padding: 0.85rem 1rem; }
     .event-top { display: flex; align-items: center; gap: 0.5rem; }
     .event-grid { display: grid; grid-template-columns: 3.2rem 1fr; gap: 0.5rem; margin-top: 0.5rem; }
-    .event-grid.cols { grid-template-columns: 1fr 1fr 1fr; }
+    .event-grid.cols { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); }
     .fld { display: flex; flex-direction: column; gap: 0.2rem; }
     .fld label { font-size: 0.68rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
     input, select { font-family: 'Nunito', sans-serif; font-size: 0.92rem; font-weight: 600; color: var(--text); border: 2px solid var(--border); border-radius: 8px; padding: 0.4rem 0.55rem; background: white; width: 100%; }
@@ -137,11 +137,16 @@
           </div>
           <div class="fld">
             <label>Type</label>
-            <select onchange="upd(${i},'type',this.value)">
+            <select onchange="upd(${i},'type',this.value); render()">
               <option value="event" ${isTask ? '' : 'selected'}>Event (heads-up)</option>
               <option value="task" ${isTask ? 'selected' : ''}>Task (checkbox)</option>
             </select>
           </div>
+          ${isTask ? `
+          <div class="fld">
+            <label>Value ($)</label>
+            <input type="number" min="0" step="0.5" value="${esc(String(e.value ?? ''))}" placeholder="2" oninput="upd(${i},'value',this.value)">
+          </div>` : ''}
         </div>
       `;
       c.appendChild(card);

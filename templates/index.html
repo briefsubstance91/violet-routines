@@ -170,6 +170,10 @@
     .extra-item:active { transform: none; }
     .extra-icon { font-size: 1.4rem; min-width: 30px; text-align: center; line-height: 1; }
     .extra-time { margin-left: auto; font-size: 0.72rem; font-weight: 800; color: var(--muted); white-space: nowrap; }
+    .extra-meta { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+    .extra-meta .extra-time { margin-left: 0; }
+    .extra-value { font-size: 0.74rem; font-weight: 900; color: #15803d; background: #dcfce7; padding: 0.16rem 0.5rem; border-radius: 100px; white-space: nowrap; }
+    .extras-earned { margin-top: 1rem; padding: 0.7rem 1rem; border-radius: 14px; background: #dcfce7; color: #15803d; font-weight: 800; text-align: center; font-size: 0.95rem; }
 
     .card-inner { padding: 1.4rem 1.5rem 1.5rem; }
 
@@ -877,7 +881,10 @@
           <div class="task" id="extra-{{ e.key }}" onclick="toggleExtra('{{ e.key }}', event)">
             <div class="task-check"></div>
             <span class="task-label">{{ e.icon }} {{ e.title }}</span>
-            {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+            <span class="extra-meta">
+              {% if e.time %}<span class="extra-time">{{ e.time }}</span>{% endif %}
+              <span class="extra-value">💲{{ '%g'|format(e.value) }}</span>
+            </span>
           </div>
           {% else %}
           <div class="task extra-item">
@@ -887,6 +894,9 @@
           </div>
           {% endif %}
         {% endfor %}
+      </div>
+      <div class="extras-earned" id="extrasEarned" style="display:none">
+        💰 Earned today: <strong id="extrasEarnedAmt">$0</strong>
       </div>
     </div>
   </div>
@@ -1195,7 +1205,13 @@
   // ── Today's Extras (recurring tasks / one-off events) ──
   // Self-contained: logged under routine 'extra', kept out of am/af/pm
   // streak/badge math (compute_stats ignores 'extra' rows server-side).
-  const EXTRAS_KEYS = {{ extras_keys_json | safe }};
+  const EXTRAS_TASKS = {{ extras_tasks_json | safe }};
+  const EXTRAS_KEYS  = EXTRAS_TASKS.map(t => t.key);
+
+  function fmtMoney(n) { return '$' + (Number.isInteger(n) ? n : n.toFixed(2)); }
+  function earnedToday() {
+    return EXTRAS_TASKS.reduce((sum, t) => sum + (extrasState[t.key] ? t.value : 0), 0);
+  }
 
   function getExtras() {
     const raw = localStorage.getItem('violet-extras-v1');
@@ -1215,6 +1231,12 @@
       const el = document.getElementById(`extra-${k}`);
       if (el) el.classList.toggle('done', !!extrasState[k]);
     });
+    const box = document.getElementById('extrasEarned');
+    if (box) {
+      box.style.display = EXTRAS_TASKS.length ? 'block' : 'none';
+      const amt = document.getElementById('extrasEarnedAmt');
+      if (amt) amt.textContent = fmtMoney(earnedToday());
+    }
   }
 
   function logExtras() {
