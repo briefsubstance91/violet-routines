@@ -65,6 +65,17 @@
         "Did something I didn't feel like doing",
         "Asked for help instead of giving up"
       ]
+    },
+    {
+      "id": "cleaning",
+      "icon": "🧹",
+      "label": "Cleaning & Organization",
+      "wins": [
+        "Tidied up my room",
+        "Put my clothes in the hamper",
+        "Put things away after using them",
+        "Cleared my plate after a meal"
+      ]
     }
   ]
 }

@@ -346,14 +346,16 @@
 
     const group = document.createElement('div');
     group.className = 'task-group';
-    group.draggable = true;
+    // Only the handle is draggable — making the whole group draggable causes
+    // WebKit/Safari to swallow clicks on child buttons/inputs (the ⊕ add-sub-task
+    // button) into drag handling. Drag events still bubble to the group's listeners.
     group.dataset.ri = ri;
     group.dataset.ti = ti;
 
     const row = document.createElement('div');
     row.className = 'task-row';
     row.innerHTML = `
-      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <span class="drag-handle" title="Drag to reorder" draggable="true">⠿</span>
       <input class="task-input" value="${esc(t.label)}" placeholder="Task name…"
              oninput="updateTaskLabel(${ri},${ti},this.value)">
       <button class="btn-add-sub" onclick="addSubtask(${ri},${ti})" title="Add sub-task">⊕</button>
@@ -441,12 +443,11 @@
   let dragSrc = null;
 
   function onDragStart(e) {
-    if (e.target !== this && !this.querySelector('.drag-handle')?.contains(e.target) && e.target.className !== 'drag-handle') {
-      // only drag from handle
-    }
     dragSrc = this;
     this.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
+    // Drag started from the handle; show the whole row as the drag image.
+    try { e.dataTransfer.setDragImage(this, 20, 20); } catch (_) {}
     e.stopPropagation();
   }
 
