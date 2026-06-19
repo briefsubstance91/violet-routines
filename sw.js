@@ -1,4 +1,4 @@
-const CACHE = 'violet-v5';
+const CACHE = 'violet-v6';
 const SHELL = ['/manifest.json', '/icon.svg'];
 
 self.addEventListener('install', e => {
@@ -8,12 +8,11 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
+  // Delete old caches, claim clients — no navigate() needed since HTML is never cached
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
-      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
-      .then(clients => clients.forEach(client => client.navigate(client.url)))
   );
 });
 
@@ -39,25 +38,32 @@ self.addEventListener('notificationclick', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Always go to network for API calls (log POST, etc.)
+  // Pass-through non-GET (POST saves, etc.)
   if (e.request.method !== 'GET') return;
 
-  // Cache-first for static assets; network-first for pages
+  // Cache-first for /static/ — images and fonts rarely change
   if (url.pathname.startsWith('/static/')) {
     e.respondWith(
       caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
         return res;
       }))
     );
-  } else {
-    e.respondWith(
-      fetch(e.request).then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-        return res;
-      }).catch(() => caches.match(e.request))
-    );
+    return;
   }
+
+  // Cache-first for shell files (manifest, icon)
+  if (SHELL.includes(url.pathname)) {
+    e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request)));
+    return;
+  }
+
+  // Network-only for all Flask HTML routes — never cache so updates are instant
+  // Falls back to cache only if completely offline
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
 });
