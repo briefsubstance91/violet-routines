@@ -34,6 +34,7 @@ CHARITIES_FILE      = os.path.join(_DATA, 'Violet Charities.csv')
 CHARITIES_SEED_FILE = os.path.join(_BASE, 'Violet Charities.csv')
 EVENTS_FILE         = os.path.join(_DATA, 'Violet Events.csv')
 EVENTS_SEED_FILE    = os.path.join(_BASE, 'Violet Events.csv')
+LEDGER_FILE         = os.path.join(_DATA, 'Violet Earnings.csv')
 
 
 _MONTH_NUM = {m: i for i, m in enumerate(
@@ -187,6 +188,44 @@ def archive_past_events(today=None):
     if changed:
         save_events(kept)
     return changed
+
+
+def load_earnings():
+    try:
+        with open(LEDGER_FILE, newline='', encoding='utf-8-sig') as f:
+            return list(csv.DictReader(f))
+    except FileNotFoundError:
+        return []
+
+
+def set_earning(entry_date, key, title, amount, earned):
+    """Upsert (earned=True) or remove (earned=False) one (date, key) row.
+    Same-day reversible: unchecking a task pulls the money back out."""
+    rows = [r for r in load_earnings()
+            if not (r.get('Date') == entry_date and r.get('Key') == key)]
+    if earned:
+        try:
+            amt = float(amount)
+        except (TypeError, ValueError):
+            amt = 0.0
+        rows.append({'Date': entry_date, 'Key': key, 'Title': title, 'Amount': '%g' % amt})
+    rows.sort(key=lambda r: r.get('Date', ''))
+    with open(LEDGER_FILE, 'w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=['Date', 'Key', 'Title', 'Amount'])
+        w.writeheader()
+        w.writerows(rows)
+
+
+def compute_bank():
+    total = 0.0
+    for r in load_earnings():
+        try:
+            total += float(r.get('Amount', 0))
+        except ValueError:
+            continue
+    total = round(total, 2)
+    given = round(total * GIVING_RATE, 2)
+    return {'earned': total, 'given': given, 'spendable': round(total - given, 2)}
 
 
 def get_vapid_keys():
@@ -633,6 +672,20 @@ def log_entry():
     return '', 204
 
 
+@app.route('/earn', methods=['POST'])
+def earn():
+    d = request.get_json()
+    set_earning(d['date'], d['key'], d.get('title', ''), d.get('amount', 0), bool(d.get('earned')))
+    return jsonify(compute_bank())
+
+
+@app.route('/bank')
+def bank():
+    recent = list(reversed(load_earnings()))[:20]
+    return render_template('bank.html', bank=compute_bank(), recent=recent,
+                           giving_pct=int(round(GIVING_RATE * 100)))
+
+
 @app.route('/routines')
 def index():
     routines   = load_routines()
@@ -654,7 +707,8 @@ def index():
         routines=routines,
         extras=extras,
         extras_tasks_json=json.dumps(
-            [{'key': e['key'], 'value': e['value']} for e in extras if e['type'] == 'task']),
+            [{'key': e['key'], 'value': e['value'], 'title': e['title']}
+             for e in extras if e['type'] == 'task']),
         phrases_json=json.dumps(phrases),
         routines_json=json.dumps(routines_cfg),
         milestones_json=json.dumps(milestones),

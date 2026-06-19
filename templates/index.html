@@ -781,6 +781,9 @@
     <a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a>
   </div>
   <div class="menu-item">
+    <a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a>
+  </div>
+  <div class="menu-item">
     <a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a>
   </div>
   <div class="menu-item">
@@ -1248,12 +1251,24 @@
     });
   }
 
+  function syncEarning(key, earned) {
+    const t = EXTRAS_TASKS.find(x => x.key === key);
+    if (!t) return;
+    const today = new Date().toISOString().split('T')[0];
+    fetch('/earn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: today, key, title: t.title, amount: t.value, earned }),
+    });
+  }
+
   function toggleExtra(key, event) {
     const wasChecked = !!extrasState[key];
     extrasState = { ...extrasState, [key]: !wasChecked };
     saveExtras(extrasState);
     renderExtras();
     logExtras();
+    syncEarning(key, !wasChecked);
     if (!wasChecked && event) popTreat(event.currentTarget);
   }
 
