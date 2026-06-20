@@ -993,8 +993,8 @@
       </div>
       <div class="ob-text-block">
         <div class="ob-title">Level Up ⚡</div>
-        <div class="ob-body">Tap ⚡ whenever you do something even a tiny bit better than yesterday. That's how legends are made.</div>
-        <div class="ob-voice">"Little by little. Day by day. That's the real magic. 💜"</div>
+        <div class="ob-body">Every week at Sunday Planning, you and your grown-up look back and celebrate the times you did something even a tiny bit better. That's how legends are made.</div>
+        <div class="ob-voice">"Little by little. Week by week. That's the real magic. 💜"</div>
       </div>
     </div>
 
@@ -1041,10 +1041,7 @@
 </div>
 
 <!-- ── Level-Up FAB ── -->
-<button class="lu-fab" id="luFab" onclick="openLevelUp()">
-  ⚡
-  <span class="lu-fab-badge" id="luBadge" style="display:none">0</span>
-</button>
+<!-- Level Up is now logged together at Sunday Planning (/admin/planning), not daily here. -->
 
 <!-- ── Level-Up Sheet ── -->
 <div class="lu-sheet" id="luSheet">
@@ -1083,6 +1080,7 @@
   // every device. PROGRESS is loaded with her profile's data; pget/pset read
   // and write it, mirroring each change up to the server.
   const PROGRESS = {{ progress_json | safe }};
+  const LEVELUP_TOTAL = {{ levelup_total }};  // wins logged at Sunday Planning (server count)
 
   function pget(key, dflt) { return key in PROGRESS ? PROGRESS[key] : dflt; }
   function pset(key, value) {
@@ -1154,7 +1152,7 @@
   function checkBadges(routineId) {
     const earned = getEarned();
     const completions = getCompletions();
-    const luTotal = pget('violet-lu-total', 0);
+    const luTotal = LEVELUP_TOTAL;  // server-side count (logged at Sunday Planning)
     const tripleCount = pget('violet-triples', 0);
     const days = daysCompleted();
 
@@ -1579,6 +1577,7 @@
 
   function updateLuBadge() {
     const badge = document.getElementById('luBadge');
+    if (!badge) return;  // Level Up moved to Sunday Planning — no daily fab/badge here
     badge.textContent = luTodayCount;
     badge.style.display = luTodayCount > 0 ? 'flex' : 'none';
   }

@@ -64,6 +64,7 @@
   <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
   <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
   <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/admin/planning"><span class="menu-item-icon">🗓️</span> Sunday Planning</a></div>
   <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
   <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
   <div class="menu-item"><a href="/admin/tasks"><span class="menu-item-icon">📋</span> Tasks</a></div>
@@ -84,7 +85,7 @@
   <div class="balance-card">
     <div class="balance-label">In Violet's bank now</div>
     <div class="balance-amt" id="balanceAmt">${{ '%g'|format(bank.balance) }}</div>
-    <div class="balance-sub">cash to hand over on planning night</div>
+    <div class="balance-sub">cash to hand over at Sunday Planning</div>
     <button class="pay-btn" id="payBtn" onclick="payOut()" {{ 'disabled' if bank.balance <= 0 }}>
       {% if bank.balance > 0 %}Pay Violet ${{ '%g'|format(bank.balance) }} 💵{% else %}Nothing to pay yet{% endif %}
     </button>

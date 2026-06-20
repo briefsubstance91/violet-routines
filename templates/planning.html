@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sunday Planning — Violet's App</title>
+  <link rel="icon" href="/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --purple:#9b87f5; --blue:#4db8ff; --pink:#f472b6; --green:#16a34a; --text:#1e1b4b; --muted:#9490c0; --card:#fff; --border:#e5e0ff; --bg:#f5f3ff; --r:16px; }
+    body { font-family:'Nunito',sans-serif; color:var(--text);
+      background:linear-gradient(160deg,#cce8ff 0%,#e9e3ff 50%,#ffd6f0 100%); background-attachment:fixed; min-height:100vh; padding-bottom:3rem; }
+    .wrap { max-width:640px; margin:0 auto; padding:1.5rem 1.1rem 3rem; }
+    .top { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.4rem; }
+    h1 { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.8rem;
+      background:linear-gradient(135deg,#4db8ff,#9b87f5,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .intro { color:var(--muted); font-weight:700; font-size:0.9rem; margin-bottom:1.25rem; line-height:1.4; }
+
+    .menu-btn { margin-left:auto; background:rgba(255,255,255,0.7); border:none; font-size:1.5rem; color:var(--purple); cursor:pointer; padding:0.25rem 0.6rem; border-radius:10px; line-height:1; }
+    .menu-btn:hover { background:#fff; }
+    .menu-backdrop { display:none; position:fixed; inset:0; background:rgba(78,58,180,0.18); z-index:200; backdrop-filter:blur(2px); }
+    .menu-backdrop.open { display:block; }
+    .menu-panel { position:fixed; top:0; right:0; width:min(280px,85vw); height:100%; background:#fff; z-index:201; transform:translateX(110%); transition:transform .3s cubic-bezier(.34,1.2,.64,1); padding:2rem 1.5rem; display:flex; flex-direction:column; box-shadow:-8px 0 40px rgba(78,58,180,0.15); }
+    .menu-panel.open { transform:translateX(0); }
+    .menu-title { font-family:'Fredoka One',cursive; font-size:1.4rem; background:linear-gradient(135deg,#4db8ff,#9b87f5,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:1.75rem; }
+    .menu-item { display:flex; align-items:center; gap:0.9rem; padding:0.95rem 0.5rem; border-bottom:1.5px solid #f3f0ff; font-size:0.95rem; font-weight:700; color:#1e1b4b; border-radius:8px; }
+    .menu-item:hover { background:#f8f5ff; }
+    .menu-item a { color:inherit; text-decoration:none; display:flex; align-items:center; gap:0.9rem; width:100%; }
+    .menu-item-icon { font-size:1.3rem; width:28px; text-align:center; }
+
+    .step { background:var(--card); border:1.5px solid var(--border); border-radius:var(--r); padding:1.1rem 1.15rem; box-shadow:0 4px 20px rgba(78,58,180,0.07); margin-bottom:1rem; }
+    .step-head { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.85rem; }
+    .step-num { font-family:'Fredoka One',cursive; font-size:1rem; color:#fff; background:linear-gradient(135deg,var(--purple),var(--pink)); width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .step-title { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.15rem; }
+    .step-sub { font-size:0.8rem; color:var(--muted); font-weight:700; margin:-0.5rem 0 0.85rem; line-height:1.4; }
+
+    .review-row { display:flex; gap:0.6rem; }
+    .review-kpi { flex:1; background:var(--bg); border-radius:12px; padding:0.7rem 0.4rem; text-align:center; }
+    .review-val { font-family:'Fredoka One',cursive; font-size:1.45rem; line-height:1; }
+    .review-lbl { font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); margin-top:0.3rem; }
+    .week-bars { display:flex; gap:0.25rem; align-items:flex-end; margin-top:0.95rem; }
+    .wb-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:0.2rem; }
+    .wb-bar-wrap { width:100%; height:50px; background:#f0ebff; border-radius:6px; display:flex; align-items:flex-end; overflow:hidden; }
+    .wb-bar { width:100%; background:linear-gradient(to top,var(--purple),var(--pink)); border-radius:6px 6px 0 0; }
+    .wb-day { font-size:0.58rem; font-weight:700; color:var(--muted); }
+
+    .lu-cats { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:0.85rem; }
+    .lu-cat { border:2px solid var(--border); background:#fff; border-radius:100px; padding:0.35rem 0.7rem; font-size:0.82rem; font-weight:800; color:var(--text); cursor:pointer; font-family:'Nunito',sans-serif; }
+    .lu-cat.active { border-color:var(--purple); background:#f3effe; color:var(--purple); }
+    .lu-wins { display:flex; flex-direction:column; gap:0.4rem; }
+    .lu-win { text-align:left; border:1.5px dashed var(--border); background:#faf8ff; border-radius:10px; padding:0.55rem 0.75rem; font-size:0.88rem; font-weight:700; color:var(--text); cursor:pointer; font-family:'Nunito',sans-serif; }
+    .lu-win:hover { border-color:var(--purple); border-style:solid; }
+    .lu-custom { display:flex; gap:0.4rem; margin-top:0.5rem; }
+    .lu-custom input { flex:1; border:1.5px solid var(--border); border-radius:10px; padding:0.5rem 0.7rem; font-family:'Nunito',sans-serif; font-size:0.88rem; outline:none; }
+    .lu-custom input:focus { border-color:var(--purple); }
+    .btn { font-family:'Nunito',sans-serif; font-weight:800; border:none; border-radius:10px; padding:0.55rem 0.9rem; cursor:pointer; font-size:0.85rem; }
+    .btn-primary { background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; }
+    .logged { margin-top:1rem; }
+    .logged-title { font-size:0.64rem; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:0.45rem; }
+    .win-chip { display:flex; align-items:center; gap:0.5rem; padding:0.42rem 0; border-bottom:1px solid var(--border); font-size:0.85rem; font-weight:700; }
+    .win-chip .cat { color:var(--purple); font-weight:800; white-space:nowrap; }
+    .empty { color:var(--muted); font-size:0.85rem; font-weight:700; }
+
+    .bank-amt { font-family:'Fredoka One',cursive; font-size:2.2rem; color:var(--green); line-height:1; }
+    .bank-note { font-size:0.78rem; color:var(--muted); font-weight:700; margin:0.35rem 0 0.85rem; line-height:1.4; }
+    .btn-pay { background:linear-gradient(135deg,#16a34a,#22c55e); color:#fff; width:100%; padding:0.8rem; font-size:0.95rem; }
+    .btn-pay:disabled { opacity:0.45; cursor:default; }
+
+    .step-link { display:block; text-align:center; text-decoration:none; background:linear-gradient(135deg,#34d399,#16a34a); color:#fff; font-weight:800; padding:0.8rem; border-radius:12px; font-size:0.95rem; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>🗓️ Sunday Planning</h1>
+    <button class="menu-btn" onclick="openMenu()">☰</button>
+  </div>
+  <div class="intro">Your weekly ritual with Violet — look back on the week, celebrate her wins, settle up the Bank, then plan the week ahead. 💜</div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">1</span><span class="step-title">Review the week</span></div>
+    <div class="review-row">
+      <div class="review-kpi"><div class="review-val">{{ stats.days_completed }}</div><div class="review-lbl">Days completed</div></div>
+      <div class="review-kpi"><div class="review-val">{{ stats.overall_pct }}%</div><div class="review-lbl">Avg completion</div></div>
+      <div class="review-kpi"><div class="review-val">${{ '%g'|format(week_earned) }}</div><div class="review-lbl">Earned this week</div></div>
+    </div>
+    <div class="week-bars">
+      {% for d in stats.week %}
+      <div class="wb-col">
+        <div class="wb-bar-wrap"><div class="wb-bar" style="height:{{ ((d.pct or 0)*100)|round|int }}%"></div></div>
+        <div class="wb-day">{{ d.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">2</span><span class="step-title">Level Up — log this week's wins ⚡</span></div>
+    <div class="step-sub">Look back together. Pick a category, then tap the win she earned (or type your own).</div>
+    <div class="lu-cats" id="luCats"></div>
+    <div class="lu-wins" id="luWins"></div>
+    <div class="lu-custom" id="luCustom" style="display:none">
+      <input id="luCustomInput" placeholder="Type a custom win…" onkeydown="if(event.key==='Enter')recordCustom()">
+      <button class="btn btn-primary" onclick="recordCustom()">Add</button>
+    </div>
+    <div class="logged">
+      <div class="logged-title">Wins logged this week</div>
+      <div id="luLogged">
+        {% if week_wins %}
+          {% for w in week_wins %}
+          <div class="win-chip"><span class="cat">{{ w.Category }}</span><span>{{ w.Win }}</span></div>
+          {% endfor %}
+        {% else %}
+          <div class="empty" id="luEmpty">No wins logged yet this week.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">3</span><span class="step-title">Pay out the Bank 🏦</span></div>
+    <div class="bank-amt" id="bankAmt">${{ '%g'|format(bank.balance) }}</div>
+    <div class="bank-note">owed to Violet now · {{ giving_pct }}% of earnings is already set aside for giving</div>
+    <button class="btn btn-pay" id="payBtn" onclick="payOut()" {% if bank.balance <= 0 %}disabled{% endif %}>
+      {% if bank.balance > 0 %}Mark ${{ '%g'|format(bank.balance) }} as paid out{% else %}Nothing to pay out{% endif %}
+    </button>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">4</span><span class="step-title">Plan next week's Toonie Tasks 🪙</span></div>
+    <div class="step-sub">Set the bonus $2 earners for the coming week — the extras on top of her daily routines.</div>
+    <a class="step-link" href="/admin/toonies">Open Toonie Tasks →</a>
+  </div>
+</div>
+
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-title">✦ Menu</div>
+  <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
+  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/admin/planning"><span class="menu-item-icon">🗓️</span> Sunday Planning</a></div>
+  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
+  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
+  <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
+  <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
+  <div class="menu-item"><a href="/admin/tasks"><span class="menu-item-icon">📋</span> Tasks</a></div>
+  <div class="menu-item"><a href="/admin/toonies"><span class="menu-item-icon">🪙</span> Toonie Tasks</a></div>
+  <div class="menu-item"><a href="/admin/payout"><span class="menu-item-icon">🏦</span> Bank of Mom & Dad</a></div>
+  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
+</div>
+
+<script>
+  const CATS  = {{ levelup_categories_json | safe }};
+  const TODAY = "{{ today_iso }}";
+  let activeCat = -1;
+
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function renderCats() {
+    document.getElementById('luCats').innerHTML = CATS.map((c, i) =>
+      `<button class="lu-cat${i===activeCat?' active':''}" onclick="pickCat(${i})">${c.icon || ''} ${escapeHtml(c.label)}</button>`
+    ).join('');
+  }
+
+  function pickCat(i) {
+    activeCat = i;
+    renderCats();
+    const cat = CATS[i];
+    document.getElementById('luWins').innerHTML = (cat.wins || []).map(w =>
+      `<button class="lu-win" onclick="recordWin(${i}, this.dataset.win)" data-win="${escapeHtml(w)}">${escapeHtml(w)}</button>`
+    ).join('');
+    document.getElementById('luCustom').style.display = 'flex';
+  }
+
+  async function record(catId, catLabel, win) {
+    try {
+      const res = await fetch('/levelup', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ date: TODAY, category_id: catId, category: catLabel, win })
+      });
+      if (!res.ok && res.status !== 204) return;
+      const logged = document.getElementById('luLogged');
+      const empty = document.getElementById('luEmpty');
+      if (empty) empty.remove();
+      const chip = document.createElement('div');
+      chip.className = 'win-chip';
+      chip.innerHTML = `<span class="cat">${escapeHtml(catLabel)}</span><span>${escapeHtml(win)}</span>`;
+      logged.prepend(chip);
+    } catch (e) {}
+  }
+
+  function recordWin(i, win) {
+    const cat = CATS[i];
+    record(cat.id, cat.label, win);
+  }
+
+  function recordCustom() {
+    if (activeCat < 0) { alert('Pick a category first.'); return; }
+    const inp = document.getElementById('luCustomInput');
+    const win = inp.value.trim();
+    if (!win) return;
+    const cat = CATS[activeCat];
+    record(cat.id, cat.label, win);
+    inp.value = '';
+  }
+
+  async function payOut() {
+    const btn = document.getElementById('payBtn');
+    if (!confirm('Record this cash as handed over to Violet?')) return;
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const res = await fetch('/admin/payout/pay', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
+      const data = await res.json();
+      const bal = (data.bank && data.bank.balance) || 0;
+      document.getElementById('bankAmt').textContent = '$' + bal;
+      btn.textContent = bal > 0 ? ('Mark $' + bal + ' as paid out') : '✓ Paid out';
+      btn.disabled = bal <= 0;
+    } catch (e) { btn.disabled = false; btn.textContent = 'Try again'; }
+  }
+
+  function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
+  function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  renderCats();
+</script>
+</body>
+</html>

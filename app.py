@@ -1222,6 +1222,7 @@ def index():
         surprises_json=json.dumps(pending_surprises()),
         progress_json=json.dumps(load_progress(current_profile())),
         profile_name=PROFILES[current_profile()]['name'],
+        levelup_total=len(load_levelup_log()),
     )
 
 
@@ -1542,6 +1543,33 @@ def admin_payout_pay():
 def admin_payout_undo():
     undone = undo_last_payout()
     return jsonify({'ok': undone, 'bank': compute_bank()})
+
+
+@app.route('/admin/planning')
+def admin_planning():
+    """Sunday Planning — the weekly ritual hub: review the week, log Level Up
+    wins together, pay out the Bank, then plan next week's Toonie Tasks."""
+    today = date.today()
+    week_start = (today - timedelta(days=6)).isoformat()
+    week_wins = [r for r in reversed(load_levelup_log())
+                 if r.get('Date', '') >= week_start]
+    week_earned = 0.0
+    for r in load_earnings():
+        if r.get('Date', '') >= week_start:
+            try:
+                week_earned += float(r.get('Amount', 0))
+            except (TypeError, ValueError):
+                continue
+    return render_template(
+        'planning.html',
+        stats=compute_stats(load_log()),
+        bank=compute_bank(),
+        giving_pct=int(round(giving_rate() * 100)),
+        levelup_categories_json=json.dumps(load_levelup_data().get('levelup_categories', [])),
+        week_wins=week_wins,
+        week_earned=round(week_earned, 2),
+        today_iso=today.isoformat(),
+    )
 
 
 BADGES = [
