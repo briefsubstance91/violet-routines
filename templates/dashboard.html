@@ -290,8 +290,8 @@
 <header>
   <div class="header-top">
     <div>
-      <div class="header-label">Parent Dashboard</div>
-      <div class="header-title">Violet's Progress ✦</div>
+      <div class="header-label">Parent area</div>
+      <div class="header-title">Parent Dashboard</div>
       <div class="header-sub">{{ today_iso }}</div>
     </div>
     <button class="menu-btn" onclick="openMenu()">☰</button>
@@ -313,6 +313,23 @@
 </div>
 
 <div class="page">
+
+  <!-- ── Manage launchpad ── -->
+  <p class="section-label">🛠️ Manage</p>
+  <div class="manage-grid">
+    <a class="manage-card" href="/admin/tasks"><span class="manage-icon">✏️</span><span class="manage-text"><span class="manage-name">Edit Routines</span><span class="manage-sub">Tasks, sub-tasks & tags</span></span></a>
+    <a class="manage-card" href="/admin/planning"><span class="manage-icon">🗓️</span><span class="manage-text"><span class="manage-name">Sunday Planning</span><span class="manage-sub">Weekly ritual</span></span></a>
+    <a class="manage-card" href="/admin#levelup"><span class="manage-icon">⚡</span><span class="manage-text"><span class="manage-name">Level Up</span><span class="manage-sub">Categories & wins</span></span></a>
+    <a class="manage-card" href="/admin#milestones"><span class="manage-icon">🏆</span><span class="manage-text"><span class="manage-name">Milestones</span><span class="manage-sub">Day rewards</span></span></a>
+    <a class="manage-card" href="/admin#money"><span class="manage-icon">💰</span><span class="manage-text"><span class="manage-name">Money & Giving</span><span class="manage-sub">Rates & rewards</span></span></a>
+    <a class="manage-card" href="/admin/toonies"><span class="manage-icon">🪙</span><span class="manage-text"><span class="manage-name">Toonie Tasks</span><span class="manage-sub">Weekly $2 extras</span></span></a>
+    <a class="manage-card" href="/admin/surprises"><span class="manage-icon">🎁</span><span class="manage-text"><span class="manage-name">Surprises</span><span class="manage-sub">Hidden rewards</span></span></a>
+    <a class="manage-card" href="/admin/payout"><span class="manage-icon">🏦</span><span class="manage-text"><span class="manage-name">Bank of Mom & Dad</span><span class="manage-sub">Pay out & history</span></span></a>
+    <a class="manage-card" href="/admin/events"><span class="manage-icon">✨</span><span class="manage-text"><span class="manage-name">Events</span><span class="manage-sub">One-off & recurring</span></span></a>
+  </div>
+
+  <!-- ── Violet's progress ── -->
+  <p class="section-label">✦ Violet's Progress</p>
 
   <!-- ── KPI row ── -->
   <div class="kpi-row">
@@ -338,19 +355,7 @@
     </div>
   </div>
 
-  <!-- ── Manage launchpad ── -->
-  <p class="section-label">🛠️ Manage</p>
-  <div class="manage-grid">
-    <a class="manage-card" href="/admin/tasks"><span class="manage-icon">✏️</span><span class="manage-text"><span class="manage-name">Edit Routines</span><span class="manage-sub">Tasks, sub-tasks & tags</span></span></a>
-    <a class="manage-card" href="/admin/planning"><span class="manage-icon">🗓️</span><span class="manage-text"><span class="manage-name">Sunday Planning</span><span class="manage-sub">Weekly ritual</span></span></a>
-    <a class="manage-card" href="/admin#levelup"><span class="manage-icon">⚡</span><span class="manage-text"><span class="manage-name">Level Up</span><span class="manage-sub">Categories & wins</span></span></a>
-    <a class="manage-card" href="/admin#milestones"><span class="manage-icon">🏆</span><span class="manage-text"><span class="manage-name">Milestones</span><span class="manage-sub">Day rewards</span></span></a>
-    <a class="manage-card" href="/admin#money"><span class="manage-icon">💰</span><span class="manage-text"><span class="manage-name">Money & Giving</span><span class="manage-sub">Rates & rewards</span></span></a>
-    <a class="manage-card" href="/admin/toonies"><span class="manage-icon">🪙</span><span class="manage-text"><span class="manage-name">Toonie Tasks</span><span class="manage-sub">Weekly $2 extras</span></span></a>
-    <a class="manage-card" href="/admin/surprises"><span class="manage-icon">🎁</span><span class="manage-text"><span class="manage-name">Surprises</span><span class="manage-sub">Hidden rewards</span></span></a>
-    <a class="manage-card" href="/admin/payout"><span class="manage-icon">🏦</span><span class="manage-text"><span class="manage-name">Bank of Mom & Dad</span><span class="manage-sub">Pay out & history</span></span></a>
-    <a class="manage-card" href="/admin/events"><span class="manage-icon">✨</span><span class="manage-text"><span class="manage-name">Events</span><span class="manage-sub">One-off & recurring</span></span></a>
-  </div>
+  <!-- Manage launchpad moved to top of page -->
 
   <!-- ── Milestone ── -->
   <p class="section-label">🏆 Next Reward</p>
