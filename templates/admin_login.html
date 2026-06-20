@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parent Login — Violet's Life OS</title>
+  <link rel="icon" href="/icon.svg">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(160deg, #cce8ff 0%, #e9defb 100%);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem; color: #3a2e55;
+    }
+    .card {
+      background: #fff; border-radius: 22px; padding: 2.2rem 1.8rem;
+      box-shadow: 0 12px 40px rgba(120, 90, 200, 0.22); width: 100%; max-width: 340px;
+      text-align: center;
+    }
+    .emoji { font-size: 2.6rem; }
+    h1 { font-size: 1.35rem; margin: 0.5rem 0 0.25rem; color: #6b4fc7; }
+    p.sub { font-size: 0.9rem; color: #8a7da8; margin-bottom: 1.4rem; }
+    input[type="password"] {
+      width: 100%; font-size: 1.6rem; text-align: center; letter-spacing: 0.4rem;
+      padding: 0.7rem; border: 2px solid #d9cdf3; border-radius: 14px; outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="password"]:focus { border-color: #9b87f5; }
+    button {
+      width: 100%; margin-top: 1rem; padding: 0.85rem; font-size: 1.05rem; font-weight: 600;
+      color: #fff; background: #9b87f5; border: none; border-radius: 14px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #855ff0; }
+    .error { color: #d6336c; font-size: 0.88rem; margin-top: 0.9rem; min-height: 1.1rem; }
+    .home { display: inline-block; margin-top: 1.2rem; font-size: 0.85rem; color: #9b87f5; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <form class="card" method="POST" action="/admin/login">
+    <div class="emoji">🔒</div>
+    <h1>Parent Login</h1>
+    <p class="sub">Enter your PIN to manage Violet's app.</p>
+    <input type="hidden" name="next" value="{{ next }}">
+    <input type="password" name="pin" inputmode="numeric" autocomplete="current-password"
+           placeholder="••••" autofocus>
+    <button type="submit">Unlock</button>
+    <div class="error">{% if error %}Incorrect PIN — try again.{% endif %}</div>
+    <a class="home" href="/">← Back to Violet's app</a>
+  </form>
+</body>
+</html>

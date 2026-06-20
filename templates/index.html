@@ -1125,23 +1125,53 @@
 
   const TODAY = new Date().toDateString();
 
+  // ── Synced progress ──────────────────────────────────────
+  // The server is the source of truth so Violet's progress is identical on
+  // every device. PROGRESS is loaded with her profile's data; pget/pset read
+  // and write it, mirroring each change up to the server.
+  const PROGRESS = {{ progress_json | safe }};
+
+  function pget(key, dflt) { return key in PROGRESS ? PROGRESS[key] : dflt; }
+  function pset(key, value) {
+    PROGRESS[key] = value;
+    fetch('/api/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value }),
+      keepalive: true,
+    }).catch(() => {});
+  }
+
+  // One-time migration: if this profile has nothing on the server yet but this
+  // device still holds the old localStorage progress, lift it up so the switch
+  // to syncing never loses Violet's streak, badges or day count.
+  (function migrateLocalProgress() {
+    if (Object.keys(PROGRESS).length) return;
+    const KEYS = ['violet-routines-v2','violet-days','violet-badges','violet-completions',
+                  'violet-lu-total','violet-triples','violet-last-triple','violet-extras-v1'];
+    for (const k of KEYS) {
+      const raw = localStorage.getItem(k);
+      if (raw == null) continue;
+      let val; try { val = JSON.parse(raw); } catch { val = raw; }
+      pset(k, val);
+    }
+  })();
+
   // v2 state uses {routine: {idx: bool}} instead of arrays
   function getState() {
-    const raw = localStorage.getItem('violet-routines-v2');
-    if (!raw) return null;
-    const s = JSON.parse(raw);
-    if (s.date !== TODAY) return null;
+    const s = pget('violet-routines-v2', null);
+    if (!s || s.date !== TODAY) return null;
     return s;
   }
   function saveState(state) {
-    localStorage.setItem('violet-routines-v2', JSON.stringify({ ...state, date: TODAY }));
+    pset('violet-routines-v2', { ...state, date: TODAY });
   }
   let state = getState() || Object.fromEntries(Object.keys(ROUTINES).map(k => [k, {}]));
 
   // Days completed: a cumulative list of dates where Violet finished at least
   // one routine. It only ever grows — missing a day never erases progress.
-  function getDaysList() { return JSON.parse(localStorage.getItem('violet-days') || '[]'); }
-  function saveDaysList(l) { localStorage.setItem('violet-days', JSON.stringify(l)); }
+  function getDaysList() { return pget('violet-days', []); }
+  function saveDaysList(l) { pset('violet-days', l); }
   function daysCompleted() { return getDaysList().length; }
 
   // Migrate & reconcile: the server log is the source of truth for which days
@@ -1163,16 +1193,16 @@
   // ── Badge tracking ──
   const BADGE_DEFS = {{ badges_json | safe }};
 
-  function getEarned() { return new Set(JSON.parse(localStorage.getItem('violet-badges') || '[]')); }
-  function saveEarned(s) { localStorage.setItem('violet-badges', JSON.stringify([...s])); }
-  function getCompletions() { return JSON.parse(localStorage.getItem('violet-completions') || '{}'); }
-  function saveCompletions(c) { localStorage.setItem('violet-completions', JSON.stringify(c)); }
+  function getEarned() { return new Set(pget('violet-badges', [])); }
+  function saveEarned(s) { pset('violet-badges', [...s]); }
+  function getCompletions() { return pget('violet-completions', {}); }
+  function saveCompletions(c) { pset('violet-completions', c); }
 
   function checkBadges(routineId) {
     const earned = getEarned();
     const completions = getCompletions();
-    const luTotal = parseInt(localStorage.getItem('violet-lu-total') || '0');
-    const tripleCount = parseInt(localStorage.getItem('violet-triples') || '0');
+    const luTotal = pget('violet-lu-total', 0);
+    const tripleCount = pget('violet-triples', 0);
     const days = daysCompleted();
 
     const newBadges = [];
@@ -1303,13 +1333,11 @@
   }
 
   function getExtras() {
-    const raw = localStorage.getItem('violet-extras-v1');
-    if (!raw) return { date: TODAY };
-    const s = JSON.parse(raw);
-    return s.date === TODAY ? s : { date: TODAY };
+    const s = pget('violet-extras-v1', null);
+    return (s && s.date === TODAY) ? s : { date: TODAY };
   }
   function saveExtras(s) {
-    localStorage.setItem('violet-extras-v1', JSON.stringify({ ...s, date: TODAY }));
+    pset('violet-extras-v1', { ...s, date: TODAY });
   }
   let extrasState = getExtras();
 
@@ -1389,11 +1417,10 @@
     // track full days (all 3 routines done today) — once per day
     const allToday = Object.keys(ROUTINES).every(r => topLevelDone(r) === ROUTINES[r].total);
     if (allToday) {
-      const lastTriple = localStorage.getItem('violet-last-triple') || '';
+      const lastTriple = pget('violet-last-triple', '');
       if (lastTriple !== TODAY) {
-        const prev = parseInt(localStorage.getItem('violet-triples') || '0');
-        localStorage.setItem('violet-triples', prev + 1);
-        localStorage.setItem('violet-last-triple', TODAY);
+        pset('violet-triples', pget('violet-triples', 0) + 1);
+        pset('violet-last-triple', TODAY);
       }
     }
 
@@ -1666,8 +1693,7 @@
       });
       luTodayCount++;
       updateLuBadge();
-      const luTotal = parseInt(localStorage.getItem('violet-lu-total') || '0');
-      localStorage.setItem('violet-lu-total', luTotal + 1);
+      pset('violet-lu-total', pget('violet-lu-total', 0) + 1);
       checkBadges(null);
     } catch(e) {}
     // close after 1.6s

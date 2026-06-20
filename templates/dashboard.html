@@ -504,7 +504,8 @@
 
 <script>
   const ALL_BADGES = {{ badges_json | safe }};
-  const earned = new Set(JSON.parse(localStorage.getItem('violet-badges') || '[]'));
+  const PROGRESS = {{ progress_json | safe }};
+  const earned = new Set('violet-badges' in PROGRESS ? PROGRESS['violet-badges'] : []);
 
   document.getElementById('badgeCountLabel').textContent =
     `${earned.size} of ${ALL_BADGES.length} earned`;
