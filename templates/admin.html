@@ -105,6 +105,12 @@
     .tag-chip { display: inline-flex; align-items: center; gap: 0.2rem; background: #ede9fe; color: #6d28d9; border-radius: 100px; padding: 0.12rem 0.35rem 0.12rem 0.5rem; font-size: 0.68rem; font-weight: 800; }
     .edit-tasks-link { display: block; margin-top: 0.85rem; padding: 0.6rem 0.85rem; border: 2px dashed var(--border); border-radius: 8px; color: var(--purple); font-weight: 800; font-size: 0.85rem; text-decoration: none; text-align: center; font-family: 'Nunito', sans-serif; }
     .edit-tasks-link:hover { border-color: var(--purple); background: #faf8ff; }
+    .edit-routines-cta { display: flex; align-items: center; gap: 0.85rem; margin: 0 0 1rem; padding: 1rem 1.15rem; background: linear-gradient(135deg, #ede9fe, #fce7f3); border: 1.5px solid var(--border); border-radius: 14px; text-decoration: none; color: var(--text); }
+    .edit-routines-cta:hover { border-color: var(--purple); }
+    .erc-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .erc-text { flex: 1; font-size: 0.88rem; line-height: 1.35; }
+    .erc-text strong { font-size: 1rem; }
+    .erc-arrow { font-size: 1.3rem; color: var(--purple); font-weight: 800; flex-shrink: 0; }
     .tag-del { background: none; border: none; cursor: pointer; color: #9b87f5; font-size: 0.75rem; line-height: 1; padding: 0 0.1rem; }
     .tag-del:hover { color: #f87171; }
     .inp-tag { border: none; outline: none; background: none; font-family: 'Nunito', sans-serif; font-size: 0.68rem; font-weight: 700; color: var(--muted); width: 72px; }
@@ -170,8 +176,7 @@
     </div>
   </div>
   <div class="tabs">
-    <button class="tab-btn active" id="tab-routines" onclick="switchTab('routines')">✦ Routines</button>
-    <button class="tab-btn" id="tab-levelup" onclick="switchTab('levelup')">⚡ Level Up</button>
+    <button class="tab-btn active" id="tab-levelup" onclick="switchTab('levelup')">⚡ Level Up</button>
     <button class="tab-btn" id="tab-milestones" onclick="switchTab('milestones')">🏆 Milestones</button>
     <button class="tab-btn" id="tab-money" onclick="switchTab('money')">💰 Money</button>
   </div>
@@ -188,7 +193,7 @@
   <div class="menu-item"><a href="/admin/planning"><span class="menu-item-icon">🗓️</span> Sunday Planning</a></div>
   <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
   <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
-  <div class="menu-item"><a href="/admin/tasks"><span class="menu-item-icon">📋</span> Tasks</a></div>
+  <div class="menu-item"><a href="/admin/tasks"><span class="menu-item-icon">✏️</span> Edit Routines</a></div>
   <div class="menu-item"><a href="/admin/toonies"><span class="menu-item-icon">🪙</span> Toonie Tasks</a></div>
   <div class="menu-item"><a href="/admin/surprises"><span class="menu-item-icon">🎁</span> Surprises</a></div>
   <div class="menu-item"><a href="/admin/payout"><span class="menu-item-icon">🏦</span> Bank of Mom & Dad</a></div>
@@ -216,20 +221,12 @@
   <option value="creativity">
 </datalist>
 
-<!-- ══════════════════════════════════════════
-     TAB 1 — ROUTINES
-     ══════════════════════════════════════════ -->
-<div id="section-routines" class="tab-content active">
-  <div class="help-box">
-    <div class="help-title">✦ Editing Routines</div>
-    <ul>
-      <li>Edit a routine's <strong>name</strong>, <strong>icon</strong>, or <strong>time</strong> directly in its header</li>
-      <li>Use <strong>✏️ Edit tasks & sub-tasks</strong> to add, nest, tag, reorder, or remove the steps in a routine</li>
-      <li>Changes here don't save until you hit <strong>Save</strong></li>
-    </ul>
-  </div>
-  <div id="routinesList"></div>
-</div>
+<!-- Routines & tasks now live on their own page (Edit Routines) -->
+<a class="edit-routines-cta" href="/admin/tasks">
+  <span class="erc-icon">✏️</span>
+  <span class="erc-text"><strong>Edit Routines &amp; Tasks</strong><br>Routine names, times, tasks, sub-tasks &amp; tags</span>
+  <span class="erc-arrow">→</span>
+</a>
 
 <!-- ══════════════════════════════════════════
      TAB 2 — LEVEL UP
@@ -332,7 +329,7 @@
   let givingPct  = {{ giving_pct }};
 
   /* ── Tab state ── */
-  let activeTab = 'routines';
+  let activeTab = 'levelup';
   let dirty = { routines: false, levelup: false, milestones: false, money: false };
 
   function switchTab(name) {
@@ -364,7 +361,6 @@
     const btn = document.getElementById('saveBtn');
     btn.textContent = 'Saving…'; btn.disabled = true;
     let url, body;
-    if (activeTab === 'routines')   { url = '/admin/routines/meta';    body = routines.map(r => ({ id: r.id, name: r.name, icon: r.icon, time: r.time })); }
     if (activeTab === 'levelup')    { url = '/admin/save';              body = levelup; }
     if (activeTab === 'milestones') { url = '/admin/milestones/save';   body = milestones; }
     if (activeTab === 'money')      { url = '/admin/money/save';        body = { giving_pct: givingPct, milestones: moneyMilestones }; }
@@ -683,7 +679,6 @@
   }
 
   /* ── Init ── */
-  renderRoutines();
   renderLevelUp();
   renderMilestones();
   renderMoney();

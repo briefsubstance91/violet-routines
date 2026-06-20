@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Violet's App — Tasks</title>
+  <title>Violet's App — Edit Routines</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -145,6 +145,11 @@
       font-weight: 600;
     }
 
+    .rt-icon { width: 46px; flex-shrink: 0; font-size: 1.4rem; text-align: center; border: 1.5px solid var(--border); border-radius: 10px; padding: 0.3rem 0; background: #fff; font-family: inherit; }
+    .rt-name { font-size: 1rem; font-weight: 800; color: var(--text); border: none; outline: none; background: none; width: 100%; font-family: 'Nunito', sans-serif; padding: 0.1rem 0.2rem; border-radius: 6px; }
+    .rt-time { font-size: 0.78rem; font-weight: 600; color: var(--muted); border: none; outline: none; background: none; width: 100%; font-family: 'Nunito', sans-serif; padding: 0.1rem 0.2rem; border-radius: 6px; }
+    .rt-name:focus, .rt-time:focus { background: #fff; box-shadow: 0 0 0 1.5px var(--border); }
+
     .task-list {
       padding: 0.5rem 0;
     }
@@ -268,7 +273,7 @@
 <body>
 
 <header>
-  <h1>✦ Tasks</h1>
+  <h1>✏️ Edit Routines</h1>
   <div class="header-actions">
     <span class="save-status" id="saveStatus">Saved ✓</span>
     <button class="btn btn-save" id="saveBtn" onclick="saveAll()" disabled>Save</button>
@@ -287,7 +292,7 @@
   <div class="menu-item"><a href="/admin/planning"><span class="menu-item-icon">🗓️</span> Sunday Planning</a></div>
   <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
   <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
-  <div class="menu-item"><a href="/admin/tasks"><span class="menu-item-icon">📋</span> Tasks</a></div>
+  <div class="menu-item"><a href="/admin/tasks"><span class="menu-item-icon">✏️</span> Edit Routines</a></div>
   <div class="menu-item"><a href="/admin/toonies"><span class="menu-item-icon">🪙</span> Toonie Tasks</a></div>
   <div class="menu-item"><a href="/admin/surprises"><span class="menu-item-icon">🎁</span> Surprises</a></div>
   <div class="menu-item"><a href="/admin/payout"><span class="menu-item-icon">🏦</span> Bank of Mom & Dad</a></div>
@@ -302,9 +307,10 @@
 </div>
 
 <div class="help-box" style="max-width:720px;margin:1.5rem auto;">
-  <div class="help-title">📋 How Tasks work</div>
-  <p>These are the checklist items Violet sees inside each routine. Changes here update the app instantly after saving.</p>
+  <div class="help-title">✏️ How editing routines works</div>
+  <p>This is where you manage Violet's routines and everything inside them. Changes update the app instantly after saving.</p>
   <ul>
+    <li>Edit each routine's <strong>name</strong>, <strong>icon</strong>, and <strong>time</strong> in its header</li>
     <li>Click any task text to edit it inline</li>
     <li>Drag the <strong>⠿</strong> handle to reorder tasks within a routine</li>
     <li>Tap <strong>+ Add sub-task</strong> under a task to nest a step beneath it (e.g. "Socks" under "Get dressed")</li>
@@ -359,10 +365,13 @@
       card.className = 'routine-card';
       card.innerHTML = `
         <div class="routine-header">
-          <span class="routine-icon">${esc(r.icon)}</span>
+          <input class="rt-icon" value="${esc(r.icon)}" placeholder="☁️"
+                 onchange="routines[${ri}].icon=this.value; markDirty()">
           <div class="routine-meta">
-            <div class="routine-name">${esc(r.name)}</div>
-            <div class="routine-time">${esc(r.time)}</div>
+            <input class="rt-name" value="${esc(r.name)}" placeholder="Routine name"
+                   oninput="routines[${ri}].name=this.value; markDirty()">
+            <input class="rt-time" value="${esc(r.time)}" placeholder="8:00 AM"
+                   oninput="routines[${ri}].time=this.value; markDirty()">
           </div>
         </div>
         <div class="task-list" id="tasks-${ri}"></div>
