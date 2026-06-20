@@ -108,6 +108,15 @@
     }
     .kpi-sub { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
 
+    /* ── Manage launchpad ── */
+    .manage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1.25rem; }
+    .manage-card { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 0.85rem; background: var(--card); border: 1.5px solid var(--border); border-radius: 14px; text-decoration: none; color: var(--text); box-shadow: 0 4px 20px rgba(78,58,180,0.06); }
+    .manage-card:hover { border-color: var(--purple); }
+    .manage-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .manage-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+    .manage-name { font-size: 0.85rem; font-weight: 800; line-height: 1.2; }
+    .manage-sub { font-size: 0.66rem; font-weight: 600; color: var(--muted); }
+
     /* ── Section heading ── */
     .section-label {
       font-size: 0.68rem; font-weight: 800; letter-spacing: 0.12em;
@@ -299,7 +308,6 @@
   <div class="menu-item"><a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
   <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
   <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
-  <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
   <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
   <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
 </div>
@@ -328,6 +336,20 @@
       <div class="kpi-value" style="color:var(--blue)">{{ stats.total_days }}</div>
       <div class="kpi-sub">days with data</div>
     </div>
+  </div>
+
+  <!-- ── Manage launchpad ── -->
+  <p class="section-label">🛠️ Manage</p>
+  <div class="manage-grid">
+    <a class="manage-card" href="/admin/tasks"><span class="manage-icon">✏️</span><span class="manage-text"><span class="manage-name">Edit Routines</span><span class="manage-sub">Tasks, sub-tasks & tags</span></span></a>
+    <a class="manage-card" href="/admin/planning"><span class="manage-icon">🗓️</span><span class="manage-text"><span class="manage-name">Sunday Planning</span><span class="manage-sub">Weekly ritual</span></span></a>
+    <a class="manage-card" href="/admin#levelup"><span class="manage-icon">⚡</span><span class="manage-text"><span class="manage-name">Level Up</span><span class="manage-sub">Categories & wins</span></span></a>
+    <a class="manage-card" href="/admin#milestones"><span class="manage-icon">🏆</span><span class="manage-text"><span class="manage-name">Milestones</span><span class="manage-sub">Day rewards</span></span></a>
+    <a class="manage-card" href="/admin#money"><span class="manage-icon">💰</span><span class="manage-text"><span class="manage-name">Money & Giving</span><span class="manage-sub">Rates & rewards</span></span></a>
+    <a class="manage-card" href="/admin/toonies"><span class="manage-icon">🪙</span><span class="manage-text"><span class="manage-name">Toonie Tasks</span><span class="manage-sub">Weekly $2 extras</span></span></a>
+    <a class="manage-card" href="/admin/surprises"><span class="manage-icon">🎁</span><span class="manage-text"><span class="manage-name">Surprises</span><span class="manage-sub">Hidden rewards</span></span></a>
+    <a class="manage-card" href="/admin/payout"><span class="manage-icon">🏦</span><span class="manage-text"><span class="manage-name">Bank of Mom & Dad</span><span class="manage-sub">Pay out & history</span></span></a>
+    <a class="manage-card" href="/admin/events"><span class="manage-icon">✨</span><span class="manage-text"><span class="manage-name">Events</span><span class="manage-sub">One-off & recurring</span></span></a>
   </div>
 
   <!-- ── Milestone ── -->
@@ -448,20 +470,6 @@
     <div class="badge-mini-grid" id="badgeMiniGrid"></div>
   </div>
 
-  <!-- ── Admin shortcuts ── -->
-  <p class="section-label">⚙️ Admin</p>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1.25rem">
-    <a href="/admin" style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;padding:1rem;background:white;border-radius:16px;text-decoration:none;color:var(--text);box-shadow:0 4px 20px rgba(78,58,180,0.08);border:1.5px solid var(--border);">
-      <span style="font-size:1.6rem">⚡</span>
-      <span style="font-size:0.82rem;font-weight:800">Level Up Editor</span>
-      <span style="font-size:0.68rem;font-weight:600;color:var(--muted);text-align:center">Add categories & wins</span>
-    </a>
-    <a href="/admin" style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;padding:1rem;background:white;border-radius:16px;text-decoration:none;color:var(--text);box-shadow:0 4px 20px rgba(78,58,180,0.08);border:1.5px solid var(--border);">
-      <span style="font-size:1.6rem">📋</span>
-      <span style="font-size:0.82rem;font-weight:800">Routines & Tasks</span>
-      <span style="font-size:0.68rem;font-weight:600;color:var(--muted);text-align:center">Edit checklists & names</span>
-    </a>
-  </div>
 
   <!-- ── How It Works ── -->
   <div class="card" style="margin-bottom: 2rem">
