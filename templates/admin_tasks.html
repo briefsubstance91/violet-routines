@@ -212,13 +212,21 @@
     }
     .subtask-indent { color: var(--muted); font-size: 0.9rem; flex-shrink: 0; width: 16px; }
     .subtask-input { font-size: 0.85rem; color: var(--muted); }
-    .btn-add-sub {
-      background: none; border: none; color: var(--purple);
-      font-size: 1.05rem; cursor: pointer; padding: 0.1rem 0.3rem;
-      border-radius: 6px; line-height: 1; flex-shrink: 0;
-      opacity: 0.6; transition: opacity 0.15s;
+    .add-sub-row { padding: 0 1rem 0.5rem 2.5rem; }
+    .btn-add-sub-task {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--purple);
+      background: none;
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
     }
-    .btn-add-sub:hover { opacity: 1; background: #ede9fe; }
+    .btn-add-sub-task:hover { border-color: var(--purple); background: #faf8ff; }
 
     .help-box {
       background: #f0ebff;
@@ -283,8 +291,8 @@
   <ul>
     <li>Click any task text to edit it inline</li>
     <li>Drag the <strong>⠿</strong> handle to reorder tasks within a routine</li>
-    <li>Hit <strong>⊕</strong> on a task to add a sub-task nested underneath it</li>
-    <li>Hit <strong>×</strong> to delete a task or sub-task, <strong>+ Add task</strong> to create one</li>
+    <li>Tap <strong>+ Add sub-task</strong> under a task to nest a step beneath it (e.g. "Socks" under "Get dressed")</li>
+    <li>Hit <strong>×</strong> to delete a task or sub-task, <strong>+ Add task</strong> to create a new task</li>
     <li>Always click <strong>Save</strong> when you're done — unsaved changes are lost on refresh</li>
   </ul>
 </div>
@@ -350,8 +358,8 @@
     const group = document.createElement('div');
     group.className = 'task-group';
     // Only the handle is draggable — making the whole group draggable causes
-    // WebKit/Safari to swallow clicks on child buttons/inputs (the ⊕ add-sub-task
-    // button) into drag handling. Drag events still bubble to the group's listeners.
+    // WebKit/Safari to swallow clicks on child buttons/inputs into drag handling.
+    // Drag events still bubble to the group's listeners.
     group.dataset.ri = ri;
     group.dataset.ti = ti;
 
@@ -361,7 +369,6 @@
       <span class="drag-handle" title="Drag to reorder" draggable="true">⠿</span>
       <input class="task-input" value="${esc(t.label)}" placeholder="Task name…"
              oninput="updateTaskLabel(${ri},${ti},this.value)">
-      <button class="btn-add-sub" onclick="addSubtask(${ri},${ti})" title="Add sub-task">⊕</button>
       <button class="btn-danger" onclick="removeTask(${ri},${ti})" title="Delete">×</button>
     `;
     group.appendChild(row);
@@ -372,6 +379,17 @@
       t.subtasks.forEach((_, si) => subsEl.appendChild(makeSubtaskRow(ri, ti, si)));
       group.appendChild(subsEl);
     }
+
+    // Clear, full-width button to nest a sub-task under this task (replaces the
+    // old ⊕ icon, which was easy to miss and got swallowed by drag on Safari).
+    const addSubRow = document.createElement('div');
+    addSubRow.className = 'add-sub-row';
+    const addSubBtn = document.createElement('button');
+    addSubBtn.className = 'btn-add-sub-task';
+    addSubBtn.textContent = '+ Add sub-task';
+    addSubBtn.addEventListener('click', () => addSubtask(ri, ti));
+    addSubRow.appendChild(addSubBtn);
+    group.appendChild(addSubRow);
 
     group.addEventListener('dragstart', onDragStart);
     group.addEventListener('dragover',  onDragOver);
