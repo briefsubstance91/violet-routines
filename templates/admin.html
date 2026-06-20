@@ -191,6 +191,12 @@
   <div class="menu-item"><a href="/admin/events"><span class="menu-item-icon">✨</span> Events</a></div>
   <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
   <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
+  <div class="menu-item" style="cursor:pointer" onclick="changePin()"><span class="menu-item-icon">🔑</span> Change PIN</div>
+  <form class="menu-item" method="POST" action="/admin/logout" style="cursor:pointer">
+    <button type="submit" style="all:unset; display:flex; align-items:center; gap:0.9rem; width:100%; cursor:pointer;">
+      <span class="menu-item-icon">🚪</span> Log out
+    </button>
+  </form>
 </div>
 
 <datalist id="tag-suggestions">
@@ -666,6 +672,18 @@
   function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
   function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
   function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  async function changePin() {
+    const pin = prompt('Enter a new parent PIN (4–8 digits):');
+    if (pin == null) return;
+    const res = await fetch('/admin/pin/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: pin.trim() }),
+    });
+    if (res.ok) { alert('PIN updated. Use it next time you log in.'); closeMenu(); }
+    else { const e = await res.json().catch(() => ({})); alert(e.error || 'Could not update PIN.'); }
+  }
 
   /* ── Init ── */
   renderRoutines();

@@ -334,8 +334,9 @@
   document.getElementById('heroGreeting').textContent =
     h < 12 ? 'Good morning ☁️' : h < 17 ? 'Good afternoon 🌸' : 'Good evening 🌙';
 
-  // Days completed from localStorage (cumulative, never resets)
-  const daysDone = JSON.parse(localStorage.getItem('violet-days') || '[]').length;
+  // Days completed from synced progress (cumulative, never resets)
+  const PROGRESS = {{ progress_json | safe }};
+  const daysDone = ('violet-days' in PROGRESS ? PROGRESS['violet-days'] : []).length;
   if (daysDone > 0) {
     document.getElementById('streakVal').textContent = daysDone;
     document.getElementById('heroStreak').style.display = 'inline-flex';

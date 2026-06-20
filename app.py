@@ -8,7 +8,8 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import (Flask, render_template, request, jsonify, send_from_directory,
+                   session, redirect, url_for)
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
@@ -46,7 +47,103 @@ MILESTONES_FILE     = os.path.join(_DATA, 'Violet Milestones.csv')
 TOONIES_FILE        = os.path.join(_DATA, 'violet_toonies.json')
 TOONIES_SEED_FILE   = os.path.join(_BASE, 'violet_toonies.json')
 SURPRISES_FILE      = os.path.join(_DATA, 'violet_surprises.json')
+PROGRESS_FILE       = os.path.join(_DATA, 'violet_progress.json')  # per-profile kid progress (synced)
+SECRET_KEY_FILE     = os.path.join(_DATA, 'flask_secret.txt')      # persisted session signing key
 DEFAULT_TZ          = 'America/Toronto'
+
+
+# ── Sessions / parent login ─────────────────────────────────────────────
+def _load_secret_key():
+    """A stable secret so parent logins survive restarts. Prefer env, then a
+    persisted key on the volume, otherwise generate and remember one."""
+    key = os.environ.get('SECRET_KEY')
+    if key:
+        return key
+    try:
+        with open(SECRET_KEY_FILE, encoding='utf-8') as f:
+            saved = f.read().strip()
+        if saved:
+            return saved
+    except FileNotFoundError:
+        pass
+    key = uuid.uuid4().hex + uuid.uuid4().hex
+    try:
+        with open(SECRET_KEY_FILE, 'w', encoding='utf-8') as f:
+            f.write(key)
+    except OSError:
+        pass
+    return key
+
+
+app.secret_key = _load_secret_key()
+DEFAULT_ADMIN_PIN = '1234'
+
+
+def admin_pin():
+    """Current parent PIN. Settings override env, env overrides the default so a
+    parent can change it in-app or via Railway without touching code."""
+    pin = load_settings().get('admin_pin')
+    if pin:
+        return str(pin)
+    return os.environ.get('ADMIN_PIN', DEFAULT_ADMIN_PIN)
+
+
+def _admin_open(path):
+    """Admin paths reachable without a session (the login flow itself)."""
+    return path in ('/admin/login', '/admin/logout')
+
+
+# ── Kid profiles ────────────────────────────────────────────────────────
+# Single profile today; the store is keyed by id so more can be added later
+# without a data migration.
+PROFILES = {'violet': {'name': 'Violet'}}
+
+
+@app.before_request
+def _gate_admin():
+    """Everything under /admin requires the parent PIN, except the login flow."""
+    p = request.path
+    if p.startswith('/admin') and not _admin_open(p):
+        if not session.get('admin'):
+            if request.method == 'GET':
+                return redirect(url_for('admin_login', next=p))
+            return jsonify({'error': 'unauthorized'}), 401
+    return None
+
+
+def current_profile():
+    """The active kid profile. One profile for now; kept as a function so a
+    profile picker can set session['profile'] in the future."""
+    pid = session.get('profile', 'violet')
+    return pid if pid in PROFILES else 'violet'
+
+
+# Keys the kid client is allowed to persist server-side. Anything else is
+# rejected so the endpoint can't be used as arbitrary storage.
+PROGRESS_KEYS = {
+    'violet-routines-v2', 'violet-days', 'violet-badges', 'violet-completions',
+    'violet-lu-total', 'violet-triples', 'violet-last-triple', 'violet-extras-v1',
+}
+
+
+def _load_all_progress():
+    try:
+        with open(PROGRESS_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, ValueError):
+        return {}
+
+
+def load_progress(profile):
+    """All synced progress for one kid profile (empty dict if none yet)."""
+    return _load_all_progress().get(profile, {})
+
+
+def save_progress_key(profile, key, value):
+    all_p = _load_all_progress()
+    all_p.setdefault(profile, {})[key] = value
+    with open(PROGRESS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(all_p, f, indent=2)
 
 
 def _data_or_seed(data_path, seed_path):
@@ -1123,12 +1220,15 @@ def index():
         toonie_config_json=json.dumps(toonie_cfg),
         toonie_earned_json=json.dumps(toonies_earned_today()),
         surprises_json=json.dumps(pending_surprises()),
+        progress_json=json.dumps(load_progress(current_profile())),
+        profile_name=PROFILES[current_profile()]['name'],
     )
 
 
 @app.route('/')
 def landing():
-    return render_template('landing.html')
+    return render_template('landing.html',
+                           progress_json=json.dumps(load_progress(current_profile())))
 
 
 @app.route('/welcome')
@@ -1158,6 +1258,54 @@ def save_milestones(items):
         writer.writerow(['Streak', 'Reward Message', 'Category'])
         for item in sorted(items, key=lambda x: int(x.get('streak', 0) or 0)):
             writer.writerow([item['streak'], item['message'], item.get('category', '')])
+
+
+@app.route('/api/progress')
+def api_progress_get():
+    """Synced kid progress for the active profile."""
+    return jsonify(load_progress(current_profile()))
+
+
+@app.route('/api/progress', methods=['POST'])
+def api_progress_set():
+    """Persist a single progress key for the active profile."""
+    data = request.get_json(silent=True) or {}
+    key = data.get('key')
+    if key not in PROGRESS_KEYS:
+        return jsonify({'error': 'unknown key'}), 400
+    save_progress_key(current_profile(), key, data.get('value'))
+    return '', 204
+
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    nxt = request.args.get('next') or request.form.get('next') or '/admin'
+    if not nxt.startswith('/admin'):
+        nxt = '/admin'
+    if request.method == 'POST':
+        if request.form.get('pin', '').strip() == admin_pin():
+            session['admin'] = True
+            session.permanent = True
+            return redirect(nxt)
+        return render_template('admin_login.html', error=True, next=nxt), 401
+    if session.get('admin'):
+        return redirect(nxt)
+    return render_template('admin_login.html', error=False, next=nxt)
+
+
+@app.route('/admin/logout', methods=['POST'])
+def admin_logout():
+    session.pop('admin', None)
+    return redirect('/')
+
+
+@app.route('/admin/pin/save', methods=['POST'])
+def admin_pin_save():
+    new_pin = (request.get_json(silent=True) or {}).get('pin', '').strip()
+    if not (new_pin.isdigit() and 4 <= len(new_pin) <= 8):
+        return jsonify({'error': 'PIN must be 4–8 digits'}), 400
+    save_settings({'admin_pin': new_pin})
+    return '', 204
 
 
 @app.route('/admin')
@@ -1411,7 +1559,8 @@ def faq():
 
 @app.route('/badges')
 def badges():
-    return render_template('badges.html', badges_json=json.dumps(BADGES))
+    return render_template('badges.html', badges_json=json.dumps(BADGES),
+                           progress_json=json.dumps(load_progress(current_profile())))
 
 
 @app.route('/dashboard')
@@ -1448,6 +1597,7 @@ def dashboard():
         badges_json=json.dumps(BADGES),
         today_iso=date.today().isoformat(),
         tag_breakdown=tag_breakdown,
+        progress_json=json.dumps(load_progress(current_profile())),
     )
 
 

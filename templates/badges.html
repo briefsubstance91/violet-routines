@@ -249,11 +249,15 @@
 
 <script>
   const ALL_BADGES  = {{ badges_json | safe }};
-  const earned      = new Set(JSON.parse(localStorage.getItem('violet-badges') || '[]'));
-  const daysDone    = JSON.parse(localStorage.getItem('violet-days') || '[]').length;
-  const completions = JSON.parse(localStorage.getItem('violet-completions') || '{}');
-  const tripleCount = parseInt(localStorage.getItem('violet-triples') || '0');
-  const luWins      = parseInt(localStorage.getItem('violet-lu-total') || '0');
+  // Synced progress for the active profile (shared across devices).
+  const PROGRESS    = {{ progress_json | safe }};
+  const pget = (k, d) => (k in PROGRESS ? PROGRESS[k] : d);
+
+  const earned      = new Set(pget('violet-badges', []));
+  const daysDone    = pget('violet-days', []).length;
+  const completions = pget('violet-completions', {});
+  const tripleCount = pget('violet-triples', 0);
+  const luWins      = pget('violet-lu-total', 0);
 
   function getProgress(badge) {
     if (badge.type === 'days') {
