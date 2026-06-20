@@ -1446,6 +1446,23 @@ def admin_tasks_save():
     return jsonify({'ok': True})
 
 
+@app.route('/admin/routines/meta', methods=['POST'])
+def admin_routines_meta_save():
+    """Update only a routine's settings (name/icon/time). Tasks, tags and
+    sub-tasks are loaded fresh and preserved, so saving routine settings from
+    the Admin tab never clobbers task edits made on the Tasks page."""
+    meta = {m.get('id'): m for m in (request.get_json() or []) if m.get('id')}
+    routines = load_tasks_raw()
+    for r in routines:
+        m = meta.get(r['id'])
+        if m:
+            r['name'] = m.get('name', r['name'])
+            r['icon'] = m.get('icon', r['icon'])
+            r['time'] = m.get('time', r['time'])
+    save_tasks_raw(routines)
+    return jsonify({'ok': True})
+
+
 @app.route('/admin/events')
 def admin_events():
     return render_template('admin_events.html',

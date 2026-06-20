@@ -227,6 +227,12 @@
       text-align: left;
     }
     .btn-add-sub-task:hover { border-color: var(--purple); background: #faf8ff; }
+    .task-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; min-height: 1.2rem; padding: 0 1rem 0.4rem 2.5rem; }
+    .tag-chip { display: inline-flex; align-items: center; gap: 0.2rem; background: #ede9fe; color: #6d28d9; border-radius: 100px; padding: 0.12rem 0.35rem 0.12rem 0.5rem; font-size: 0.68rem; font-weight: 800; }
+    .tag-del { background: none; border: none; cursor: pointer; color: #9b87f5; font-size: 0.75rem; line-height: 1; padding: 0 0.1rem; }
+    .tag-del:hover { color: #f87171; }
+    .inp-tag { border: none; outline: none; background: none; font-family: 'Nunito', sans-serif; font-size: 0.68rem; font-weight: 700; color: var(--muted); width: 72px; }
+    .inp-tag::placeholder { color: #c4b5fd; }
 
     .help-box {
       background: #f0ebff;
@@ -301,10 +307,24 @@
     <li>Click any task text to edit it inline</li>
     <li>Drag the <strong>⠿</strong> handle to reorder tasks within a routine</li>
     <li>Tap <strong>+ Add sub-task</strong> under a task to nest a step beneath it (e.g. "Socks" under "Get dressed")</li>
+    <li>Add category tags (e.g. <em>hygiene</em>, <em>school</em>) with the <strong>+ tag</strong> field — type and press Enter</li>
     <li>Hit <strong>×</strong> to delete a task or sub-task, <strong>+ Add task</strong> to create a new task</li>
     <li>Always click <strong>Save</strong> when you're done — unsaved changes are lost on refresh</li>
   </ul>
 </div>
+
+<datalist id="tag-suggestions">
+  <option value="hygiene">
+  <option value="health">
+  <option value="school">
+  <option value="organization">
+  <option value="self-care">
+  <option value="dressing">
+  <option value="nutrition">
+  <option value="mindfulness">
+  <option value="social">
+  <option value="creativity">
+</datalist>
 
 <div class="container" id="routinesList"></div>
 
@@ -363,6 +383,7 @@
     if (typeof task === 'string') { routines[ri].tasks[ti] = {label: task, tags: [], subtasks: []}; }
     const t = routines[ri].tasks[ti];
     if (!Array.isArray(t.subtasks)) t.subtasks = [];
+    if (!Array.isArray(t.tags)) t.tags = [];
 
     const group = document.createElement('div');
     group.className = 'task-group';
@@ -381,6 +402,16 @@
       <button class="btn-danger" onclick="removeTask(${ri},${ti})" title="Delete">×</button>
     `;
     group.appendChild(row);
+
+    // Tag chips + add-tag input (categories like hygiene, school)
+    const tagsRow = document.createElement('div');
+    tagsRow.className = 'task-tags';
+    tagsRow.innerHTML =
+      t.tags.map((tg, i) => `<span class="tag-chip">${esc(tg)}<button class="tag-del" onclick="removeTag(${ri},${ti},${i})" title="Remove tag">×</button></span>`).join('') +
+      `<input class="inp-tag" list="tag-suggestions" placeholder="+ tag"
+              onkeydown="if(event.key==='Enter'||event.key===','){addTagFromInput(${ri},${ti},this);event.preventDefault()}"
+              onblur="addTagFromInput(${ri},${ti},this)">`;
+    group.appendChild(tagsRow);
 
     if (t.subtasks.length > 0) {
       const subsEl = document.createElement('div');
@@ -465,6 +496,22 @@
 
   function removeSubtask(ri, ti, si) {
     routines[ri].tasks[ti].subtasks.splice(si, 1);
+    markDirty();
+    render();
+  }
+
+  function addTagFromInput(ri, ti, input) {
+    const val = input.value.trim().replace(/,+$/, '');
+    if (!val) return;
+    if (!Array.isArray(routines[ri].tasks[ti].tags)) routines[ri].tasks[ti].tags = [];
+    if (!routines[ri].tasks[ti].tags.includes(val)) routines[ri].tasks[ti].tags.push(val);
+    input.value = '';
+    markDirty();
+    render();
+  }
+
+  function removeTag(ri, ti, idx) {
+    routines[ri].tasks[ti].tags.splice(idx, 1);
     markDirty();
     render();
   }

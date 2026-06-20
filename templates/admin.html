@@ -103,6 +103,8 @@
     .task-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
     .task-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; min-height: 1.4rem; }
     .tag-chip { display: inline-flex; align-items: center; gap: 0.2rem; background: #ede9fe; color: #6d28d9; border-radius: 100px; padding: 0.12rem 0.35rem 0.12rem 0.5rem; font-size: 0.68rem; font-weight: 800; }
+    .edit-tasks-link { display: block; margin-top: 0.85rem; padding: 0.6rem 0.85rem; border: 2px dashed var(--border); border-radius: 8px; color: var(--purple); font-weight: 800; font-size: 0.85rem; text-decoration: none; text-align: center; font-family: 'Nunito', sans-serif; }
+    .edit-tasks-link:hover { border-color: var(--purple); background: #faf8ff; }
     .tag-del { background: none; border: none; cursor: pointer; color: #9b87f5; font-size: 0.75rem; line-height: 1; padding: 0 0.1rem; }
     .tag-del:hover { color: #f87171; }
     .inp-tag { border: none; outline: none; background: none; font-family: 'Nunito', sans-serif; font-size: 0.68rem; font-weight: 700; color: var(--muted); width: 72px; }
@@ -221,9 +223,8 @@
     <div class="help-title">✦ Editing Routines</div>
     <ul>
       <li>Edit a routine's <strong>name</strong>, <strong>icon</strong>, or <strong>time</strong> directly in its header</li>
-      <li>Tap <strong>▸ Tasks</strong> to expand the task list — click to edit, drag ⠿ to reorder, × to delete</li>
-      <li>Tag tasks with categories (e.g. <em>hygiene</em>, <em>school</em>) using the <strong>+ tag</strong> field — type and press Enter</li>
-      <li>Changes don't save until you hit <strong>Save</strong></li>
+      <li>Use <strong>✏️ Edit tasks & sub-tasks</strong> to add, nest, tag, reorder, or remove the steps in a routine</li>
+      <li>Changes here don't save until you hit <strong>Save</strong></li>
     </ul>
   </div>
   <div id="routinesList"></div>
@@ -362,7 +363,7 @@
     const btn = document.getElementById('saveBtn');
     btn.textContent = 'Saving…'; btn.disabled = true;
     let url, body;
-    if (activeTab === 'routines')   { url = '/admin/tasks/save';       body = routines; }
+    if (activeTab === 'routines')   { url = '/admin/routines/meta';    body = routines.map(r => ({ id: r.id, name: r.name, icon: r.icon, time: r.time })); }
     if (activeTab === 'levelup')    { url = '/admin/save';              body = levelup; }
     if (activeTab === 'milestones') { url = '/admin/milestones/save';   body = milestones; }
     if (activeTab === 'money')      { url = '/admin/money/save';        body = { giving_pct: givingPct, milestones: moneyMilestones }; }
@@ -388,6 +389,7 @@
     routines.forEach((r, ri) => {
       const card = document.createElement('div');
       card.className = 'card';
+      const taskCount = (r.tasks || []).length;
       card.innerHTML = `
         <div class="card-header">
           <input class="inp-icon" value="${esc(r.icon)}" placeholder="☁️"
@@ -398,17 +400,10 @@
             <input class="inp meta-time inp-sm" value="${esc(r.time)}" placeholder="8:00 AM"
                    oninput="routines[${ri}].time=this.value; markDirty('routines')">
           </div>
-          <button class="routine-expand-btn" onclick="toggleTasks(this)">▸ Tasks (${r.tasks.length})</button>
         </div>
-        <div class="tasks-body" id="tasks-${ri}">
-          <div class="task-list" id="task-list-${ri}"></div>
-          <div class="add-task-wrap">
-            <button class="btn-ghost" onclick="addTask(${ri})">+ Add task</button>
-          </div>
-        </div>
+        <a class="edit-tasks-link" href="/admin/tasks">✏️ Edit tasks &amp; sub-tasks (${taskCount}) →</a>
       `;
       container.appendChild(card);
-      renderTasks(ri);
     });
   }
 
