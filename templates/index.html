@@ -809,42 +809,16 @@
 <div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
 <div class="menu-panel" id="menuPanel">
   <div class="menu-title">✦ Menu</div>
-  <div class="menu-item">
-    <a href="/"><span class="menu-item-icon">🏠</span> Home</a>
-  </div>
-  <div class="menu-item" onclick="closeMenu(); setTimeout(replayOnboarding, 200)">
-    <span class="menu-item-icon">✨</span> Welcome tour
-  </div>
-  <div class="menu-item">
-    <a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a>
-  </div>
-  <div class="menu-item" onclick="closeMenu(); setTimeout(resetAll, 200)">
-    <span class="menu-item-icon">↺</span> Reset routines
-  </div>
-  <div class="menu-item">
-    <a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a>
-  </div>
-  <div class="menu-item">
-    <a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a>
-  </div>
-  <div class="menu-item">
-    <a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a>
-  </div>
-  <div class="menu-item">
-    <a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a>
-  </div>
-  <div class="menu-item">
-    <a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a>
-  </div>
-  <div class="menu-item">
-    <a href="/admin/events"><span class="menu-item-icon">✨</span> Events</a>
-  </div>
-  <div class="menu-item">
-    <a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a>
-  </div>
-  <div class="menu-item">
-    <a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a>
-  </div>
+  <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
+  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
+  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
+  <div class="menu-item"><a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
+  <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
+  <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
+  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
+  <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
 </div>
 
 <!-- ── Badge toast ── -->
@@ -943,24 +917,6 @@
   </div>
   {% endfor %}
 
-  {% if extras_anytime %}
-  <div class="routine-card extras" id="card-extras">
-    <div class="card-strip"></div>
-    <div class="card-inner">
-      <div class="routine-header">
-        <span class="routine-icon">✨</span>
-        <div>
-          <div class="routine-title">Anytime today</div>
-          <div class="routine-time">Today's extras — no set time</div>
-        </div>
-      </div>
-      <div class="task-list">
-        {% for e in extras_anytime %}{{ extra_item(e) }}{% endfor %}
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
   <div class="extras-earned" id="extrasEarned" style="display:none">
     💰 Earned today: <strong id="extrasEarnedAmt">$0</strong>
   </div>
@@ -981,9 +937,6 @@
   </div>
 </div>
 
-<div class="reset-wrap">
-  <button class="reset-btn" onclick="resetAll()">↺ Reset all routines</button>
-</div>
 
 <!-- ── Surprise reward reveal ── -->
 <div class="surprise-overlay" id="surpriseOverlay" style="display:none">

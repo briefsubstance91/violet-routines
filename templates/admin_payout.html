@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Violet's App — Pay Out</title>
+  <title>Violet's App — Violet's Bank</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -46,23 +46,38 @@
     .menu-title { font-weight: 800; margin-bottom: 1rem; }
     .menu-item a { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.6rem; border-radius: 10px; color: var(--text); text-decoration: none; font-weight: 700; }
     .menu-item a:hover { background: var(--bg); }
+    .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>💵 Pay Out</h1>
+  <h1>🏦 Violet's Bank</h1>
   <button class="menu-btn" onclick="openMenu()">☰</button>
 </header>
 
 <div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
 <div class="menu-panel" id="menuPanel">
   <div class="menu-title">✦ Menu</div>
-  <div class="menu-item"><a href="/routines"><span>✦</span> Routines</a></div>
-  <div class="menu-item"><a href="/bank"><span>🏦</span> Violet's Bank</a></div>
-  <div class="menu-item"><a href="/admin"><span>⚙️</span> Admin ⚡</a></div>
-  <div class="menu-item"><a href="/admin/toonies"><span>🪙</span> Toonie Tasks</a></div>
-  <div class="menu-item"><a href="/admin/surprises"><span>🎁</span> Surprises</a></div>
+  <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
+  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
+  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
+  <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
+  <div class="menu-item"><a href="/admin"><span class="menu-item-icon">⚙️</span> Admin</a></div>
+  <div class="menu-item"><a href="/admin/tasks"><span class="menu-item-icon">📋</span> Tasks</a></div>
+  <div class="menu-item"><a href="/admin/toonies"><span class="menu-item-icon">🪙</span> Toonie Tasks</a></div>
+  <div class="menu-item"><a href="/admin/surprises"><span class="menu-item-icon">🎁</span> Surprises</a></div>
+  <div class="menu-item"><a href="/admin/payout"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
+  <div class="menu-item"><a href="/admin/events"><span class="menu-item-icon">✨</span> Events</a></div>
+  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
+  <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
+  <form class="menu-item" method="POST" action="/admin/logout" style="cursor:pointer">
+    <button type="submit" style="all:unset; display:flex; align-items:center; gap:0.9rem; width:100%; cursor:pointer;">
+      <span class="menu-item-icon">🚪</span> Log out
+    </button>
+  </form>
 </div>
 
 <div class="container">
@@ -87,7 +102,7 @@
     The {{ giving_pct }}% Giving share is tracked separately on the Family Giving page.
   </div>
 
-  <div class="section-title">Payout history</div>
+  <div class="section-title">Cash-out history</div>
   {% if payouts %}
   {% for p in payouts %}
   <div class="pay-row">
