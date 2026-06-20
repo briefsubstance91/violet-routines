@@ -912,9 +912,9 @@
                onclick="toggleExpand('{{ r.id }}', '{{ task.idx }}')">
             <div class="task-check"></div>
             <span class="task-label">{{ task.label }}</span>
-            <span class="expand-chevron" id="chev-{{ r.id }}-{{ task.idx }}">›</span>
+            <span class="expand-chevron open" id="chev-{{ r.id }}-{{ task.idx }}">›</span>
           </div>
-          <div class="subtask-group" id="subs-{{ r.id }}-{{ task.idx }}">
+          <div class="subtask-group expanded" id="subs-{{ r.id }}-{{ task.idx }}">
             {% for sub in task.subtasks %}
             <div class="task subtask" id="{{ r.id }}-{{ sub.idx }}"
                  onclick="toggle('{{ r.id }}', '{{ sub.idx }}', event)">
