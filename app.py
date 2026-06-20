@@ -1302,8 +1302,8 @@ def admin_logout():
 @app.route('/admin/pin/save', methods=['POST'])
 def admin_pin_save():
     new_pin = (request.get_json(silent=True) or {}).get('pin', '').strip()
-    if not (new_pin.isdigit() and 4 <= len(new_pin) <= 8):
-        return jsonify({'error': 'PIN must be 4–8 digits'}), 400
+    if not (4 <= len(new_pin) <= 64):
+        return jsonify({'error': 'PIN must be 4–64 characters'}), 400
     save_settings({'admin_pin': new_pin})
     return '', 204
 
