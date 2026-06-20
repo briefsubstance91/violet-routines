@@ -41,10 +41,10 @@
   <form class="card" method="POST" action="/admin/login">
     <div class="emoji">🔒</div>
     <h1>Parent Login</h1>
-    <p class="sub">Enter your PIN to manage Violet's app.</p>
+    <p class="sub">Enter your PIN or passphrase to manage Violet's app.</p>
     <input type="hidden" name="next" value="{{ next }}">
-    <input type="password" name="pin" inputmode="numeric" autocomplete="current-password"
-           placeholder="••••" autofocus>
+    <input type="password" name="pin" inputmode="text" autocomplete="current-password"
+           placeholder="••••••" autofocus>
     <button type="submit">Unlock</button>
     <div class="error">{% if error %}Incorrect PIN — try again.{% endif %}</div>
     <a class="home" href="/">← Back to Violet's app</a>

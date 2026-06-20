@@ -674,7 +674,7 @@
   function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
 
   async function changePin() {
-    const pin = prompt('Enter a new parent PIN (4–8 digits):');
+    const pin = prompt('Enter a new parent PIN or passphrase (4–64 characters):');
     if (pin == null) return;
     const res = await fetch('/admin/pin/save', {
       method: 'POST',
