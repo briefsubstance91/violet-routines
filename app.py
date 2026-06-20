@@ -2,8 +2,10 @@ import csv
 import json
 import os
 import re
+import time
 import uuid
 import atexit
+import urllib.request
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -499,6 +501,82 @@ def _now_local(cfg=None):
         return datetime.now(ZoneInfo(tz_name))
     except Exception:
         return datetime.now()
+
+
+# ── Family calendar (read-only iCloud/iCal feed) ─────────────────────────
+FAMILY_CAL_TTL = 1800   # seconds between feed refreshes
+FAMILY_CAL_DAYS = 21    # how far ahead to expand recurring events
+_family_cal = {'fetched': 0.0, 'events': [], 'error': None, 'url': None}
+
+
+def family_calendar_url():
+    """The subscribed feed URL — settings (set in Admin) override the env var."""
+    return (load_settings().get('family_calendar_url')
+            or os.environ.get('FAMILY_CALENDAR_URL', '')).strip()
+
+
+def _local_tz():
+    try:
+        return ZoneInfo(load_toonies().get('timezone') or DEFAULT_TZ)
+    except Exception:
+        return ZoneInfo('UTC')
+
+
+def refresh_family_calendar(force=False):
+    """Fetch + parse the iCloud feed into the cache, respecting the TTL."""
+    url = family_calendar_url()
+    now = time.time()
+    if not url:
+        _family_cal.update(events=[], error=None, url=None, fetched=now)
+        return
+    if (not force and _family_cal['url'] == url
+            and now - _family_cal['fetched'] < FAMILY_CAL_TTL):
+        return
+    try:
+        import icalendar
+        import recurring_ical_events
+        fetch_url = url.replace('webcal://', 'https://', 1) if url.startswith('webcal://') else url
+        req = urllib.request.Request(fetch_url, headers={'User-Agent': 'VioletApp/1.0'})
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            raw = resp.read()
+        cal = icalendar.Calendar.from_ical(raw)
+        tz = _local_tz()
+        today = _now_local().date()
+        occ = recurring_ical_events.of(cal).between(today, today + timedelta(days=FAMILY_CAL_DAYS))
+        events = []
+        for e in occ:
+            start = e.decoded('DTSTART')
+            title = str(e.get('SUMMARY', '') or '').strip() or 'Event'
+            location = str(e.get('LOCATION', '') or '').strip()
+            if isinstance(start, datetime):
+                sl = start.astimezone(tz) if start.tzinfo else start.replace(tzinfo=tz)
+                d, all_day = sl.date(), False
+                time_label = sl.strftime('%-I:%M %p')
+                sort_t = sl.strftime('%H:%M')
+            else:
+                d, all_day, time_label, sort_t = start, True, 'All day', ''
+            events.append({
+                'title': title, 'location': location, 'all_day': all_day,
+                'date': d.isoformat(), 'time_label': time_label,
+                'day_label': d.strftime('%a, %b %-d'), 'sort': (d.isoformat(), sort_t),
+            })
+        events.sort(key=lambda x: x['sort'])
+        _family_cal.update(events=events, error=None, url=url, fetched=now)
+    except Exception as ex:
+        _family_cal.update(error=str(ex), url=url, fetched=now)
+
+
+def family_events_today():
+    refresh_family_calendar()
+    iso = _now_local().date().isoformat()
+    return [e for e in _family_cal['events'] if e['date'] == iso]
+
+
+def family_events_upcoming(days=14):
+    refresh_family_calendar()
+    today = _now_local().date()
+    end = (today + timedelta(days=days)).isoformat()
+    return [e for e in _family_cal['events'] if today.isoformat() <= e['date'] <= end]
 
 
 def current_window(cfg=None):
@@ -1223,6 +1301,7 @@ def index():
         progress_json=json.dumps(load_progress(current_profile())),
         profile_name=PROFILES[current_profile()]['name'],
         levelup_total=len(load_levelup_log()),
+        family_today=family_events_today(),
     )
 
 
@@ -1475,6 +1554,29 @@ def admin_events():
 def admin_events_save():
     save_events(request.get_json() or [])
     return jsonify({'ok': True})
+
+
+@app.route('/calendar')
+def family_calendar_page():
+    """Family Calendar — upcoming events from the subscribed iCloud feed."""
+    return render_template(
+        'calendar.html',
+        events=family_events_upcoming(14),
+        configured=bool(family_calendar_url()),
+        error=_family_cal.get('error'),
+        is_admin=bool(session.get('admin')),
+        feed_url=family_calendar_url() if session.get('admin') else '',
+    )
+
+
+@app.route('/admin/calendar/save', methods=['POST'])
+def admin_calendar_save():
+    """Set/replace the family calendar feed URL (parent-only)."""
+    url = (request.get_json(silent=True) or {}).get('url', '').strip()
+    save_settings({'family_calendar_url': url})
+    refresh_family_calendar(force=True)
+    return jsonify({'ok': True, 'error': _family_cal.get('error'),
+                    'count': len(_family_cal.get('events', []))})
 
 
 @app.route('/admin/toonies')
