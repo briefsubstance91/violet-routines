@@ -1526,12 +1526,9 @@
   let obCurrent = 0;
 
   function obInit() {
-    if (localStorage.getItem('violet-onboarded')) return;
-    const el = document.getElementById('obOverlay');
-    el.style.display = 'flex';
-    document.body.classList.add('ob-open');
-    obCurrent = 0;
-    obRender();
+    // The welcome tour is reached from the menu ("Welcome Tour" → /welcome).
+    // Don't auto-show it on the routines page.
+    return;
   }
 
   function obRender() {
