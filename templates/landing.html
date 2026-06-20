@@ -327,10 +327,7 @@
 </div>
 
 <script>
-  // First-time onboarding redirect
-  if (!localStorage.getItem('violet-onboarded')) {
-    window.location.replace('/welcome');
-  }
+  // (Welcome tour is no longer shown automatically — reach it from the menu.)
 
   // Greeting
   const h = new Date().getHours();
