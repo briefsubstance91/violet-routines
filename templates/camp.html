@@ -12,7 +12,7 @@
     :root { --purple:#9b87f5; --blue:#4db8ff; --pink:#f472b6; --green:#16a34a; --text:#1e1b4b; --muted:#9490c0; --card:#fff; --border:#e5e0ff; }
     body { font-family:'Nunito',sans-serif; color:var(--text);
       background:linear-gradient(160deg,#cce8ff 0%,#e9e3ff 50%,#ffd6f0 100%); background-attachment:fixed; min-height:100vh; padding-bottom:3rem; }
-    .wrap { max-width:640px; margin:0 auto; padding:1.5rem 1.1rem 3rem; }
+    .wrap { max-width:980px; margin:0 auto; padding:1.5rem 1.1rem 3rem; }
     .top { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.4rem; }
     h1 { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.8rem;
       background:linear-gradient(135deg,#4db8ff,#9b87f5,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
@@ -39,7 +39,11 @@
     .hint { background:#ede9fe; border-left:3px solid var(--purple); border-radius:0 10px 10px 0; padding:0.6rem 0.85rem; font-size:0.78rem; font-weight:700; color:var(--text); line-height:1.45; margin-bottom:1.25rem; }
 
     /* ── Sections + items ── */
-    .sec-head { display:flex; align-items:baseline; gap:0.5rem; margin:1.3rem 0 0.5rem; }
+    /* On a wide screen (landscape iPad) the sections sit side by side, like the
+       original packing sheet; on a phone they stack into one column. */
+    #list { display:grid; grid-template-columns:repeat(auto-fit, minmax(340px,1fr)); gap:0 1.5rem; align-items:start; }
+    .sec { min-width:0; }
+    .sec-head { display:flex; align-items:baseline; gap:0.5rem; margin:1.1rem 0 0.5rem; }
     .sec-title { font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--text); }
     .sec-count { font-size:0.72rem; font-weight:800; color:var(--muted); }
     .col-key { display:flex; justify-content:flex-end; gap:0.55rem; font-size:0.58rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:var(--muted); padding:0 0.2rem 0.35rem; }
@@ -179,13 +183,14 @@
     SECTIONS.forEach((sec, si) => {
       const ids = sec.items.map((_, ii) => `s${si}-${ii}`);
       const packed = ids.filter(id => state[id + '-to']).length;
-      html += `<div class="sec-head"><span class="sec-title">${esc(sec.title)}</span><span class="sec-count">${packed}/${sec.items.length} packed</span></div>`;
-      html += `<div class="col-key"><span>Trunk</span><span>Home</span></div>`;
+      let s = '<div class="sec">';
+      s += `<div class="sec-head"><span class="sec-title">${esc(sec.title)}</span><span class="sec-count">${packed}/${sec.items.length} packed</span></div>`;
+      s += `<div class="col-key"><span>Trunk</span><span>Home</span></div>`;
       sec.items.forEach((it, ii) => {
         const id = `s${si}-${ii}`;
         const to = !!state[id + '-to'], home = !!state[id + '-home'];
         const qty = it.q ? `<span class="ci-qty">×${it.q}</span>` : '';
-        html += `<div class="ci${to ? ' packed' : ''}">
+        s += `<div class="ci${to ? ' packed' : ''}">
           <div class="ci-body"><div class="ci-label">${esc(it.l)}</div></div>
           ${qty}
           <div class="ticks">
@@ -194,6 +199,8 @@
           </div>
         </div>`;
       });
+      s += '</div>';
+      html += s;
     });
     document.getElementById('list').innerHTML = html;
     updateCounts();
