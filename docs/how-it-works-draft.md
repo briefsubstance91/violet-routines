@@ -219,5 +219,7 @@ something she already does, in her own voice. Editable anytime. **[REVIEW]**
 5. **Hosting wording:** generic ("a private server").
 6. **Rollout:** update FAQ/How It Works, Admin help boxes, and Welcome Tour.
 
-**Still needed from you:** a real 4-digit **parent PIN**, and a 👍 on the
-starter 1% ideas above (tweak any you'd word differently).
+**Status:** ✅ Rolled out to the FAQ/How It Works page, the Admin Level-Up help
+box, and the Welcome Tour; the starter 1% ideas are loaded into the Level-Up
+categories (version 3). PIN kept at default. Copy tweaks welcome anytime while
+testing.

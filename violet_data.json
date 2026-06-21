@@ -1,47 +1,75 @@
 {
-  "categories_version": 2,
+  "categories_version": 3,
   "levelup_categories": [
     {
       "id": "self_care",
       "icon": "🛁",
       "label": "Self-Care",
-      "wins": []
+      "wins": [
+        "Brushed my teeth the full two minutes",
+        "Got ready without being reminded",
+        "Laid out my clothes the night before"
+      ]
     },
     {
       "id": "cleaning",
       "icon": "🧹",
       "label": "Cleaning & Organization",
-      "wins": []
+      "wins": [
+        "Made my bed a little neater",
+        "Put my clothes away instead of on the chair",
+        "Tidied one extra spot without being asked"
+      ]
     },
     {
       "id": "health_fitness",
       "icon": "🏃",
       "label": "Health & Fitness",
-      "wins": []
+      "wins": [
+        "Moved my body 5 minutes longer",
+        "Chose water instead of juice",
+        "Did a quick stretch before bed"
+      ]
     },
     {
       "id": "learning",
       "icon": "📚",
       "label": "Education & Learning",
-      "wins": []
+      "wins": [
+        "Read a few minutes longer than usual",
+        "Checked my own work before saying I was done",
+        "Tried the tricky part before asking for help"
+      ]
     },
     {
       "id": "goals",
       "icon": "🎯",
       "label": "Goal Setting",
-      "wins": []
+      "wins": [
+        "Picked one small goal for the day",
+        "Broke a big job into smaller steps",
+        "Finished what I started before moving on"
+      ]
     },
     {
       "id": "giving",
       "icon": "💛",
       "label": "Charity & Giving Back",
-      "wins": []
+      "wins": [
+        "Helped someone without being asked",
+        "Said something kind on purpose",
+        "Set aside something to give"
+      ]
     },
     {
       "id": "fun",
       "icon": "🎉",
       "label": "Fun",
-      "wins": []
+      "wins": [
+        "Tried a new game or activity",
+        "Invited someone to join in",
+        "Made something creative just for me"
+      ]
     }
   ]
 }
