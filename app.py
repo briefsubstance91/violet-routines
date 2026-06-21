@@ -547,7 +547,12 @@ def _local_tz():
 
 
 def _occ_to_event(e, tz):
-    """One expanded iCal occurrence → the event dict the UI consumes."""
+    """One expanded iCal occurrence → the event dict the UI consumes.
+
+    start_min/end_min are minutes from midnight in local time (clamped to the
+    start day) so the Day view can lay timed events out on an hour grid;
+    all-day events have them as None.
+    """
     start = e.decoded('DTSTART')
     title = str(e.get('SUMMARY', '') or '').strip() or 'Event'
     location = str(e.get('LOCATION', '') or '').strip()
@@ -556,12 +561,25 @@ def _occ_to_event(e, tz):
         d, all_day = sl.date(), False
         time_label = sl.strftime('%-I:%M %p')
         sort_t = sl.strftime('%H:%M')
+        start_min = sl.hour * 60 + sl.minute
+        end_min = start_min + 60
+        try:
+            end = e.decoded('DTEND')
+        except KeyError:
+            end = None
+        if isinstance(end, datetime):
+            el = end.astimezone(tz) if end.tzinfo else end.replace(tzinfo=tz)
+            end_min = 1440 if el.date() > d else el.hour * 60 + el.minute
+        if end_min <= start_min:
+            end_min = min(start_min + 30, 1440)
     else:
         d, all_day, time_label, sort_t = start, True, 'All day', ''
+        start_min = end_min = None
     return {
         'title': title, 'location': location, 'all_day': all_day,
         'date': d.isoformat(), 'time_label': time_label,
         'day_label': d.strftime('%a, %b %-d'), 'sort': (d.isoformat(), sort_t),
+        'start_min': start_min, 'end_min': end_min,
     }
 
 

@@ -72,6 +72,19 @@
     .wday.sel { border-color:var(--purple); }
     .detail-head { font-size:0.78rem; font-weight:900; color:var(--text); margin-bottom:0.6rem; }
 
+    /* ── Day hour-grid timeline ── */
+    .allday { margin-bottom:0.7rem; }
+    .allday-chip { display:inline-flex; align-items:center; gap:0.35rem; background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; font-weight:800; font-size:0.78rem; padding:0.35rem 0.7rem; border-radius:9px; margin:0 0.4rem 0.4rem 0; }
+    .tl-scroll { max-height:64vh; overflow-y:auto; background:var(--card); border:1.5px solid var(--border); border-radius:14px; box-shadow:0 3px 14px rgba(78,58,180,0.05); }
+    .tl { position:relative; margin:0; }
+    .tl-hour { position:absolute; left:0; right:0; height:0; border-top:1px solid #eee8ff; }
+    .tl-hour .lbl { position:absolute; top:-7px; left:0; width:44px; text-align:right; padding-right:7px; font-size:0.6rem; font-weight:800; color:var(--muted); }
+    .tl-ev { position:absolute; background:linear-gradient(135deg,#6ec1ff,#9b87f5); color:#fff; border-radius:8px; padding:2px 7px; overflow:hidden; box-shadow:0 2px 6px rgba(78,58,180,0.2); border:1px solid rgba(255,255,255,0.5); }
+    .tl-ev .t1 { font-weight:800; font-size:0.76rem; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tl-ev .t2 { font-size:0.64rem; font-weight:700; opacity:0.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tl-now { position:absolute; left:44px; right:0; height:0; border-top:2px solid var(--pink); z-index:5; }
+    .tl-now::before { content:''; position:absolute; left:-1px; top:-4px; width:7px; height:7px; border-radius:50%; background:var(--pink); }
+
     .settings { margin-top:1.5rem; background:#faf8ff; border:1.5px dashed var(--border); border-radius:14px; padding:1rem; }
     .settings summary { font-weight:800; font-size:0.85rem; color:var(--purple); cursor:pointer; }
     .settings p { font-size:0.78rem; color:var(--muted); font-weight:600; margin:0.6rem 0; line-height:1.5; }
@@ -262,11 +275,82 @@
       el.innerHTML = any ? html : `<div class="empty"><div class="big">🌤️</div>Nothing coming up on the family calendar.</div>`;
     }
 
+    const HOUR_PX = 50;   // pixel height of one hour on the Day timeline
+
+    // Greedy column packing so overlapping events sit side by side.
+    function layoutColumns(evs) {
+      const sorted = [...evs].sort((a, b) => a.start_min - b.start_min || a.end_min - b.end_min);
+      const placed = [];
+      let cluster = [], clusterEnd = -1;
+      const flush = () => {
+        const colEnds = [];
+        cluster.forEach(e => {
+          let ci = colEnds.findIndex(end => e.start_min >= end);
+          if (ci === -1) { ci = colEnds.length; colEnds.push(e.end_min); } else colEnds[ci] = e.end_min;
+          e._col = ci;
+        });
+        cluster.forEach(e => placed.push({ ev: e, col: e._col, cols: colEnds.length }));
+        cluster = []; clusterEnd = -1;
+      };
+      sorted.forEach(e => {
+        if (cluster.length && e.start_min >= clusterEnd) flush();
+        cluster.push(e); clusterEnd = Math.max(clusterEnd, e.end_min);
+      });
+      if (cluster.length) flush();
+      return placed;
+    }
+
     async function renderDay() {
       navTitle.textContent = `${DAYNAMES[cursor.getDay()]}, ${MONTHS[cursor.getMonth()]} ${cursor.getDate()}`;
       const iso = ymd(cursor);
       await ensureRange(iso, iso);
-      document.getElementById('view-day').innerHTML = dayAgenda(iso);
+      const evs = eventsOn(iso);
+      const allDay = evs.filter(e => e.all_day || e.start_min == null);
+      const timed = evs.filter(e => !e.all_day && e.start_min != null);
+
+      const alldayHTML = allDay.length
+        ? `<div class="allday">${allDay.map(e => `<span class="allday-chip">📌 ${esc(e.title)}</span>`).join('')}</div>`
+        : '';
+
+      // Hour lines (12 AM … 11 PM) + a half-line for the bottom edge.
+      let lines = '';
+      for (let h = 0; h <= 24; h++) {
+        const label = h === 0 || h === 24 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`;
+        lines += `<div class="tl-hour" style="top:${h * HOUR_PX}px"><span class="lbl">${h === 24 ? '' : label}</span></div>`;
+      }
+
+      const blocks = layoutColumns(timed).map(({ ev, col, cols }) => {
+        const top = ev.start_min / 60 * HOUR_PX;
+        const h = Math.max((ev.end_min - ev.start_min) / 60 * HOUR_PX - 2, 20);
+        const left = `calc(48px + (100% - 54px) * ${col} / ${cols})`;
+        const width = `calc((100% - 54px) / ${cols} - 3px)`;
+        const loc = ev.location ? ` · ${esc(ev.location)}` : '';
+        const t2 = h > 30 ? `<div class="t2">${esc(ev.time_label)}${loc}</div>` : '';
+        return `<div class="tl-ev" style="top:${top}px; height:${h}px; left:${left}; width:${width}">
+          <div class="t1">${esc(ev.title)}</div>${t2}</div>`;
+      }).join('');
+
+      let nowLine = '';
+      if (iso === TODAY_ISO) {
+        const now = new Date();
+        nowLine = `<div class="tl-now" style="top:${(now.getHours() * 60 + now.getMinutes()) / 60 * HOUR_PX}px"></div>`;
+      }
+
+      const empty = (!timed.length && !allDay.length)
+        ? `<div class="empty" style="margin-top:0.5rem"><div class="big">🌤️</div>Nothing scheduled.</div>` : '';
+
+      document.getElementById('view-day').innerHTML =
+        alldayHTML +
+        (timed.length
+          ? `<div class="tl-scroll" id="tlScroll"><div class="tl" style="height:${24 * HOUR_PX}px">${lines}${blocks}${nowLine}</div></div>`
+          : empty);
+
+      // Scroll the timeline to the first event (or 7 AM) so it isn't buried.
+      const scroller = document.getElementById('tlScroll');
+      if (scroller) {
+        const firstStart = timed.length ? Math.min(...timed.map(e => e.start_min)) : 7 * 60;
+        scroller.scrollTop = Math.max(firstStart / 60 * HOUR_PX - 16, 0);
+      }
     }
 
     async function renderWeek() {
