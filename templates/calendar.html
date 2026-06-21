@@ -72,6 +72,13 @@
     .wday.sel { border-color:var(--purple); }
     .detail-head { font-size:0.78rem; font-weight:900; color:var(--text); margin-bottom:0.6rem; }
 
+    /* ── Week agenda (every day) ── */
+    .wk-day { margin-bottom:1.1rem; }
+    .wk-day-head { display:flex; align-items:center; gap:0.5rem; font-size:0.78rem; font-weight:900; color:var(--text); margin-bottom:0.5rem; }
+    .wk-day.today .wk-day-head { color:var(--purple); }
+    .wk-today { font-size:0.58rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:#fff; background:linear-gradient(135deg,var(--blue),var(--purple)); padding:0.1rem 0.45rem; border-radius:100px; }
+    .wk-empty { font-size:0.8rem; font-weight:700; color:#c7c2e6; padding:0.1rem 0.15rem 0.2rem; }
+
     /* ── Day hour-grid timeline ── */
     .allday { margin-bottom:0.7rem; }
     .allday-chip { display:inline-flex; align-items:center; gap:0.35rem; background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; font-weight:800; font-size:0.78rem; padding:0.35rem 0.7rem; border-radius:9px; margin:0 0.4rem 0.4rem 0; }
@@ -359,17 +366,24 @@
         ? `${MONTHS[ws.getMonth()].slice(0, 3)} ${ws.getDate()} – ${we.getDate()}`
         : `${MONTHS[ws.getMonth()].slice(0, 3)} ${ws.getDate()} – ${MONTHS[we.getMonth()].slice(0, 3)} ${we.getDate()}`;
       await ensureRange(ymd(ws), ymd(we));
-      let strip = '';
+      let strip = '', agenda = '';
       for (let i = 0; i < 7; i++) {
-        const d = addDays(ws, i), iso = ymd(d);
-        const cls = ['wday', iso === TODAY_ISO ? 'today' : '', iso === ymd(selected) ? 'sel' : ''].join(' ').trim();
-        const dot = eventsOn(iso).length ? '<div class="dots"><span class="dot"></span></div>' : '<div class="dots"></div>';
-        strip += `<div class="${cls}" data-iso="${iso}"><span class="wd">${WEEKDAYS[d.getDay()]}</span><span class="wn">${d.getDate()}</span>${dot}</div>`;
+        const d = addDays(ws, i), iso = ymd(d), evs = eventsOn(iso);
+        const isToday = iso === TODAY_ISO;
+        const dot = evs.length ? '<div class="dots"><span class="dot"></span></div>' : '<div class="dots"></div>';
+        strip += `<div class="wday${isToday ? ' today' : ''}" data-iso="${iso}"><span class="wd">${WEEKDAYS[d.getDay()]}</span><span class="wn">${d.getDate()}</span>${dot}</div>`;
+        // Every day gets its own agenda block (not just the selected one).
+        const head = `${DAYNAMES[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
+        agenda += `<div class="wk-day${isToday ? ' today' : ''}">
+          <div class="wk-day-head">${esc(head)}${isToday ? '<span class="wk-today">Today</span>' : ''}</div>
+          ${evs.length ? evs.map(evRow).join('') : '<div class="wk-empty">No events</div>'}
+        </div>`;
       }
-      const selHead = `${DAYNAMES[selected.getDay()]}, ${MONTHS[selected.getMonth()]} ${selected.getDate()}`;
-      document.getElementById('view-week').innerHTML =
-        `<div class="wstrip">${strip}</div><div class="detail-head">${esc(selHead)}</div>${dayAgenda(ymd(selected))}`;
-      bindDayPicks('view-week', renderWeek);
+      document.getElementById('view-week').innerHTML = `<div class="wstrip">${strip}</div>${agenda}`;
+      // Tap a day in the strip to open it in the Day view.
+      document.querySelectorAll('#view-week .wday[data-iso]').forEach(el => {
+        el.onclick = () => { cursor = parseISO(el.dataset.iso); selectView('day', false); };
+      });
     }
 
     async function renderMonth() {
@@ -407,15 +421,15 @@
     }
 
     // ── Wiring ──
+    function selectView(v, resetToToday) {
+      view = v;
+      seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+      if (resetToToday && v !== 'list') { cursor = parseISO(TODAY_ISO); selected = parseISO(TODAY_ISO); }
+      showView(v);
+      render();
+    }
     seg.querySelectorAll('button').forEach(btn => {
-      btn.onclick = () => {
-        seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        view = btn.dataset.view;
-        if (view !== 'list') { cursor = parseISO(TODAY_ISO); selected = parseISO(TODAY_ISO); }
-        showView(view);
-        render();
-      };
+      btn.onclick = () => selectView(btn.dataset.view, true);
     });
 
     const step = (n) => {
