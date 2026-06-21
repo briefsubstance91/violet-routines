@@ -26,15 +26,23 @@ page to reinforce:
 5. **Money has a purpose — including giving.** Earnings split automatically: a
    set percentage goes to a giving pot, the rest is Violet's to bank. Family
    Giving makes the generosity visible.
-6. **Weekly rhythm: Sunday Planning.** Once a week the family sits down to look
-   back (stats), log the week's Level-Up wins, pay out the bank, and plan next
-   week's toonies.
-7. **Celebrate everything.** Badges, milestones (days + money), surprises, and
+6. **Get 1% better — the Compound Effect.** "Level Up" is how we make a routine
+   task we've already gotten good at *a little* better — about **1%**. Small,
+   almost-too-easy improvements that compound over time. The cycling line says
+   it best: *"It doesn't get easier — you just get better."* The win isn't doing
+   something hard; it's **never going back**. The 1% steps should feel easy on
+   purpose.
+7. **Weekly rhythm: Sunday Planning.** Once a week the family sits down to (a)
+   review how the week went, (b) decide what we want to do next week, (c) figure
+   out how to make next week **easier and more fun**, and (d) pick a few
+   proficient tasks to **level up by 1%**. We also log the week's level-ups, pay
+   out the bank, and plan next week's toonies.
+8. **Celebrate everything.** Badges, milestones (days + money), surprises, and
    confetti are all there to make showing up feel good.
 
 **The weekly loop, in one line:** *Do routines in their windows → finish them to
-unlock toonie chores → earn money (some to giving, some to bank) → log wins,
-cash out, and plan again at Sunday Planning.*
+unlock toonie chores → earn money (some to giving, some to bank) → at Sunday
+Planning, review, cash out, and level up a few tasks by 1% for next week.*
 
 ---
 
@@ -73,11 +81,20 @@ day.**
   more time.
 
 ### What is Level Up ⚡?
-Level Up is where your **wins** get celebrated — anything you did a little better
-than before. You log them together each week at **Sunday Planning**, sorted into
+Level Up is how you make something you already do **1% better**. Pick a task
+you've gotten good at and find a tiny way to push it forward — neater, faster,
+or one notch more grown-up. Like in cycling: *"it doesn't get easier, you just
+get better."* The goal isn't to do something hard — it's to **never go back**,
+so a 1% step should feel easy. Those little steps add up (that's the Compound
+Effect).
+
+You log your level-ups together each week at **Sunday Planning**, sorted into
 categories:
 🛁 Self-Care · 🧹 Cleaning & Organization · 🏃 Health & Fitness ·
 📚 Education & Learning · 🎯 Goal Setting · 💛 Charity & Giving Back · 🎉 Fun.
+
+> Example: "Make my bed" → this week, also straighten the pillows. Next week,
+> add the throw blanket. Each step is tiny; together they compound.
 
 ### What's my Bank and the giving pot? 🏦
 Money you earn from chores adds up in your Bank. A small slice automatically goes
@@ -119,14 +136,18 @@ PIN is `1234` unless you've changed it — we should set a real one.
   weekday = window-only, weekend = open until the next window.
 - **[CONFIRM]** Keep exactly **6** tasks, or is the count flexible?
 
-### Level Up categories
+### Level Up categories (the 1% / Compound-Effect tool)
+- **What it's for:** taking tasks Violet is already proficient at and nudging
+  them ~1% forward — small enough to feel easy, with the rule being "don't go
+  back." It's the cycling mindset: *it doesn't get easier, you just get better.*
 - Edit at **Admin → Level Up** (the main `/admin` page): add/rename categories,
-  set icons, and optionally pre-load example "wins."
-- Wins themselves are logged with Violet at **Sunday Planning**.
+  set icons, and optionally pre-load example level-ups.
+- Level-ups are logged with Violet at **Sunday Planning**, where you also review
+  the week and plan how to make next week easier, more fun, and 1% better.
 - Current categories: Self-Care, Cleaning & Organization, Health & Fitness,
   Education & Learning, Goal Setting, Charity & Giving Back, Fun. (Currently no
-  example wins are pre-loaded — they're typed in at planning. **[CONFIRM]** add
-  starter wins?)
+  examples are pre-loaded — they're typed in at planning. **[CONFIRM]** add a few
+  starter "1% level-up" ideas per category to spark ideas?)
 
 ### Money, giving & the bank
 - **Giving %** and **money milestones**: Admin → main page (money section).
