@@ -140,7 +140,7 @@
     .cause-name { font-size: 0.78rem; font-weight: 700; width: 92px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cause-track { flex: 1; height: 10px; background: #f3effe; border-radius: 100px; overflow: hidden; }
     .cause-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--purple), var(--pink)); min-width: 4px; }
-    .cause-val { font-size: 0.75rem; font-weight: 800; color: var(--purple); width: 26px; text-align: right; flex-shrink: 0; }
+    .cause-val { font-size: 0.75rem; font-weight: 800; color: var(--purple); width: 40px; text-align: right; flex-shrink: 0; }
     .gc-empty { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-align: center; padding: 0.5rem; }
 
     /* ── Month card ── */
@@ -423,33 +423,44 @@
 
   function renderStats() {
     const donated = data.filter(r => r.status === 'donated');
-    const totalGiven = donated.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
-    const monthsSet = new Set(donated.map(r => `${r.month}|${r.year}`));
+    const total = donated.length;
+    const monthsSet  = new Set(donated.map(r => `${r.month}|${r.year}`));
+    const charitySet = new Set(donated.map(r => (r.charity || '').trim()).filter(Boolean));
+    const countrySet = new Set(donated.map(r => (r.cause   || '').trim()).filter(Boolean));
 
-    // donations by cause (blank → "Other")
-    const causeMap = {};
-    donated.forEach(r => { const c = (r.cause || '').trim() || 'Other'; causeMap[c] = (causeMap[c] || 0) + 1; });
-    const causes = Object.entries(causeMap).sort((a, b) => b[1] - a[1]);
-
-    // donations per month, chronological, last 12
+    // donations per month (count), chronological, last 12
     const mMap = {};
     donated.forEach(r => {
       const k = `${r.month}|${r.year}`;
       if (!mMap[k]) mMap[k] = { count: 0, month: r.month, year: r.year };
       mMap[k].count++;
     });
-    let months = Object.values(mMap).sort((a, b) =>
+    const months = Object.values(mMap).sort((a, b) =>
       a.year !== b.year ? a.year - b.year : MONTH_ORDER.indexOf(a.month) - MONTH_ORDER.indexOf(b.month)
     ).slice(-12);
     const maxCount = Math.max(1, ...months.map(m => m.count));
-    const maxCause = Math.max(1, ...causes.map(c => c[1]));
+
+    // % share breakdown — bar width and label both show share of all donations
+    function shareBars(field, title, icon, emptyMsg) {
+      const map = {};
+      donated.forEach(r => { const k = (r[field] || '').trim() || 'Unspecified'; map[k] = (map[k] || 0) + 1; });
+      const entries = Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      return `<div class="give-chart"><div class="gc-title">${icon} ${title}</div>${
+        entries.length ? entries.map(([name, n]) => {
+          const pct = total ? Math.round(n / total * 100) : 0;
+          return `<div class="cause-row"><div class="cause-name">${escHtml(name)}</div>` +
+                 `<div class="cause-track"><div class="cause-fill" style="width:${pct}%"></div></div>` +
+                 `<div class="cause-val">${pct}%</div></div>`;
+        }).join('') : `<div class="gc-empty">${emptyMsg}</div>`
+      }</div>`;
+    }
 
     const kpis = `
       <div class="give-kpis">
-        <div class="give-kpi"><div class="gk-num">${donated.length}</div><div class="gk-lbl">Donations made</div></div>
+        <div class="give-kpi"><div class="gk-num">${total}</div><div class="gk-lbl">Donations made</div></div>
         <div class="give-kpi"><div class="gk-num">${monthsSet.size}</div><div class="gk-lbl">Months giving</div></div>
-        <div class="give-kpi"><div class="gk-num">${causes.length}</div><div class="gk-lbl">Causes supported</div></div>
-        <div class="give-kpi"><div class="gk-num">${totalGiven > 0 ? fmtMoney(totalGiven) : '—'}</div><div class="gk-lbl">Total given</div></div>
+        <div class="give-kpi"><div class="gk-num">${charitySet.size}</div><div class="gk-lbl">Charities supported</div></div>
+        <div class="give-kpi"><div class="gk-num">${countrySet.size}</div><div class="gk-lbl">Countries reached</div></div>
       </div>`;
 
     const monthChart = `
@@ -460,15 +471,9 @@
         ).join('')}</div>` : `<div class="gc-empty">No donations logged yet.</div>`}
       </div>`;
 
-    const causeChart = `
-      <div class="give-chart">
-        <div class="gc-title">🌍 By cause</div>
-        ${causes.length ? causes.slice(0, 6).map(([name, n]) =>
-          `<div class="cause-row"><div class="cause-name">${escHtml(name)}</div><div class="cause-track"><div class="cause-fill" style="width:${Math.round(n / maxCause * 100)}%"></div></div><div class="cause-val">${n}</div></div>`
-        ).join('') : `<div class="gc-empty">Tag donations with a cause to see this.</div>`}
-      </div>`;
-
-    document.getElementById('statsBar').innerHTML = kpis + monthChart + causeChart;
+    document.getElementById('statsBar').innerHTML = kpis + monthChart
+      + shareBars('charity', 'Share by charity', '🏛️', 'No donations logged yet.')
+      + shareBars('cause', 'Share by country', '🌍', 'Tag donations with a country to see this.');
   }
 
   function renderTimeline() {
