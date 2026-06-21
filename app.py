@@ -1098,19 +1098,32 @@ def load_levelup_data():
             break
     if data is None:
         return {'levelup_categories': []}
-    # Merge in any seed categories the saved copy is missing (matched by id), so
-    # newly shipped Level-Up sections appear even when a customised copy already
-    # lives on the volume. Idempotent: existing categories are left untouched.
+    # Reconcile the volume copy against the shipped seed (only relevant when a
+    # customised copy lives on a separate volume).
     if LEVELUP_DATA_FILE != LEVELUP_SEED_FILE and os.path.isfile(LEVELUP_SEED_FILE):
         try:
             with open(LEVELUP_SEED_FILE, encoding='utf-8') as f:
                 seed = json.load(f)
-            existing_ids = {c.get('id') for c in data.get('levelup_categories', [])}
-            for cat in seed.get('levelup_categories', []):
-                if cat.get('id') not in existing_ids:
-                    data.setdefault('levelup_categories', []).append(cat)
         except (OSError, ValueError):
-            pass
+            seed = None
+        if seed is not None:
+            if seed.get('categories_version', 0) > data.get('categories_version', 0):
+                # A new category set shipped — replace the saved copy wholesale,
+                # once, and remember the version so this never re-runs (and so it
+                # won't clobber the parent's later Admin edits at the same version).
+                data['levelup_categories'] = seed.get('levelup_categories', [])
+                data['categories_version'] = seed.get('categories_version', 0)
+                try:
+                    save_levelup_data(data)
+                except OSError:
+                    pass
+            else:
+                # Same version: just add any seed categories the saved copy is
+                # missing (matched by id). Existing categories are left untouched.
+                existing_ids = {c.get('id') for c in data.get('levelup_categories', [])}
+                for cat in seed.get('levelup_categories', []):
+                    if cat.get('id') not in existing_ids:
+                        data.setdefault('levelup_categories', []).append(cat)
     return data
 
 
