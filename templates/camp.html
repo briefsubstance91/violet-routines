@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Camp Packing — Violet's Life OS</title>
+  <link rel="icon" href="/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --purple:#9b87f5; --blue:#4db8ff; --pink:#f472b6; --green:#16a34a; --text:#1e1b4b; --muted:#9490c0; --card:#fff; --border:#e5e0ff; }
+    body { font-family:'Nunito',sans-serif; color:var(--text);
+      background:linear-gradient(160deg,#cce8ff 0%,#e9e3ff 50%,#ffd6f0 100%); background-attachment:fixed; min-height:100vh; padding-bottom:3rem; }
+    .wrap { max-width:640px; margin:0 auto; padding:1.5rem 1.1rem 3rem; }
+    .top { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.4rem; }
+    h1 { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.8rem;
+      background:linear-gradient(135deg,#4db8ff,#9b87f5,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .sub { font-size:0.82rem; font-weight:700; color:var(--muted); margin-bottom:1rem; }
+    .menu-btn { margin-left:auto; background:rgba(255,255,255,0.7); border:none; font-size:1.5rem; color:var(--purple); cursor:pointer; padding:0.25rem 0.6rem; border-radius:10px; line-height:1; }
+    .menu-btn:hover { background:#fff; }
+    .menu-backdrop { display:none; position:fixed; inset:0; background:rgba(78,58,180,0.18); z-index:200; backdrop-filter:blur(2px); }
+    .menu-backdrop.open { display:block; }
+    .menu-panel { position:fixed; top:0; right:0; width:min(280px,85vw); height:100%; background:#fff; z-index:201; transform:translateX(110%); transition:transform .3s cubic-bezier(.34,1.2,.64,1); padding:2rem 1.5rem; display:flex; flex-direction:column; box-shadow:-8px 0 40px rgba(78,58,180,0.15); overflow-y:auto; }
+    .menu-panel.open { transform:translateX(0); }
+    .menu-title { font-family:'Fredoka One',cursive; font-size:1.4rem; background:linear-gradient(135deg,#4db8ff,#9b87f5,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:1.75rem; }
+    .menu-item { display:flex; align-items:center; gap:0.9rem; padding:0.95rem 0.5rem; border-bottom:1.5px solid #f3f0ff; font-size:0.95rem; font-weight:700; color:#1e1b4b; border-radius:8px; }
+    .menu-item:hover { background:#f8f5ff; }
+    .menu-item a { color:inherit; text-decoration:none; display:flex; align-items:center; gap:0.9rem; width:100%; }
+    .menu-item-icon { font-size:1.3rem; width:28px; text-align:center; }
+
+    /* ── Summary ── */
+    .summary { display:flex; gap:0.6rem; margin-bottom:1.25rem; }
+    .stat { flex:1; background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:0.7rem 0.5rem; text-align:center; box-shadow:0 3px 14px rgba(78,58,180,0.05); }
+    .stat .n { font-family:'Fredoka One',cursive; font-size:1.35rem; color:var(--purple); line-height:1; }
+    .stat .l { font-size:0.66rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); margin-top:0.25rem; }
+    .stat.home .n { color:var(--green); }
+
+    .hint { background:#ede9fe; border-left:3px solid var(--purple); border-radius:0 10px 10px 0; padding:0.6rem 0.85rem; font-size:0.78rem; font-weight:700; color:var(--text); line-height:1.45; margin-bottom:1.25rem; }
+
+    /* ── Sections + items ── */
+    .sec-head { display:flex; align-items:baseline; gap:0.5rem; margin:1.3rem 0 0.5rem; }
+    .sec-title { font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--text); }
+    .sec-count { font-size:0.72rem; font-weight:800; color:var(--muted); }
+    .col-key { display:flex; justify-content:flex-end; gap:0.55rem; font-size:0.58rem; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:var(--muted); padding:0 0.2rem 0.35rem; }
+    .col-key span { width:2.6rem; text-align:center; }
+
+    .ci { display:flex; align-items:center; gap:0.6rem; background:var(--card); border:1.5px solid var(--border); border-radius:13px; padding:0.6rem 0.7rem; margin-bottom:0.4rem; box-shadow:0 2px 10px rgba(78,58,180,0.04); }
+    .ci-body { flex:1; min-width:0; }
+    .ci-label { font-weight:700; font-size:0.9rem; line-height:1.25; }
+    .ci.packed .ci-label { color:var(--muted); text-decoration:line-through; }
+    .ci-qty { font-size:0.72rem; font-weight:900; color:var(--green); background:#dcfce7; padding:0.12rem 0.5rem; border-radius:100px; white-space:nowrap; flex-shrink:0; }
+    .ticks { display:flex; gap:0.55rem; flex-shrink:0; }
+    .tick { width:2.6rem; height:2.1rem; border-radius:9px; border:2px solid var(--border); background:#faf8ff; cursor:pointer; font-size:1rem; color:transparent; display:flex; align-items:center; justify-content:center; transition:all .12s; padding:0; }
+    .tick:active { transform:scale(0.92); }
+    .tick.on { color:#fff; border-color:transparent; }
+    .tick.to.on { background:linear-gradient(135deg,var(--blue),var(--purple)); }
+    .tick.home.on { background:linear-gradient(135deg,#34d399,var(--green)); }
+
+    .actions { margin-top:1.5rem; text-align:center; }
+    .reset { font-family:'Nunito',sans-serif; font-weight:800; font-size:0.8rem; color:var(--muted); background:rgba(255,255,255,0.7); border:1.5px solid var(--border); border-radius:100px; padding:0.5rem 1.1rem; cursor:pointer; }
+    .reset:hover { color:var(--purple); background:#fff; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>🏕️ Camp Packing</h1>
+    <button class="menu-btn" onclick="openMenu()">☰</button>
+  </div>
+  <div class="sub">Quantities for the <strong>2-week</strong> session · tick ☑ when it's in the trunk, and again on the way home.</div>
+
+  <div class="summary">
+    <div class="stat"><div class="n" id="toN">0/0</div><div class="l">Packed for camp</div></div>
+    <div class="stat home"><div class="n" id="homeN">0/0</div><div class="l">Packed for home</div></div>
+  </div>
+
+  <div class="hint">💡 Two ticks per item: <strong>Trunk</strong> = packed to take, <strong>Home</strong> = packed to bring back. Saved on this device.</div>
+
+  <div id="list"></div>
+
+  <div class="actions"><button class="reset" onclick="resetAll()">Reset all checks</button></div>
+</div>
+
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-title">✦ Menu</div>
+  <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
+  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/calendar"><span class="menu-item-icon">📅</span> Family Calendar</a></div>
+  <div class="menu-item"><a href="/camp"><span class="menu-item-icon">🏕️</span> Camp Packing</a></div>
+  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
+  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
+  <div class="menu-item"><a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
+  <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
+  <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
+</div>
+
+<script>
+  const SECTIONS = [
+    { title: '🎒 Equipment', items: [
+      { l: 'Pillow', q: 1 },
+      { l: 'Pillow cases', q: 2 },
+      { l: 'Bath towels', q: 3 },
+      { l: 'Face cloths', q: 2 },
+      { l: 'Laundry bag', q: 1 },
+      { l: 'Knapsack', q: 1 },
+      { l: 'Flashlight (with extra batteries)', q: 1 },
+      { l: 'Sleeping bag', q: 1 },
+      { l: 'Life jacket — vest-type PFD, Govt-approved, whistle attached', q: 1 },
+      { l: 'Toiletries bag (soap, toothbrush + paste, brush, comb, shampoo, cup…)', q: 1 },
+      { l: 'Writing paper, pen & stamped envelopes' },
+      { l: 'Sunscreen lotion (SPF 30)' },
+      { l: 'Insect repellant' },
+      { l: 'Water bottle', q: 1 },
+      { l: '30-litre waterproof dry sac (for tripping)', q: 1 },
+    ]},
+    { title: '👕 Clothing', items: [
+      { l: 'Long pants', q: 4 },
+      { l: 'Nylon shell jacket or windbreaker', q: 1 },
+      { l: 'Sweatshirts or sweaters', q: 3 },
+      { l: 'Heavy sweater or fleece', q: 2 },
+      { l: 'Summer tops (any colour)', q: 8 },
+      { l: 'Shorts', q: 6 },
+      { l: 'Pyjamas', q: 2 },
+      { l: 'Long-sleeved shirts', q: 3 },
+      { l: 'Underwear', q: 10 },
+      { l: 'Pairs of socks (incl. 2 wool)', q: 6 },
+      { l: 'Beach shoes (Crocs / old runners / flip-flops)', q: 1 },
+      { l: 'Sneakers or closed-toe shoes (sturdy rubber soles)', q: 2 },
+      { l: 'Sun hat', q: 1 },
+      { l: 'Bathing suits', q: 3 },
+      { l: 'Sun shirt / rash guard', q: 1 },
+      { l: 'Rainsuit + rain shoes or boots (waterproof)', q: 1 },
+    ]},
+    { title: '✨ Optional', items: [
+      { l: 'Musical instrument' },
+      { l: 'Books and games' },
+      { l: 'Camera' },
+      { l: 'Washable face masks' },
+    ]},
+  ];
+
+  const KEY = 'violet-camp-v1';
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { state = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+  let TOTAL = 0;
+  SECTIONS.forEach(s => TOTAL += s.items.length);
+
+  function render() {
+    let html = '';
+    SECTIONS.forEach((sec, si) => {
+      const ids = sec.items.map((_, ii) => `s${si}-${ii}`);
+      const packed = ids.filter(id => state[id + '-to']).length;
+      html += `<div class="sec-head"><span class="sec-title">${esc(sec.title)}</span><span class="sec-count">${packed}/${sec.items.length} packed</span></div>`;
+      html += `<div class="col-key"><span>Trunk</span><span>Home</span></div>`;
+      sec.items.forEach((it, ii) => {
+        const id = `s${si}-${ii}`;
+        const to = !!state[id + '-to'], home = !!state[id + '-home'];
+        const qty = it.q ? `<span class="ci-qty">×${it.q}</span>` : '';
+        html += `<div class="ci${to ? ' packed' : ''}">
+          <div class="ci-body"><div class="ci-label">${esc(it.l)}</div></div>
+          ${qty}
+          <div class="ticks">
+            <button class="tick to${to ? ' on' : ''}" onclick="toggle('${id}','to')">✓</button>
+            <button class="tick home${home ? ' on' : ''}" onclick="toggle('${id}','home')">✓</button>
+          </div>
+        </div>`;
+      });
+    });
+    document.getElementById('list').innerHTML = html;
+    updateCounts();
+  }
+
+  function updateCounts() {
+    let to = 0, home = 0;
+    SECTIONS.forEach((sec, si) => sec.items.forEach((_, ii) => {
+      if (state[`s${si}-${ii}-to`]) to++;
+      if (state[`s${si}-${ii}-home`]) home++;
+    }));
+    document.getElementById('toN').textContent = `${to}/${TOTAL}`;
+    document.getElementById('homeN').textContent = `${home}/${TOTAL}`;
+  }
+
+  function toggle(id, which) {
+    const k = `${id}-${which}`;
+    state[k] = !state[k];
+    save();
+    render();
+  }
+
+  function resetAll() {
+    if (!confirm('Clear all the checkmarks?')) return;
+    state = {};
+    save();
+    render();
+  }
+
+  function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
+  function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  render();
+</script>
+</body>
+</html>
