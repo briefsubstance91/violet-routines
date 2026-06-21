@@ -1,8 +1,10 @@
 # Violet's App — How It Works (DRAFT for current version)
 
-> Working draft to get the wording set, then we'll roll it into the right pages
-> (the **How It Works / FAQ** page first, plus the little help boxes on Admin
-> pages and the Welcome Tour). **[CONFIRM]** tags = decisions for you.
+> Working draft to get the wording set, then we'll roll it into the right pages:
+> the **How It Works / FAQ** page, the help boxes on Admin pages, and the Welcome
+> Tour. Decisions are now locked (see *Decisions — locked* at the bottom); the
+> only things still open are the **parent PIN** and a 👍 on the **starter 1%
+> ideas**.
 
 ---
 
@@ -58,10 +60,9 @@ Tap each task as you finish it (some tasks open up into smaller steps). When
 - 🌸 **Afternoon** — 3:30–5:00 PM
 - 🖤 **Evening** — 5:00–7:00 PM
 
-> **[CONFIRM]** Today the app needs **all** tasks checked for a routine to count.
-> Keep it that way, or should a routine count once she's done *most* of it (say a
-> threshold)? The current copy promising "you don't have to do every task" is
-> wrong and I'll remove it either way.
+> **Decided:** a routine counts only when **all** tasks + subtasks are checked
+> (that's what marks the day complete). The old "you don't have to do every task"
+> line will be removed everywhere.
 
 ### What's the "Now" tag and the greeting?
 The app gently points you at the right routine for the time of day:
@@ -120,8 +121,8 @@ Sometimes a surprise from your family pops up in the app. Tap it to reveal it!
 
 ## Part 2 — For Parents (setup & management)
 
-Everything below lives behind the **parent PIN** (Admin). **[CONFIRM]** default
-PIN is `1234` unless you've changed it — we should set a real one.
+Everything below lives behind the **parent PIN** (Admin). **[NEEDS A VALUE]**
+default is `1234` — tell me a 4-digit code and I'll set it.
 
 ### The routines themselves
 - **Edit tasks:** Admin → **Edit Routines** (`/admin/tasks`) — task names, icons,
@@ -134,7 +135,7 @@ PIN is `1234` unless you've changed it — we should set a real one.
   each with an icon, label, and $ value (default $2).
 - Rules: unlocks when the window's routine is done; **once per task per day**;
   weekday = window-only, weekend = open until the next window.
-- **[CONFIRM]** Keep exactly **6** tasks, or is the count flexible?
+- **Decided:** the list is **6 tasks** (you can still add/remove anytime).
 
 ### Level Up categories (the 1% / Compound-Effect tool)
 - **What it's for:** taking tasks Violet is already proficient at and nudging
@@ -145,14 +146,14 @@ PIN is `1234` unless you've changed it — we should set a real one.
 - Level-ups are logged with Violet at **Sunday Planning**, where you also review
   the week and plan how to make next week easier, more fun, and 1% better.
 - Current categories: Self-Care, Cleaning & Organization, Health & Fitness,
-  Education & Learning, Goal Setting, Charity & Giving Back, Fun. (Currently no
-  examples are pre-loaded — they're typed in at planning. **[CONFIRM]** add a few
-  starter "1% level-up" ideas per category to spark ideas?)
+  Education & Learning, Goal Setting, Charity & Giving Back, Fun.
+- **Decided:** pre-load a few starter **"1% level-up" ideas** per category (see
+  the *Starter 1% level-up ideas* section below) — editable anytime.
 
 ### Money, giving & the bank
 - **Giving %** and **money milestones**: Admin → main page (money section).
   Earnings auto-split: the giving % goes to the giving pot, the rest to Violet's
-  spendable bank. **[CONFIRM]** giving rate is **10%** today — keep it?
+  spendable bank. **Decided:** giving rate stays **10%** (change anytime).
 - **Pay out** cash at **Sunday Planning** (or `/admin/payout`); there's an undo.
 - **Family Giving** (`/charities`) shows where the giving pot goes; parents
   allocate it to causes month by month.
@@ -182,20 +183,41 @@ PIN is `1234` unless you've changed it — we should set a real one.
 - **Stats** (`/stats`): monthly calendar view and more detail.
 
 ### Data & privacy
-- Progress (day count, badges, streaks, wins, earnings) is saved on the server,
-  so it's the same on every device. Admin is PIN-protected. No third-party
-  tracking. **[CONFIRM]** hosting wording — the old copy says "Railway"; want me
-  to keep, change, or make it generic ("a private server")?
+- Progress (day count, badges, streaks, wins, earnings) is saved on **a private
+  server**, so it's the same on every device. Admin is PIN-protected. No
+  third-party tracking and no analytics — it's just for your family. 💜
 
 ---
 
-## Open decisions to lock before we update pages
-1. **Routine completion:** all tasks required (current) vs a "done enough"
-   threshold.
-2. **Toonie count:** fixed 6 vs flexible.
-3. **Giving rate:** keep 10%?
-4. **Level-Up starter wins:** add example wins per category, or keep type-your-own?
-5. **PIN:** set a real parent PIN.
-6. **Hosting/privacy wording.**
-7. **Where this content goes:** FAQ page is the main target — also refresh the
-   Admin help boxes and the Welcome Tour to match? (recommended)
+## Starter "1% level-up" ideas (for sign-off)
+Proposed examples to pre-load per category — each is a *tiny* step up on
+something she already does, in her own voice. Editable anytime. **[REVIEW]**
+
+- **🛁 Self-Care:** "Brushed my teeth the full two minutes" · "Got ready without
+  being reminded" · "Laid out my clothes the night before"
+- **🧹 Cleaning & Organization:** "Made my bed a little neater" · "Put my clothes
+  away instead of on the chair" · "Tidied one extra spot without being asked"
+- **🏃 Health & Fitness:** "Moved my body 5 minutes longer" · "Chose water
+  instead of juice" · "Did a quick stretch before bed"
+- **📚 Education & Learning:** "Read a few minutes longer than usual" · "Checked
+  my own work before saying I was done" · "Tried the tricky part before asking
+  for help"
+- **🎯 Goal Setting:** "Picked one small goal for the day" · "Broke a big job
+  into smaller steps" · "Finished what I started before moving on"
+- **💛 Charity & Giving Back:** "Helped someone without being asked" · "Said
+  something kind on purpose" · "Set aside something to give"
+- **🎉 Fun:** "Tried a new game or activity" · "Invited someone to join in" ·
+  "Made something creative just for me"
+
+---
+
+## Decisions — locked ✅
+1. **Routine completion:** all tasks required. (Remove old "best effort" copy.)
+2. **Toonie count:** 6 (flexible to edit).
+3. **Giving rate:** 10%.
+4. **Level-Up starters:** add the 1% examples above, per category.
+5. **Hosting wording:** generic ("a private server").
+6. **Rollout:** update FAQ/How It Works, Admin help boxes, and Welcome Tour.
+
+**Still needed from you:** a real 4-digit **parent PIN**, and a 👍 on the
+starter 1% ideas above (tweak any you'd word differently).
