@@ -1771,7 +1771,7 @@
     const sub   = document.getElementById('toonieSub');
     const tally = document.getElementById('toonieTally');
     const wins  = TOONIE_CFG.windows || {};
-    const tasksByWin = TOONIE_CFG.tasks || {};
+    const tasks = TOONIE_CFG.tasks || [];   // one shared daily list
     if (!Object.keys(wins).length) { card.style.display = 'none'; return; }
     card.style.display = 'block';
     tally.textContent = '';
@@ -1787,33 +1787,32 @@
     const routineDone = r && r.total > 0 && topLevelDone(win) === r.total;
     if (!routineDone) {
       sub.textContent = `${wlabel} window is open`;
-      body.innerHTML  = lockedToonie('🔒', `Finish your <b>${wlabel}</b> routine to unlock toonie tasks!`);
+      body.innerHTML  = lockedToonie('🔒', `Finish your <b>${wlabel}</b> routine to unlock today's toonie tasks!`);
       return;
     }
-    const tasks = tasksByWin[win] || [];
     if (!tasks.length) {
-      sub.textContent = `${wlabel} toonies`;
-      body.innerHTML  = lockedToonie('✨', 'No toonie tasks planned for this window yet.');
+      sub.textContent = 'Toonie tasks';
+      body.innerHTML  = lockedToonie('✨', 'No toonie tasks planned yet.');
       return;
     }
-    let earnedSum = 0;
+    let earnedSum = 0, doneCount = 0;
     body.innerHTML = '<div class="toonie-grid">' + tasks.map(t => {
-      const key  = `toonie:${win}:${t.id}`;
+      const key  = `toonie:${t.id}`;
       const done = toonieEarned.has(key);
       const val  = (t.value == null ? 2 : t.value);
-      if (done) earnedSum += Number(val) || 0;
-      return `<button class="toonie-card${done ? ' done' : ''}" onclick="tapToonie('${win}','${t.id}',this)">
+      if (done) { earnedSum += Number(val) || 0; doneCount++; }
+      return `<button class="toonie-card${done ? ' done' : ''}" onclick="tapToonie('${t.id}',this)">
           <span class="toonie-icon">${t.icon || '🪙'}</span>
           <span class="toonie-label">${t.label || ''}</span>
           <span class="toonie-val">${done ? '✓ earned' : '$' + val}</span>
         </button>`;
     }).join('') + '</div>';
-    sub.textContent = `${wlabel} toonies unlocked!`;
+    sub.textContent = `${doneCount} of ${tasks.length} done today`;
     tally.textContent = earnedSum ? `+$${earnedSum}` : '';
   }
 
-  async function tapToonie(win, taskId, el) {
-    const key  = `toonie:${win}:${taskId}`;
+  async function tapToonie(taskId, el) {
+    const key  = `toonie:${taskId}`;
     const want = !toonieEarned.has(key);
     if (want && el) popTreat(el);
     try {

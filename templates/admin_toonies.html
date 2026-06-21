@@ -101,9 +101,9 @@
 <div class="help-box">
   <div class="help-title">🪙 How Toonie Tasks work</div>
   <ul>
-    <li>Plan these at <strong>Sunday Planning</strong> — they're the weekly $2 earners, an extra on top of her routines.</li>
-    <li>Each window's tasks unlock only after Violet finishes that routine <strong>within its time window</strong>.</li>
-    <li>She can earn each task once per window; the list renews at the next window.</li>
+    <li>This is <strong>one shared daily list</strong> of $2 earners — an extra on top of her routines.</li>
+    <li>The list <strong>unlocks</strong> whenever Violet finishes a routine <strong>within its time window</strong>, and stays the same all day.</li>
+    <li>She can earn <strong>each task once per day</strong>; finished ones stay checked off across every window.</li>
     <li>Set the $ value per task (defaults to $2). Always hit <strong>Save</strong> when done.</li>
   </ul>
 </div>
@@ -112,7 +112,7 @@
 
 <script>
   let cfg = {{ toonies_json | safe }};
-  if (!cfg.tasks) cfg.tasks = {};
+  if (!Array.isArray(cfg.tasks)) cfg.tasks = [];   // one shared daily list
   let dirty = false;
 
   function markDirty() {
@@ -132,57 +132,50 @@
   function render() {
     const container = document.getElementById('windowsList');
     container.innerHTML = '';
-    const windows = cfg.windows || {};
-    Object.keys(windows).forEach(win => {
-      const w = windows[win];
-      if (!Array.isArray(cfg.tasks[win])) cfg.tasks[win] = [];
-      const card = document.createElement('div');
-      card.className = 'win-card';
-      card.innerHTML = `
-        <div class="win-header">
-          <div style="flex:1">
-            <div class="win-name">${esc(w.label || win)}</div>
-            <div class="win-time">${esc(w.start || '')}–${esc(w.end || '')}</div>
-          </div>
+    const card = document.createElement('div');
+    card.className = 'win-card';
+    card.innerHTML = `
+      <div class="win-header">
+        <div style="flex:1">
+          <div class="win-name">🪙 Daily toonie tasks</div>
+          <div class="win-time">One shared list — each earnable once a day</div>
         </div>
-        <div class="tt-list" id="list-${win}"></div>
-        <div class="add-row"><button class="btn-add" onclick="addTask('${win}')">+ Add toonie task</button></div>
-      `;
-      container.appendChild(card);
-      const list = card.querySelector(`#list-${win}`);
-      cfg.tasks[win].forEach((t, ti) => list.appendChild(makeRow(win, ti)));
-    });
+      </div>
+      <div class="tt-list" id="ttList"></div>
+      <div class="add-row"><button class="btn-add" onclick="addTask()">+ Add toonie task</button></div>
+    `;
+    container.appendChild(card);
+    const list = card.querySelector('#ttList');
+    cfg.tasks.forEach((t, ti) => list.appendChild(makeRow(ti)));
   }
 
-  function makeRow(win, ti) {
-    const t = cfg.tasks[win][ti];
+  function makeRow(ti) {
+    const t = cfg.tasks[ti];
     const row = document.createElement('div');
     row.className = 'tt-row';
     row.innerHTML = `
       <input class="tt-icon"  value="${esc(t.icon || '')}"  maxlength="2" placeholder="🪙"
-             oninput="cfg.tasks['${win}'][${ti}].icon=this.value; markDirty()">
+             oninput="cfg.tasks[${ti}].icon=this.value; markDirty()">
       <input class="tt-label" value="${esc(t.label || '')}" placeholder="What should she do?"
-             oninput="cfg.tasks['${win}'][${ti}].label=this.value; markDirty()">
+             oninput="cfg.tasks[${ti}].label=this.value; markDirty()">
       <span class="tt-val-wrap">$<input class="tt-val" type="number" min="0" step="0.5"
              value="${t.value == null ? 2 : t.value}"
-             oninput="cfg.tasks['${win}'][${ti}].value=parseFloat(this.value)||0; markDirty()"></span>
-      <button class="btn-danger" onclick="removeTask('${win}',${ti})" title="Delete">×</button>
+             oninput="cfg.tasks[${ti}].value=parseFloat(this.value)||0; markDirty()"></span>
+      <button class="btn-danger" onclick="removeTask(${ti})" title="Delete">×</button>
     `;
     return row;
   }
 
-  function addTask(win) {
-    if (!Array.isArray(cfg.tasks[win])) cfg.tasks[win] = [];
-    cfg.tasks[win].push({ id: `${win}-${Date.now()}`, icon: '🪙', label: '', value: 2 });
+  function addTask() {
+    cfg.tasks.push({ id: `t-${Date.now()}`, icon: '🪙', label: '', value: 2 });
     markDirty();
     render();
-    const list = document.getElementById(`list-${win}`);
-    const labels = list.querySelectorAll('.tt-label');
+    const labels = document.getElementById('ttList').querySelectorAll('.tt-label');
     labels[labels.length - 1]?.focus();
   }
 
-  function removeTask(win, ti) {
-    cfg.tasks[win].splice(ti, 1);
+  function removeTask(ti) {
+    cfg.tasks.splice(ti, 1);
     markDirty();
     render();
   }

@@ -477,16 +477,38 @@ def next_money_milestone(earned):
 
 
 # ── Toonie tasks (weekly-planned $2 earners, unlocked per routine window) ──
+def _normalize_toonie_tasks(tasks):
+    """Toonie tasks are one shared daily list. Accept the legacy per-window dict
+    ({am:[...], af:[...], pm:[...]}) and flatten it, deduped by id."""
+    if isinstance(tasks, list):
+        return tasks
+    if isinstance(tasks, dict):
+        flat, seen = [], set()
+        for win_tasks in tasks.values():
+            for t in (win_tasks or []):
+                tid = t.get('id')
+                if tid and tid in seen:
+                    continue
+                seen.add(tid)
+                flat.append(t)
+        return flat
+    return []
+
+
 def load_toonies():
-    """Per-window toonie-task config. Prefer the volume copy, fall back to seed."""
+    """Toonie config: routine windows + one shared daily task list. Prefer the
+    volume copy, fall back to seed. Legacy per-window task dicts are flattened."""
+    data = {'timezone': DEFAULT_TZ, 'windows': {}, 'tasks': []}
     for path in (TOONIES_FILE, TOONIES_SEED_FILE):
         if os.path.isfile(path):
             try:
                 with open(path, encoding='utf-8') as f:
-                    return json.load(f)
+                    data = json.load(f)
             except (OSError, ValueError):
                 break
-    return {'timezone': DEFAULT_TZ, 'windows': {}, 'tasks': {}}
+            break
+    data['tasks'] = _normalize_toonie_tasks(data.get('tasks'))
+    return data
 
 
 def save_toonies(data):
@@ -677,7 +699,7 @@ def routine_complete_today(routine_id, today=None):
 
 
 def toonies_earned_today(today=None):
-    """Ledger keys of toonie tasks already earned today (one per window+task)."""
+    """Ledger keys of toonie tasks already earned today (one per task per day)."""
     today = today or _now_local().date().isoformat()
     return [r.get('Key') for r in load_earnings()
             if r.get('Date') == today and (r.get('Key') or '').startswith('toonie:')]
@@ -1278,8 +1300,9 @@ def earn():
 
 @app.route('/earn-toonie', methods=['POST'])
 def earn_toonie():
-    """Earn (or same-window reverse) one toonie task. Strictly gated server-side:
-    must be inside the task's window AND that window's routine done today."""
+    """Earn (or reverse) one toonie task. One shared daily list — each task is
+    earnable once per day. Gated server-side: must be inside a routine window
+    AND that window's routine done today (the list unlocks per window)."""
     d = request.get_json() or {}
     task_id = d.get('task_id')
     want    = bool(d.get('earned', True))
@@ -1287,13 +1310,13 @@ def earn_toonie():
     win = current_window(cfg)
     if not win:
         return jsonify({'ok': False, 'reason': 'closed'})
-    task = next((t for t in cfg.get('tasks', {}).get(win, []) if t.get('id') == task_id), None)
+    task = next((t for t in cfg.get('tasks', []) if t.get('id') == task_id), None)
     if not task:
         return jsonify({'ok': False, 'reason': 'unknown'})
     if want and not routine_complete_today(win):
         return jsonify({'ok': False, 'reason': 'routine'})
     today  = _now_local(cfg).date().isoformat()
-    key    = 'toonie:%s:%s' % (win, task_id)
+    key    = 'toonie:%s' % task_id
     before = compute_bank()['earned']
     set_earning(today, key, task.get('label', 'Toonie task'),
                 task.get('value', DEFAULT_TASK_VALUE), want)
@@ -1703,8 +1726,8 @@ def admin_toonies():
 def admin_toonies_save():
     data = request.get_json() or {}
     cfg = load_toonies()
-    # Preserve window/timezone config; only the weekly task lists are editable here.
-    cfg['tasks'] = data.get('tasks', {})
+    # Preserve window/timezone config; only the shared daily task list is editable here.
+    cfg['tasks'] = _normalize_toonie_tasks(data.get('tasks'))
     save_toonies(cfg)
     return jsonify({'ok': True})
 

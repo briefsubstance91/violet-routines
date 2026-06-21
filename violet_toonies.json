@@ -1,22 +1,58 @@
 {
-  "timezone": "America/Toronto",
-  "windows": {
-    "am": { "label": "Morning",   "start": "06:00", "end": "09:00" },
-    "af": { "label": "Afternoon", "start": "15:30", "end": "17:00" },
-    "pm": { "label": "Evening",   "start": "17:00", "end": "19:00" }
-  },
-  "tasks": {
-    "am": [
-      { "id": "am-bed",  "icon": "🛏️", "label": "Make my bed neatly", "value": 2 },
-      { "id": "am-help", "icon": "🍳", "label": "Help make breakfast", "value": 2 }
-    ],
-    "af": [
-      { "id": "af-read", "icon": "📚", "label": "Read for 15 minutes", "value": 2 },
-      { "id": "af-tidy", "icon": "🧹", "label": "Tidy one space in the house", "value": 2 }
-    ],
-    "pm": [
-      { "id": "pm-table", "icon": "🍽️", "label": "Help clear the table", "value": 2 },
-      { "id": "pm-prep",  "icon": "🎒", "label": "Pack my bag for tomorrow", "value": 2 }
+    "timezone": "America/Toronto",
+    "windows": {
+        "am": {
+            "label": "Morning",
+            "start": "06:00",
+            "end": "09:00"
+        },
+        "af": {
+            "label": "Afternoon",
+            "start": "15:30",
+            "end": "17:00"
+        },
+        "pm": {
+            "label": "Evening",
+            "start": "17:00",
+            "end": "19:00"
+        }
+    },
+    "tasks": [
+        {
+            "id": "t-bed",
+            "icon": "🛏️",
+            "label": "Make my bed neatly",
+            "value": 2
+        },
+        {
+            "id": "t-breakfast",
+            "icon": "🍳",
+            "label": "Help make breakfast",
+            "value": 2
+        },
+        {
+            "id": "t-read",
+            "icon": "📚",
+            "label": "Read for 15 minutes",
+            "value": 2
+        },
+        {
+            "id": "t-tidy",
+            "icon": "🧹",
+            "label": "Tidy one space in the house",
+            "value": 2
+        },
+        {
+            "id": "t-table",
+            "icon": "🍽️",
+            "label": "Help clear the table",
+            "value": 2
+        },
+        {
+            "id": "t-bag",
+            "icon": "🎒",
+            "label": "Pack my bag for tomorrow",
+            "value": 2
+        }
     ]
-  }
 }
