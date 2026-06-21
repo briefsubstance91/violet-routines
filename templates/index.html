@@ -187,12 +187,15 @@
     /* ── Toonie tasks ── */
     .routine-card.toonies { --accent: #16a34a; grid-column: 1 / -1; order: -1; }
     .routine-card.toonies .card-strip { background: linear-gradient(90deg, #34d399, #16a34a); }
-    .toonie-locked { display: flex; align-items: center; gap: 0.7rem; padding: 0.9rem 0.6rem; color: var(--muted);
-      font-weight: 700; font-size: 0.92rem; line-height: 1.3; }
-    .toonie-locked .tl-icon { font-size: 1.5rem; flex-shrink: 0; }
-    .toonie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.55rem; }
-    .toonie-card { display: flex; align-items: center; gap: 0.75rem; width: 100%; text-align: left;
-      padding: 0.7rem 0.85rem; border: 2px solid #d1fae5; border-radius: 16px; background: #f0fdf4;
+    /* Tighter than the routine cards — the menu is compact, so trim the padding. */
+    .routine-card.toonies .card-inner { padding: 0.8rem 1rem 0.95rem; }
+    .routine-card.toonies .routine-header { margin-bottom: 0.7rem; padding-bottom: 0.7rem; }
+    .toonie-locked { display: flex; align-items: center; gap: 0.6rem; padding: 0.3rem 0.4rem 0.4rem; color: var(--muted);
+      font-weight: 700; font-size: 0.9rem; line-height: 1.3; }
+    .toonie-locked .tl-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .toonie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.5rem; }
+    .toonie-card { display: flex; align-items: center; gap: 0.7rem; width: 100%; text-align: left;
+      padding: 0.55rem 0.8rem; border: 2px solid #d1fae5; border-radius: 14px; background: #f0fdf4;
       font-family: inherit; cursor: pointer; transition: transform 0.1s, border-color 0.15s; }
     .toonie-card:active { transform: scale(0.98); }
     .toonie-card .toonie-icon { font-size: 1.5rem; min-width: 30px; text-align: center; line-height: 1; }
