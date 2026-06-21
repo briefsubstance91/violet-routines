@@ -529,7 +529,8 @@ def _now_local(cfg=None):
 # ── Family calendar (read-only iCloud/iCal feed) ─────────────────────────
 FAMILY_CAL_TTL = 1800   # seconds between feed refreshes
 FAMILY_CAL_DAYS = 21    # how far ahead to expand recurring events
-_family_cal = {'fetched': 0.0, 'events': [], 'error': None, 'url': None}
+_family_cal = {'fetched': 0.0, 'events': [], 'cal': None, 'tz': None,
+               'error': None, 'url': None}
 
 
 def family_calendar_url():
@@ -545,46 +546,67 @@ def _local_tz():
         return ZoneInfo('UTC')
 
 
+def _occ_to_event(e, tz):
+    """One expanded iCal occurrence → the event dict the UI consumes."""
+    start = e.decoded('DTSTART')
+    title = str(e.get('SUMMARY', '') or '').strip() or 'Event'
+    location = str(e.get('LOCATION', '') or '').strip()
+    if isinstance(start, datetime):
+        sl = start.astimezone(tz) if start.tzinfo else start.replace(tzinfo=tz)
+        d, all_day = sl.date(), False
+        time_label = sl.strftime('%-I:%M %p')
+        sort_t = sl.strftime('%H:%M')
+    else:
+        d, all_day, time_label, sort_t = start, True, 'All day', ''
+    return {
+        'title': title, 'location': location, 'all_day': all_day,
+        'date': d.isoformat(), 'time_label': time_label,
+        'day_label': d.strftime('%a, %b %-d'), 'sort': (d.isoformat(), sort_t),
+    }
+
+
+def _expand_events(start_date, end_date):
+    """Sorted events between start_date and end_date (inclusive) from the cached feed."""
+    cal = _family_cal.get('cal')
+    if cal is None:
+        return []
+    try:
+        import recurring_ical_events
+    except ImportError:
+        return []
+    tz = _family_cal.get('tz') or _local_tz()
+    try:
+        occ = recurring_ical_events.of(cal).between(start_date, end_date + timedelta(days=1))
+    except Exception:
+        return []
+    si, ei = start_date.isoformat(), end_date.isoformat()
+    events = [ev for ev in (_occ_to_event(e, tz) for e in occ) if si <= ev['date'] <= ei]
+    events.sort(key=lambda x: x['sort'])
+    return events
+
+
 def refresh_family_calendar(force=False):
-    """Fetch + parse the iCloud feed into the cache, respecting the TTL."""
+    """Fetch + parse the iCloud feed into the cache, respecting the TTL. The
+    parsed calendar is cached so any date range can be expanded on demand."""
     url = family_calendar_url()
     now = time.time()
     if not url:
-        _family_cal.update(events=[], error=None, url=None, fetched=now)
+        _family_cal.update(events=[], cal=None, tz=None, error=None, url=None, fetched=now)
         return
-    if (not force and _family_cal['url'] == url
+    if (not force and _family_cal['url'] == url and _family_cal.get('cal') is not None
             and now - _family_cal['fetched'] < FAMILY_CAL_TTL):
         return
     try:
         import icalendar
-        import recurring_ical_events
         fetch_url = url.replace('webcal://', 'https://', 1) if url.startswith('webcal://') else url
         req = urllib.request.Request(fetch_url, headers={'User-Agent': 'VioletApp/1.0'})
         with urllib.request.urlopen(req, timeout=12) as resp:
             raw = resp.read()
         cal = icalendar.Calendar.from_ical(raw)
-        tz = _local_tz()
+        _family_cal.update(cal=cal, tz=_local_tz(), error=None, url=url, fetched=now)
+        # Default window powers the home page + the connected-event count.
         today = _now_local().date()
-        occ = recurring_ical_events.of(cal).between(today, today + timedelta(days=FAMILY_CAL_DAYS))
-        events = []
-        for e in occ:
-            start = e.decoded('DTSTART')
-            title = str(e.get('SUMMARY', '') or '').strip() or 'Event'
-            location = str(e.get('LOCATION', '') or '').strip()
-            if isinstance(start, datetime):
-                sl = start.astimezone(tz) if start.tzinfo else start.replace(tzinfo=tz)
-                d, all_day = sl.date(), False
-                time_label = sl.strftime('%-I:%M %p')
-                sort_t = sl.strftime('%H:%M')
-            else:
-                d, all_day, time_label, sort_t = start, True, 'All day', ''
-            events.append({
-                'title': title, 'location': location, 'all_day': all_day,
-                'date': d.isoformat(), 'time_label': time_label,
-                'day_label': d.strftime('%a, %b %-d'), 'sort': (d.isoformat(), sort_t),
-            })
-        events.sort(key=lambda x: x['sort'])
-        _family_cal.update(events=events, error=None, url=url, fetched=now)
+        _family_cal['events'] = _expand_events(today, today + timedelta(days=FAMILY_CAL_DAYS))
     except Exception as ex:
         _family_cal.update(error=str(ex), url=url, fetched=now)
 
@@ -600,6 +622,12 @@ def family_events_upcoming(days=14):
     today = _now_local().date()
     end = (today + timedelta(days=days)).isoformat()
     return [e for e in _family_cal['events'] if today.isoformat() <= e['date'] <= end]
+
+
+def family_events_range(start_date, end_date):
+    """Events for an arbitrary date range (used by the calendar view switcher)."""
+    refresh_family_calendar()
+    return _expand_events(start_date, end_date)
 
 
 def current_window(cfg=None):
@@ -1609,7 +1637,32 @@ def family_calendar_page():
         error=_family_cal.get('error'),
         is_admin=bool(session.get('admin')),
         feed_url=family_calendar_url() if session.get('admin') else '',
+        today_iso=_now_local().date().isoformat(),
     )
+
+
+@app.route('/calendar/events')
+def family_calendar_events():
+    """Events in a date range, for the Month/Week/Day/List view switcher."""
+    today = _now_local().date()
+
+    def _parse(s, default):
+        try:
+            return date.fromisoformat(s)
+        except (TypeError, ValueError):
+            return default
+
+    start = _parse(request.args.get('start'), today)
+    end = _parse(request.args.get('end'), today + timedelta(days=FAMILY_CAL_DAYS))
+    if end < start:
+        start, end = end, start
+    if (end - start).days > 70:        # keep recurrence expansion bounded
+        end = start + timedelta(days=70)
+    return jsonify({
+        'events': family_events_range(start, end),
+        'configured': bool(family_calendar_url()),
+        'error': _family_cal.get('error'),
+    })
 
 
 @app.route('/admin/calendar/save', methods=['POST'])
