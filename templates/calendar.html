@@ -72,12 +72,30 @@
     .wday.sel { border-color:var(--purple); }
     .detail-head { font-size:0.78rem; font-weight:900; color:var(--text); margin-bottom:0.6rem; }
 
-    /* ── Week agenda (every day) ── */
-    .wk-day { margin-bottom:1.1rem; }
-    .wk-day-head { display:flex; align-items:center; gap:0.5rem; font-size:0.78rem; font-weight:900; color:var(--text); margin-bottom:0.5rem; }
-    .wk-day.today .wk-day-head { color:var(--purple); }
-    .wk-today { font-size:0.58rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:#fff; background:linear-gradient(135deg,var(--blue),var(--purple)); padding:0.1rem 0.45rem; border-radius:100px; }
-    .wk-empty { font-size:0.8rem; font-weight:700; color:#c7c2e6; padding:0.1rem 0.15rem 0.2rem; }
+    /* ── Week timed grid (calendar-style) ── */
+    .wk7 { max-height:70vh; overflow-y:auto; background:var(--card); border:1.5px solid var(--border); border-radius:14px; box-shadow:0 3px 14px rgba(78,58,180,0.05); }
+    .wk7-head { position:sticky; top:0; z-index:4; background:#fff; box-shadow:0 1.5px 0 var(--border); }
+    .wk7-cols, .wk7-body { display:grid; grid-template-columns:46px repeat(7, minmax(0,1fr)); }
+    .wk7-h { text-align:center; padding:0.4rem 0.1rem 0.45rem; border-left:1px solid #f1edff; cursor:pointer; }
+    .wk7-h.gutter { border-left:none; cursor:default; }
+    .wk7-h .wd { display:block; font-size:0.55rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.03em; }
+    .wk7-h .wn { display:inline-flex; align-items:center; justify-content:center; min-width:1.45rem; height:1.45rem; border-radius:50%; font-size:0.8rem; font-weight:800; color:var(--text); margin-top:2px; }
+    .wk7-h.today .wn { background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; }
+    .wk7-ad-label { font-size:0.48rem; font-weight:800; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; justify-content:flex-end; padding:2px 4px 2px 0; }
+    .wk7-ad-cell { border-left:1px solid #f1edff; padding:2px; display:flex; flex-direction:column; gap:2px; min-height:0; }
+    .wk7-ad-chip { font-size:0.55rem; font-weight:800; color:#fff; background:linear-gradient(135deg,#34d399,#16a34a); border-radius:4px; padding:1px 4px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .wk7-body { position:relative; }
+    .wk7-gutter { position:relative; }
+    .wk7-gutter .hr { position:absolute; right:5px; transform:translateY(-50%); font-size:0.55rem; font-weight:800; color:var(--muted); white-space:nowrap; }
+    .wk7-col { position:relative; border-left:1px solid #f1edff;
+      background:repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hpx) - 1px), #f1edff calc(var(--hpx) - 1px), #f1edff var(--hpx)); }
+    .wk7-col.today { background-color:#faf8ff; }
+    .wk7-ev { position:absolute; border-radius:5px; padding:1px 4px; overflow:hidden; color:#fff;
+      background:linear-gradient(135deg,#6ec1ff,#9b87f5); box-shadow:0 1px 3px rgba(78,58,180,0.25); border:1px solid rgba(255,255,255,0.4); }
+    .wk7-ev .e1 { font-size:0.6rem; font-weight:800; line-height:1.12; overflow:hidden; }
+    .wk7-ev .e2 { font-size:0.52rem; font-weight:700; opacity:0.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .wk7-now { position:absolute; left:46px; right:0; height:0; border-top:2px solid var(--pink); z-index:6; pointer-events:none; }
+    .wk7-now::before { content:''; position:absolute; left:-1px; top:-4px; width:7px; height:7px; border-radius:50%; background:var(--pink); }
 
     /* ── Day hour-grid timeline ── */
     .allday { margin-bottom:0.7rem; }
@@ -360,30 +378,73 @@
       }
     }
 
+    const WK_HPX = 44;   // hour height in the week grid
+
     async function renderWeek() {
       const ws = startOfWeek(cursor), we = addDays(ws, 6);
       navTitle.textContent = ws.getMonth() === we.getMonth()
         ? `${MONTHS[ws.getMonth()].slice(0, 3)} ${ws.getDate()} – ${we.getDate()}`
         : `${MONTHS[ws.getMonth()].slice(0, 3)} ${ws.getDate()} – ${MONTHS[we.getMonth()].slice(0, 3)} ${we.getDate()}`;
       await ensureRange(ymd(ws), ymd(we));
-      let strip = '', agenda = '';
-      for (let i = 0; i < 7; i++) {
-        const d = addDays(ws, i), iso = ymd(d), evs = eventsOn(iso);
-        const isToday = iso === TODAY_ISO;
-        const dot = evs.length ? '<div class="dots"><span class="dot"></span></div>' : '<div class="dots"></div>';
-        strip += `<div class="wday${isToday ? ' today' : ''}" data-iso="${iso}"><span class="wd">${WEEKDAYS[d.getDay()]}</span><span class="wn">${d.getDate()}</span>${dot}</div>`;
-        // Every day gets its own agenda block (not just the selected one).
-        const head = `${DAYNAMES[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
-        agenda += `<div class="wk-day${isToday ? ' today' : ''}">
-          <div class="wk-day-head">${esc(head)}${isToday ? '<span class="wk-today">Today</span>' : ''}</div>
-          ${evs.length ? evs.map(evRow).join('') : '<div class="wk-empty">No events</div>'}
-        </div>`;
+
+      const days = [];
+      for (let i = 0; i < 7; i++) { const d = addDays(ws, i); days.push({ d, iso: ymd(d), evs: eventsOn(ymd(d)) }); }
+
+      // Header row + all-day row
+      let head = '<div class="wk7-h gutter"></div>', allday = '<div class="wk7-ad-label">all-day</div>';
+      days.forEach(({ d, iso, evs }) => {
+        const t = iso === TODAY_ISO ? ' today' : '';
+        head += `<div class="wk7-h${t}" data-iso="${iso}"><span class="wd">${WEEKDAYS[d.getDay()]}</span><span class="wn">${d.getDate()}</span></div>`;
+        const ad = evs.filter(e => e.all_day || e.start_min == null);
+        allday += `<div class="wk7-ad-cell">${ad.map(e => `<div class="wk7-ad-chip" title="${esc(e.title)}">${esc(e.title)}</div>`).join('')}</div>`;
+      });
+
+      // Body: time gutter + 7 day columns with positioned event blocks
+      const H = WK_HPX, totalH = 24 * H;
+      let gutter = '';
+      for (let h = 1; h < 24; h++) {
+        const label = h < 12 ? `${h} AM` : h === 12 ? 'Noon' : `${h - 12} PM`;
+        gutter += `<div class="hr" style="top:${h * H}px">${label}</div>`;
       }
-      document.getElementById('view-week').innerHTML = `<div class="wstrip">${strip}</div>${agenda}`;
-      // Tap a day in the strip to open it in the Day view.
-      document.querySelectorAll('#view-week .wday[data-iso]').forEach(el => {
+      let cols = `<div class="wk7-gutter" style="height:${totalH}px">${gutter}</div>`;
+      days.forEach(({ iso, evs }) => {
+        const timed = evs.filter(e => !e.all_day && e.start_min != null);
+        const blocks = layoutColumns(timed).map(({ ev, col, cols: n }) => {
+          const top = ev.start_min / 60 * H;
+          const hgt = Math.max((ev.end_min - ev.start_min) / 60 * H - 1, 13);
+          const left = `calc(1px + ${col} / ${n} * 100%)`;
+          const width = `calc(100% / ${n} - 2px)`;
+          const t2 = hgt > 28 ? `<div class="e2">${esc(ev.time_label)}</div>` : '';
+          return `<div class="wk7-ev" style="top:${top}px;height:${hgt}px;left:${left};width:${width}"><div class="e1">${esc(ev.title)}</div>${t2}</div>`;
+        }).join('');
+        const t = iso === TODAY_ISO ? ' today' : '';
+        cols += `<div class="wk7-col${t}" style="height:${totalH}px">${blocks}</div>`;
+      });
+
+      let now = '';
+      if (TODAY_ISO >= ymd(ws) && TODAY_ISO <= ymd(we)) {
+        const n = new Date();
+        now = `<div class="wk7-now" style="top:${(n.getHours() * 60 + n.getMinutes()) / 60 * H}px"></div>`;
+      }
+
+      document.getElementById('view-week').innerHTML =
+        `<div class="wk7" id="wk7Scroll">
+           <div class="wk7-head"><div class="wk7-cols">${head}</div><div class="wk7-cols">${allday}</div></div>
+           <div class="wk7-body" style="--hpx:${H}px">${cols}${now}</div>
+         </div>`;
+
+      // Tap a day header to open it in the Day view.
+      document.querySelectorAll('#view-week .wk7-h[data-iso]').forEach(el => {
         el.onclick = () => { cursor = parseISO(el.dataset.iso); selectView('day', false); };
       });
+
+      // Scroll to the first event (or 7 AM) so it isn't buried.
+      const sc = document.getElementById('wk7Scroll');
+      if (sc) {
+        const starts = days.flatMap(x => x.evs.filter(e => e.start_min != null).map(e => e.start_min));
+        const first = starts.length ? Math.min(...starts) : 7 * 60;
+        sc.scrollTop = Math.max(first / 60 * H - 8, 0);
+      }
     }
 
     async function renderMonth() {
