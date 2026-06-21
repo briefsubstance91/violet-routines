@@ -670,20 +670,38 @@ def family_events_range(start_date, end_date):
     return _expand_events(start_date, end_date)
 
 
-def current_window(cfg=None):
-    """Window id (am/af/pm) whose [start, end) clock range contains 'now', else None."""
-    cfg = cfg or load_toonies()
-    now = _now_local(cfg)
-    mins = now.hour * 60 + now.minute
-    for wid, w in cfg.get('windows', {}).items():
+def _active_window(windows, mins, weekend=False):
+    """Window id active at 'mins' minutes-past-midnight, else None.
+
+    Weekdays: the window whose [start, end) range contains now (time-limited).
+    Weekends: each window is extended to stay open until the next window opens
+    (the last one runs to midnight), so there's more time to finish toonies.
+    """
+    parsed = []
+    for wid, w in windows.items():
         try:
             sh, sm = (int(x) for x in w['start'].split(':'))
             eh, em = (int(x) for x in w['end'].split(':'))
         except (ValueError, KeyError, AttributeError):
             continue
-        if sh * 60 + sm <= mins < eh * 60 + em:
+        parsed.append((wid, sh * 60 + sm, eh * 60 + em))
+    parsed.sort(key=lambda x: x[1])
+    for i, (wid, start, end) in enumerate(parsed):
+        eff_end = end
+        if weekend:
+            nxt = parsed[i + 1][1] if i + 1 < len(parsed) else 1440
+            eff_end = max(end, nxt)
+        if start <= mins < eff_end:
             return wid
     return None
+
+
+def current_window(cfg=None):
+    """Active toonie window id for 'now' (weekend-extended), else None."""
+    cfg = cfg or load_toonies()
+    now = _now_local(cfg)
+    weekend = now.weekday() >= 5      # Sat = 5, Sun = 6
+    return _active_window(cfg.get('windows', {}), now.hour * 60 + now.minute, weekend)
 
 
 def routine_complete_today(routine_id, today=None):

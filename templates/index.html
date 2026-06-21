@@ -1749,13 +1749,19 @@
   function currentToonieWindow() {
     const now  = new Date();
     const mins = now.getHours() * 60 + now.getMinutes();
+    const weekend = now.getDay() === 0 || now.getDay() === 6;  // Sun=0, Sat=6
     const wins = TOONIE_CFG.windows || {};
-    for (const wid in wins) {
-      const w = wins[wid];
-      const [sh, sm] = (w.start || '').split(':').map(Number);
-      const [eh, em] = (w.end   || '').split(':').map(Number);
-      if (Number.isFinite(sh) && Number.isFinite(eh) &&
-          sh * 60 + sm <= mins && mins < eh * 60 + em) return wid;
+    const parsed = Object.keys(wins).map(wid => {
+      const [sh, sm] = (wins[wid].start || '').split(':').map(Number);
+      const [eh, em] = (wins[wid].end   || '').split(':').map(Number);
+      return { wid, start: sh * 60 + sm, end: eh * 60 + em };
+    }).filter(w => Number.isFinite(w.start) && Number.isFinite(w.end))
+      .sort((a, b) => a.start - b.start);
+    for (let i = 0; i < parsed.length; i++) {
+      const w = parsed[i];
+      // Weekends: stay open until the next window opens (last one runs to midnight).
+      const effEnd = weekend ? Math.max(w.end, i + 1 < parsed.length ? parsed[i + 1].start : 1440) : w.end;
+      if (w.start <= mins && mins < effEnd) return w.wid;
     }
     return null;
   }
