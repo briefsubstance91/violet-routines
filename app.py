@@ -125,6 +125,7 @@ def current_profile():
 PROGRESS_KEYS = {
     'violet-routines-v2', 'violet-days', 'violet-badges', 'violet-completions',
     'violet-lu-total', 'violet-triples', 'violet-last-triple', 'violet-extras-v1',
+    'violet-camp-v1',
 }
 
 
@@ -1861,7 +1862,8 @@ def faq():
 
 @app.route('/camp')
 def camp():
-    return render_template('camp.html')
+    camp_state = load_progress(current_profile()).get('violet-camp-v1', {})
+    return render_template('camp.html', camp_state_json=json.dumps(camp_state))
 
 
 @app.route('/badges')
