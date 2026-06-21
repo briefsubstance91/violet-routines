@@ -1667,46 +1667,78 @@
   initLuBadge();
 
   // ── Greeting + Now badge ─────────────────────────────────
-  const ROUTINE_ORDER = [
-    { id: 'am', start: 0,  end: 12 },
-    { id: 'af', start: 12, end: 18 },
-    { id: 'pm', start: 18, end: 24 },
-  ];
+  // Focus windows are read from the toonie window config — the same source the
+  // routine cards show their times from — so the "Now" pill turns on and off at
+  // the exact times printed on each card.
+  const _hhmmToMin = (hhmm) => {
+    const [h, m] = String(hhmm || '').split(':').map(Number);
+    return Number.isFinite(h) ? h * 60 + (m || 0) : NaN;
+  };
 
-  function currentRoutineId() {
-    const hour = new Date().getHours();
-    // Priority: first incomplete routine whose window has started
-    for (const { id, start } of ROUTINE_ORDER) {
-      if (ROUTINES[id] && hour >= start && topLevelDone(id) < ROUTINES[id].total) return id;
+  function routineWindows() {
+    const wins = (typeof TOONIE_CFG !== 'undefined' && TOONIE_CFG.windows) || {};
+    const out = [];
+    for (const id in wins) {
+      if (!ROUTINES[id]) continue;
+      const start = _hhmmToMin(wins[id].start), end = _hhmmToMin(wins[id].end);
+      if (Number.isFinite(start) && Number.isFinite(end)) out.push({ id, start, end });
     }
-    // All time-appropriate ones done — find any incomplete
-    for (const { id } of ROUTINE_ORDER) {
-      if (ROUTINES[id] && topLevelDone(id) < ROUTINES[id].total) return id;
+    // No windows configured? Fall back to coarse day-parts so the page still works.
+    if (!out.length) {
+      [['am', 0, 720], ['af', 720, 1080], ['pm', 1080, 1440]].forEach(([id, start, end]) => {
+        if (ROUTINES[id]) out.push({ id, start, end });
+      });
     }
+    return out.sort((a, b) => a.start - b.start);
+  }
+
+  // Returns { id, state } where state is 'now' (window open), 'catchup'
+  // (window closed but unfinished) or 'soon' (window hasn't opened yet), or null.
+  function currentRoutineFocus() {
+    const mins = new Date().getHours() * 60 + new Date().getMinutes();
+    const wins = routineWindows();
+    const incomplete = (w) => ROUTINES[w.id] && topLevelDone(w.id) < ROUTINES[w.id].total;
+    for (const w of wins) if (mins >= w.start && mins < w.end && incomplete(w)) return { id: w.id, state: 'now' };
+    for (const w of wins) if (mins >= w.end && incomplete(w)) return { id: w.id, state: 'catchup' };
+    for (const w of wins) if (mins < w.start && incomplete(w)) return { id: w.id, state: 'soon' };
     return null; // all complete
   }
+
+  let _greetScrolled = false;
 
   function updateGreetingAndBadge() {
     const hour = new Date().getHours();
     const salutation = hour < 12 ? '☀️ Good morning' : hour < 18 ? '🌤 Good afternoon' : '🌙 Good evening';
-    const currentId = currentRoutineId();
+    const focus = currentRoutineFocus();
     const greetEl = document.getElementById('greeting');
 
     // Clear all now badges and current highlights
     document.querySelectorAll('.now-badge').forEach(b => b.classList.remove('visible'));
     document.querySelectorAll('.routine-card').forEach(c => c.classList.remove('current'));
 
-    if (currentId) {
-      const name = ROUTINES[currentId] ? document.querySelector(`#card-${currentId} .routine-title`)?.textContent : '';
-      greetEl.innerHTML = `${salutation}, Violet! <strong>Start with ${name}.</strong>`;
-      document.getElementById(`now-${currentId}`)?.classList.add('visible');
-      document.getElementById(`card-${currentId}`)?.classList.add('current');
-      // scroll into view on first load
-      setTimeout(() => {
-        document.getElementById(`card-${currentId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
-    } else {
+    if (!focus) {
       greetEl.innerHTML = `${salutation}, Violet! <strong>All done today — you're amazing! 🌟</strong>`;
+      return;
+    }
+
+    const name = document.querySelector(`#card-${focus.id} .routine-title`)?.textContent || '';
+    document.getElementById(`card-${focus.id}`)?.classList.add('current');
+
+    if (focus.state === 'soon') {
+      // Window isn't open yet — point ahead without flashing a "Now" pill.
+      greetEl.innerHTML = `${salutation}, Violet! <strong>Next up: ${name}.</strong>`;
+      return;
+    }
+
+    // Open now, or overdue and unfinished — this routine is active.
+    const lead = focus.state === 'catchup' ? `Time to finish ${name}.` : `Start with ${name}.`;
+    greetEl.innerHTML = `${salutation}, Violet! <strong>${lead}</strong>`;
+    document.getElementById(`now-${focus.id}`)?.classList.add('visible');
+    if (!_greetScrolled) {              // scroll to the active routine once per load
+      _greetScrolled = true;
+      setTimeout(() => {
+        document.getElementById(`card-${focus.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
     }
   }
 
@@ -1834,6 +1866,7 @@
   render();
   renderExtras();
   updateGreetingAndBadge();
+  setInterval(updateGreetingAndBadge, 30000);  // keep the Now pill in sync as windows open/close
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
