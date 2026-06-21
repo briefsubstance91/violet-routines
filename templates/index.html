@@ -185,12 +185,12 @@
       color: #b45309; background: #fef3c7; padding: 0.14rem 0.45rem; border-radius: 100px; white-space: nowrap; }
 
     /* ── Toonie tasks ── */
-    .routine-card.toonies { --accent: #16a34a; }
+    .routine-card.toonies { --accent: #16a34a; grid-column: 1 / -1; order: -1; }
     .routine-card.toonies .card-strip { background: linear-gradient(90deg, #34d399, #16a34a); }
     .toonie-locked { display: flex; align-items: center; gap: 0.7rem; padding: 0.9rem 0.6rem; color: var(--muted);
       font-weight: 700; font-size: 0.92rem; line-height: 1.3; }
     .toonie-locked .tl-icon { font-size: 1.5rem; flex-shrink: 0; }
-    .toonie-grid { display: flex; flex-direction: column; gap: 0.55rem; }
+    .toonie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.55rem; }
     .toonie-card { display: flex; align-items: center; gap: 0.75rem; width: 100%; text-align: left;
       padding: 0.7rem 0.85rem; border: 2px solid #d1fae5; border-radius: 16px; background: #f0fdf4;
       font-family: inherit; cursor: pointer; transition: transform 0.1s, border-color 0.15s; }
