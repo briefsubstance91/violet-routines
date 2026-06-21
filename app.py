@@ -494,6 +494,29 @@ def save_toonies(data):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
+def _fmt_clock(hhmm):
+    """'06:00' → '6:00 AM', '15:30' → '3:30 PM'. Returns (label, meridiem)."""
+    try:
+        h, m = (int(x) for x in hhmm.split(':'))
+    except (ValueError, AttributeError):
+        return '', ''
+    mer = 'AM' if h < 12 else 'PM'
+    h12 = h % 12 or 12
+    return f'{h12}:{m:02d} {mer}', mer
+
+
+def window_time_label(win):
+    """Human range for a window dict, e.g. {'start':'06:00','end':'09:00'} →
+    '6:00–9:00 AM'. Drops the repeated meridiem when start and end share one."""
+    start, smer = _fmt_clock((win or {}).get('start', ''))
+    end,   emer = _fmt_clock((win or {}).get('end', ''))
+    if not start or not end:
+        return ''
+    if smer == emer:
+        return f"{start.rsplit(' ', 1)[0]}–{end}"   # '6:00–9:00 AM'
+    return f"{start}–{end}"                           # '11:00 AM–1:00 PM'
+
+
 def _now_local(cfg=None):
     """Current time in the configured timezone (falls back to naive local)."""
     tz_name = (cfg or load_toonies()).get('timezone') or DEFAULT_TZ
@@ -1264,6 +1287,13 @@ def index():
     routines   = load_routines()
     phrases    = load_phrases()
     milestones = load_milestones()
+    # Show each routine's real window range as its time copy (single source of
+    # truth = the toonie window config), falling back to the CSV's Time value.
+    _windows = load_toonies().get('windows', {})
+    for r in routines:
+        label = window_time_label(_windows.get(r['id']))
+        if label:
+            r['time'] = label
     routines_cfg = {
         r['id']: {
             'total': len(r['tasks']),
