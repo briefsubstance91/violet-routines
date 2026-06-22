@@ -280,6 +280,8 @@
       padding: 0.9rem 1.5rem; text-align: center;
     }
     .save-bar.visible { display: block; }
+    .save-bar.saved { background: var(--green); }
+    .save-bar.error { background: #ef4444; }
     .save-bar-inner { max-width: 880px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
     .save-bar p { font-size: 0.9rem; font-weight: 700; }
     .save-action-btn {
@@ -362,12 +364,15 @@
 
 <div class="save-bar" id="saveBar">
   <div class="save-bar-inner">
-    <p>You have unsaved changes</p>
-    <button class="save-action-btn" onclick="saveAll()">Save 💜</button>
+    <p id="saveStatus">💜 Saving…</p>
+    <button class="save-action-btn" onclick="saveAll()">Save now</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+
+<datalist id="charityList"></datalist>
+<datalist id="causeList"></datalist>
 
 <script>
   const MONTH_ORDER = ['January','February','March','April','May','June',
@@ -424,9 +429,29 @@
     return 'planned';
   }
 
+  let saveTimer = null, hideTimer = null;
+
   function markDirty() {
     dirty = true;
-    document.getElementById('saveBar').classList.add('visible');
+    setSaveStatus('saving');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveAll, 700);   // debounced auto-save
+  }
+
+  function setSaveStatus(state) {
+    const bar = document.getElementById('saveBar');
+    const txt = document.getElementById('saveStatus');
+    bar.classList.add('visible');
+    bar.classList.toggle('saved', state === 'saved');
+    bar.classList.toggle('error', state === 'error');
+    clearTimeout(hideTimer);
+    if (state === 'saving') txt.textContent = '💜 Saving…';
+    else if (state === 'saved') {
+      txt.textContent = '✓ All changes saved';
+      hideTimer = setTimeout(() => bar.classList.remove('visible'), 1800);
+    } else {
+      txt.textContent = '⚠️ Couldn’t save — check your connection';
+    }
   }
 
   function renderStats() {
@@ -560,8 +585,8 @@
       form.className = 'add-charity-form';
       form.innerHTML = `
         <div class="add-charity-row">
-          <input class="add-input" placeholder="Charity name" data-month="${g.month}" data-year="${g.year}" id="name-${g.month}-${g.year}">
-          <input class="add-input cause-input" placeholder="Cause (optional)" id="cause-${g.month}-${g.year}">
+          <input class="add-input" placeholder="Charity name" list="charityList" data-month="${g.month}" data-year="${g.year}" id="name-${g.month}-${g.year}" onchange="prefillCause('${g.month}',${g.year})">
+          <input class="add-input cause-input" placeholder="City / cause" list="causeList" id="cause-${g.month}-${g.year}">
         </div>
         <div class="add-charity-row">
           <input class="add-input" placeholder="Notes (optional)" id="notes-${g.month}-${g.year}" style="flex:1">
@@ -581,6 +606,35 @@
 
     renderStats();
     renderPot();
+    buildPresets();
+  }
+
+  // ── Preset charities + cities (select instead of retyping) ──
+  const SEED_CHARITIES = ['Daily Bread Food Bank','United 24','Doctors Without Borders',
+    'Oxfam','UNICEF','Red Cross','PLAN International','SickKids Foundation'];
+  const SEED_CAUSES = ['Toronto','Ukraine','Palestine','USA','Canada','Global'];
+
+  function uniqSorted(arr) {
+    return [...new Set(arr.map(s => (s || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }
+  function escAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
+
+  function buildPresets() {
+    const charities = uniqSorted([...SEED_CHARITIES, ...data.map(r => r.charity)]);
+    const causes    = uniqSorted([...SEED_CAUSES, ...data.map(r => r.cause)]);
+    document.getElementById('charityList').innerHTML = charities.map(c => `<option value="${escAttr(c)}">`).join('');
+    document.getElementById('causeList').innerHTML   = causes.map(c => `<option value="${escAttr(c)}">`).join('');
+  }
+
+  // When a known charity is picked, auto-fill its usual city/cause (if blank)
+  function prefillCause(month, year) {
+    const nameEl  = document.getElementById(`name-${month}-${year}`);
+    const causeEl = document.getElementById(`cause-${month}-${year}`);
+    if (!nameEl || !causeEl || causeEl.value.trim()) return;
+    const name = nameEl.value.trim().toLowerCase();
+    const match = [...data].reverse().find(r =>
+      (r.charity || '').trim().toLowerCase() === name && (r.cause || '').trim());
+    if (match) causeEl.value = match.cause;
   }
 
   function setAmount(idx, val) {
@@ -646,16 +700,16 @@
   }
 
   async function saveAll() {
-    const resp = await fetch('/charities/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (resp.ok) {
-      dirty = false;
-      document.getElementById('saveBar').classList.remove('visible');
-      showToast('Saved! 💜');
-    }
+    clearTimeout(saveTimer);
+    try {
+      const resp = await fetch('/charities/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (resp.ok) { dirty = false; setSaveStatus('saved'); }
+      else { setSaveStatus('error'); }
+    } catch (e) { setSaveStatus('error'); }
   }
 
   function showToast(msg) {
