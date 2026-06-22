@@ -1087,6 +1087,15 @@
   const CEL_ROUTINES  = {{ cel_routines_json | safe }};
   const CEL_MILESTONES = {{ cel_milestones_json | safe }};
 
+  // Encouraging phrases shown on the completion screen (rewards live elsewhere now).
+  const ENCOURAGE = [
+    'So proud of you! 💜', 'You showed up — that’s everything.', 'Look at you go! ⭐',
+    'Another one done. Amazing.', 'You’re building something great.',
+    'That’s how legends are made. ✨', 'Keep shining, superstar! 🌟',
+    'You did the thing! 🎉', '1% better every day. 💪', 'Way to follow through!',
+    'Your future self says thank you. 💫', 'Small steps, big magic. 🪄',
+  ];
+
   const TODAY = new Date().toDateString();
 
   // ── Synced progress ──────────────────────────────────────
@@ -1398,8 +1407,8 @@
 
     document.getElementById('cel-emoji').textContent  = ROUTINES[routine].emoji;
     document.getElementById('cel-title').textContent  = pick.title;
-    document.getElementById('cel-sub').textContent    = pick.reward;
-    document.getElementById('cel-streak').textContent = milestone || (days > 1 ? `🌟 ${days} days completed!` : '');
+    document.getElementById('cel-sub').textContent    = ENCOURAGE[Math.floor(Math.random() * ENCOURAGE.length)];
+    document.getElementById('cel-streak').textContent = days > 1 ? `🌟 ${days} days completed!` : '';
     const chars = (CEL_ROUTINES[routine] || []).length ? CEL_ROUTINES[routine] : TREAT_SRCS;
     document.getElementById('cel-treat-deco').src = chars[Math.floor(Math.random() * chars.length)];
 
