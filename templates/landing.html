@@ -96,6 +96,21 @@
       margin-bottom: 0.4rem;
     }
 
+    /* ── Weather widget ── */
+    .hero-weather {
+      display: inline-flex; align-items: center; gap: 0.65rem;
+      background: rgba(255,255,255,0.72);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      border: 1.5px solid var(--border); border-radius: 18px;
+      padding: 0.5rem 0.95rem; margin-top: 1rem;
+      box-shadow: 0 4px 18px rgba(78,58,180,0.1);
+    }
+    .hw-emoji { font-size: 1.8rem; line-height: 1; }
+    .hw-main { display: flex; flex-direction: column; line-height: 1.15; }
+    .hw-temp { font-family: 'Fredoka One', cursive; font-size: 1.35rem; color: var(--text); }
+    .hw-desc { font-size: 0.7rem; font-weight: 800; color: var(--muted); }
+    .hw-hilo { font-size: 0.74rem; font-weight: 800; color: var(--purple); margin-left: 0.35rem; white-space: nowrap; }
+
     .hero-title {
       font-family: 'Fredoka One', cursive;
       font-size: 2.6rem; line-height: 1.05;
@@ -264,6 +279,14 @@
     <div class="hero-greeting" id="heroGreeting">Good morning</div>
     <div class="hero-title">Violet's<br>Life OS ✦</div>
     <div class="hero-sub">Your routines, wins &<br>everything in between.</div>
+    <div class="hero-weather" id="heroWeather" style="display:none">
+      <span class="hw-emoji" id="hwEmoji">⛅</span>
+      <span class="hw-main">
+        <span class="hw-temp" id="hwTemp">–</span>
+        <span class="hw-desc" id="hwDesc"></span>
+      </span>
+      <span class="hw-hilo" id="hwHilo"></span>
+    </div>
     <div class="hero-streak" id="heroStreak" style="display:none">
       🌟 <span id="streakVal">0</span> days completed
     </div>
@@ -334,6 +357,41 @@
   const h = new Date().getHours();
   document.getElementById('heroGreeting').textContent =
     h < 12 ? 'Good morning ☁️' : h < 17 ? 'Good afternoon 🌸' : 'Good evening 🌙';
+
+  // ── Live weather — fixed location: Toronto (M6K) ──
+  const WX_LAT = 43.64, WX_LON = -79.43;
+  function wxInfo(code) {
+    const m = {
+      0:['☀️','Sunny'], 1:['🌤️','Mostly sunny'], 2:['⛅','Partly cloudy'], 3:['☁️','Cloudy'],
+      45:['🌫️','Foggy'], 48:['🌫️','Foggy'],
+      51:['🌦️','Light drizzle'], 53:['🌦️','Drizzle'], 55:['🌦️','Heavy drizzle'],
+      56:['🌧️','Freezing drizzle'], 57:['🌧️','Freezing drizzle'],
+      61:['🌧️','Light rain'], 63:['🌧️','Rain'], 65:['🌧️','Heavy rain'],
+      66:['🌧️','Freezing rain'], 67:['🌧️','Freezing rain'],
+      71:['🌨️','Light snow'], 73:['🌨️','Snow'], 75:['🌨️','Heavy snow'], 77:['🌨️','Snow'],
+      80:['🌦️','Rain showers'], 81:['🌦️','Rain showers'], 82:['🌦️','Heavy showers'],
+      85:['🌨️','Snow showers'], 86:['🌨️','Snow showers'],
+      95:['⛈️','Thunderstorm'], 96:['⛈️','Thunderstorm'], 99:['⛈️','Thunderstorm'],
+    };
+    return m[code] || ['🌡️','—'];
+  }
+  async function loadWeather() {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${WX_LAT}&longitude=${WX_LON}`
+        + `&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min`
+        + `&timezone=auto&temperature_unit=celsius`;
+      const d = await (await fetch(url)).json();
+      const [emoji, desc] = wxInfo(d.current.weather_code);
+      document.getElementById('hwEmoji').textContent = emoji;
+      document.getElementById('hwTemp').textContent  = Math.round(d.current.temperature_2m) + '°';
+      document.getElementById('hwDesc').textContent  = desc;
+      document.getElementById('hwHilo').textContent  =
+        'H ' + Math.round(d.daily.temperature_2m_max[0]) + '°  ·  L ' + Math.round(d.daily.temperature_2m_min[0]) + '°';
+      document.getElementById('heroWeather').style.display = 'inline-flex';
+    } catch (e) { /* network issue — leave the widget hidden */ }
+  }
+  loadWeather();
+  setInterval(loadWeather, 15 * 60 * 1000);   // refresh every 15 minutes
 
   // Days completed from synced progress (cumulative, never resets)
   const PROGRESS = {{ progress_json | safe }};
