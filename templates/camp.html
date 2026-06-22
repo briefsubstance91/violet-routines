@@ -72,14 +72,13 @@
     <h1>🏕️ Camp Packing</h1>
     <button class="menu-btn" onclick="openMenu()">☰</button>
   </div>
-  <div class="sub">Quantities for the <strong>2-week</strong> session · tick ☑ when it's in the trunk, and again on the way home.</div>
+  <div class="sub">Quantities for the <strong>2-week</strong> session · tick ☑ when it's packed in her trunk.</div>
 
   <div class="summary">
     <div class="stat"><div class="n" id="toN">0/0</div><div class="l">Packed for camp</div></div>
-    <div class="stat home"><div class="n" id="homeN">0/0</div><div class="l">Packed for home</div></div>
   </div>
 
-  <div class="hint">💡 Two ticks per item: <strong>Trunk</strong> = packed to take, <strong>Home</strong> = packed to bring back. Saved on this device.</div>
+  <div class="hint">💡 Tick each item once it's in the trunk. Saved on this device.</div>
 
   <div id="list"></div>
 
@@ -185,17 +184,15 @@
       const packed = ids.filter(id => state[id + '-to']).length;
       let s = '<div class="sec">';
       s += `<div class="sec-head"><span class="sec-title">${esc(sec.title)}</span><span class="sec-count">${packed}/${sec.items.length} packed</span></div>`;
-      s += `<div class="col-key"><span>Trunk</span><span>Home</span></div>`;
       sec.items.forEach((it, ii) => {
         const id = `s${si}-${ii}`;
-        const to = !!state[id + '-to'], home = !!state[id + '-home'];
+        const to = !!state[id + '-to'];
         const qty = it.q ? `<span class="ci-qty">×${it.q}</span>` : '';
         s += `<div class="ci${to ? ' packed' : ''}">
           <div class="ci-body"><div class="ci-label">${esc(it.l)}</div></div>
           ${qty}
           <div class="ticks">
             <button class="tick to${to ? ' on' : ''}" onclick="toggle('${id}','to')">✓</button>
-            <button class="tick home${home ? ' on' : ''}" onclick="toggle('${id}','home')">✓</button>
           </div>
         </div>`;
       });
@@ -207,13 +204,11 @@
   }
 
   function updateCounts() {
-    let to = 0, home = 0;
+    let to = 0;
     SECTIONS.forEach((sec, si) => sec.items.forEach((_, ii) => {
       if (state[`s${si}-${ii}-to`]) to++;
-      if (state[`s${si}-${ii}-home`]) home++;
     }));
     document.getElementById('toN').textContent = `${to}/${TOTAL}`;
-    document.getElementById('homeN').textContent = `${home}/${TOTAL}`;
   }
 
   function toggle(id, which) {
