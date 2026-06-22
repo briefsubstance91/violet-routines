@@ -401,7 +401,6 @@
       top: -55px; right: -10px;
       width: 115px; height: 115px;
       object-fit: contain;
-      border-radius: 16px;
       animation: treatFloat 2.8s ease-in-out infinite;
       pointer-events: none;
       transform-origin: center bottom;
@@ -1431,11 +1430,14 @@
   let particles = [], animId = null;
 
   const TREAT_SRCS = [
-    '/static/Design elements and icons/276785187fab2ab8be90f6e538bba322.png',
-    '/static/Design elements and icons/283fe7d3d96975d6c31dab5edc2ab179.png',
-    '/static/Design elements and icons/7939575ac7c9c9c48035185d841b982a.png',
-    '/static/Design elements and icons/872d9565a164222b8dc2482f4e3afe1f.png',
-    '/static/Design elements and icons/8f4f58699df5de7e89c897afdf7c5a6f.png',
+    '/static/treats/candy-blue.png', '/static/treats/candy-crystal-1.png',
+    '/static/treats/candy-crystal-2.png', '/static/treats/cupcake.png',
+    '/static/treats/donut-blue.png', '/static/treats/fries.png',
+    '/static/treats/gem-blue.png', '/static/treats/gem-blue-2.png',
+    '/static/treats/gem-pink.png', '/static/treats/gem-sapphire.png',
+    '/static/treats/gummybear-blue.png', '/static/treats/gummybear-rainbow.png',
+    '/static/treats/icecream-pink.png', '/static/treats/icecream-vanilla.png',
+    '/static/treats/ringpop-blue.png',
   ];
   const TREAT_IMGS = TREAT_SRCS.map(src => { const i = new Image(); i.src = src; return i; });
 
@@ -1472,7 +1474,6 @@
       objectFit: 'contain',
       pointerEvents: 'none',
       zIndex: '500',
-      mixBlendMode: 'multiply',
       transition: 'transform 0.55s cubic-bezier(0.34,1.56,0.64,1), opacity 0.55s ease',
       transform: 'scale(0) rotate(-25deg)',
       opacity: '1',
