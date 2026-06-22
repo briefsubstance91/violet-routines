@@ -135,6 +135,13 @@
     .gc-bar { width: 100%; background: linear-gradient(to top, var(--purple), var(--pink)); border-radius: 6px 6px 0 0; min-height: 3px; transition: height 0.5s; }
     .gc-cap { font-size: 0.66rem; font-weight: 800; color: #1e1b4b; }
     .gc-day { font-size: 0.58rem; font-weight: 700; color: var(--muted); }
+    /* line chart (cumulative $ given) */
+    .give-chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .gl-line { fill: none; stroke: var(--purple); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+    .gl-area { fill: rgba(155,135,245,0.12); stroke: none; }
+    .gl-dot  { fill: #fff; stroke: var(--purple); stroke-width: 2.5; }
+    .gl-lbl  { font-family: 'Nunito', sans-serif; font-size: 9px; font-weight: 700; fill: var(--muted); }
+    .gl-val  { font-family: 'Nunito', sans-serif; font-size: 10px; font-weight: 800; fill: var(--purple); }
     .cause-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
     .cause-row:last-child { margin-bottom: 0; }
     .cause-name { font-size: 0.78rem; font-weight: 700; width: 92px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -429,17 +436,23 @@
     const charitySet = new Set(donated.map(r => (r.charity || '').trim()).filter(Boolean));
     const countrySet = new Set(donated.map(r => (r.cause   || '').trim()).filter(Boolean));
 
-    // donations per month (count), chronological, last 12
+    // donations per month (count + $), chronological, last 12
     const mMap = {};
     donated.forEach(r => {
       const k = `${r.month}|${r.year}`;
-      if (!mMap[k]) mMap[k] = { count: 0, month: r.month, year: r.year };
+      if (!mMap[k]) mMap[k] = { count: 0, amount: 0, month: r.month, year: r.year };
       mMap[k].count++;
+      mMap[k].amount += parseFloat(r.amount) || 0;
     });
     const months = Object.values(mMap).sort((a, b) =>
       a.year !== b.year ? a.year - b.year : MONTH_ORDER.indexOf(a.month) - MONTH_ORDER.indexOf(b.month)
     ).slice(-12);
     const maxCount = Math.max(1, ...months.map(m => m.count));
+
+    // cumulative $ given over time → line graph (only if any $ recorded)
+    let cum = 0;
+    const cumPts = months.map(m => { cum += m.amount; return { label: m.month.slice(0, 3), total: cum }; });
+    const cumChart = (months.length >= 2 && cum > 0) ? lineChart(cumPts) : '';
 
     // % share breakdown — bar width and label both show share of all donations
     function shareBars(field, title, icon, emptyMsg) {
@@ -472,9 +485,32 @@
         ).join('')}</div>` : `<div class="gc-empty">No donations logged yet.</div>`}
       </div>`;
 
-    document.getElementById('statsBar').innerHTML = kpis + monthChart
+    document.getElementById('statsBar').innerHTML = kpis + monthChart + cumChart
       + shareBars('charity', 'Share by charity', '🏛️', 'No donations logged yet.')
       + shareBars('cause', 'Share by country', '🌍', 'Tag donations with a country to see this.');
+  }
+
+  // SVG line chart of cumulative dollars given over time
+  function lineChart(pts) {
+    const W = 300, H = 120, padL = 14, padR = 14, padT = 18, padB = 22;
+    const n = pts.length;
+    const maxV = Math.max(1, ...pts.map(p => p.total));
+    const x = i => padL + (n === 1 ? 0 : i * (W - padL - padR) / (n - 1));
+    const y = v => (H - padB) - (v / maxV) * (H - padT - padB);
+    const xy = pts.map((p, i) => [x(i), y(p.total)]);
+    const line = xy.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+    const area = `M${x(0).toFixed(1)} ${H - padB} ` +
+      xy.map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') +
+      ` L${x(n - 1).toFixed(1)} ${H - padB} Z`;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Total given over time">`;
+    svg += `<path class="gl-area" d="${area}"/><path class="gl-line" d="${line}"/>`;
+    pts.forEach((p, i) => {
+      svg += `<circle class="gl-dot" cx="${x(i).toFixed(1)}" cy="${y(p.total).toFixed(1)}" r="3"/>`;
+      svg += `<text class="gl-lbl" x="${x(i).toFixed(1)}" y="${H - 7}" text-anchor="middle">${p.label}</text>`;
+    });
+    svg += `<text class="gl-val" x="${x(n - 1).toFixed(1)}" y="${(y(pts[n - 1].total) - 7).toFixed(1)}" text-anchor="end">${fmtMoney(pts[n - 1].total)}</text>`;
+    svg += `</svg>`;
+    return `<div class="give-chart"><div class="gc-title">📈 Total given over time</div>${svg}</div>`;
   }
 
   function renderTimeline() {
@@ -483,8 +519,11 @@
     tl.innerHTML = '';
 
     groups.forEach(g => {
-      const donated = g.charities.filter(c => c.status === 'donated').length;
-      const total   = g.charities.length;
+      // Real charities only — placeholder rows (blank charity) keep an empty
+      // month visible but aren't shown or counted as entries.
+      const real    = g.charities.filter(c => c.charity);
+      const donated = real.filter(c => c.status === 'donated').length;
+      const total   = real.length;
 
       const card = document.createElement('div');
       card.className = 'month-card';
@@ -495,7 +534,7 @@
         </div>
       `;
 
-      g.charities.forEach((c, ci) => {
+      real.forEach((c, ci) => {
         const globalIdx = data.indexOf(c);
         const row = document.createElement('div');
         row.className = `charity-row ${c.status}`;
@@ -575,6 +614,8 @@
                 cause: (causeEl.value || '').trim(),
                 status: 'planned', notes: (notesEl.value || '').trim(),
                 amount: parseFloat(amtEl.value) || 0 });
+    // Drop the now-redundant blank placeholder for this month.
+    data = data.filter(r => r.charity || !(r.month === month && r.year === parseInt(year)));
     nameEl.value = ''; causeEl.value = ''; notesEl.value = ''; amtEl.value = '';
     markDirty();
     renderTimeline();
@@ -585,11 +626,8 @@
     const year  = parseInt(document.getElementById('newMonthYear').value);
     const exists = data.some(r => r.month === month && r.year === year);
     if (exists) { showToast(`${month} ${year} already exists`); return; }
-    data.push({ month, year, charity: '', cause: '', status: 'planned', notes: '' });
-    data = data.filter(r => r.charity); // remove placeholder if any
-    // force the month to appear by adding a placeholder we'll show...
-    // Actually just add a real first entry via the form after month appears
-    // For now just push a visible placeholder
+    // Push a placeholder row so the (empty) month appears and persists.
+    data.push({ month, year, charity: '', cause: '', status: 'planned', notes: '', amount: 0 });
     markDirty();
     renderTimeline();
     showToast(`${month} ${year} added — now add charities below`);

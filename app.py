@@ -210,7 +210,10 @@ def load_charities():
     try:
         with open(path, newline='', encoding='utf-8-sig') as f:
             for row in csv.DictReader(f):
-                if row.get('Charity', '').strip():
+                # Keep any row that names a month — a row with a blank charity
+                # is a placeholder for a month added but not yet filled in, so
+                # it must survive load/save too.
+                if row.get('Month', '').strip():
                     try:
                         amount = float(row.get('Amount') or 0)
                     except ValueError:
@@ -218,7 +221,7 @@ def load_charities():
                     rows.append({
                         'month':   row['Month'].strip(),
                         'year':    int(row['Year'].strip() or 0),
-                        'charity': row['Charity'].strip(),
+                        'charity': row.get('Charity', '').strip(),
                         'cause':   row.get('Cause', '').strip(),
                         'status':  row.get('Status', 'planned').strip(),
                         'notes':   row.get('Notes', '').strip(),
@@ -1893,6 +1896,13 @@ def dashboard():
     routines_raw   = load_tasks_raw()
     tag_breakdown  = compute_tag_breakdown(routines_raw)
 
+    # Family Giving summary
+    charities      = load_charities()
+    given          = [c for c in charities if c['charity'] and c['status'] == 'donated']
+    giving_total   = len(given)
+    giving_months  = len({(c['month'], c['year']) for c in given})
+    giving_amount  = round(sum(c.get('amount', 0) for c in given), 2)
+
     return render_template(
         'dashboard.html',
         stats=s,
@@ -1907,6 +1917,9 @@ def dashboard():
         today_iso=date.today().isoformat(),
         tag_breakdown=tag_breakdown,
         progress_json=json.dumps(load_progress(current_profile())),
+        giving_total=giving_total,
+        giving_months=giving_months,
+        giving_amount=giving_amount,
     )
 
 
