@@ -1082,6 +1082,7 @@
 <script>
   const ROUTINES   = {{ routines_json | safe }};
   const PHRASES       = {{ phrases_json | safe }};
+  const TITLES        = {{ titles_json | safe }};   // completion titles per routine (editable in Admin)
   const MILESTONES    = {{ milestones_json | safe }};
   const IMAGES        = {{ images_json | safe }};
   const CEL_ROUTINES  = {{ cel_routines_json | safe }};
@@ -1394,14 +1395,14 @@
     }
 
     checkBadges(routine);
-    const phrases  = PHRASES[routine] || [];
-    const pick     = phrases[Math.floor(Math.random() * phrases.length)] || { title: 'Amazing!', reward: 'You did it!' };
+    const tl    = TITLES[routine] || [];
+    const title = tl[Math.floor(Math.random() * tl.length)] || 'Amazing!';
     // milestone rewards fire only when the day count newly crosses a threshold
     const ms = firstFinishToday ? MILESTONES[String(days)] : null;
     const milestone = ms ? ms.message : null;
 
     document.getElementById('cel-emoji').textContent  = ROUTINES[routine].emoji;
-    document.getElementById('cel-title').textContent  = pick.title;
+    document.getElementById('cel-title').textContent  = title;
     document.getElementById('cel-sub').textContent    = ENCOURAGE[Math.floor(Math.random() * ENCOURAGE.length)];
     document.getElementById('cel-streak').textContent = days > 1 ? `🌟 ${days} days completed!` : '';
     const chars = (CEL_ROUTINES[routine] || []).length ? CEL_ROUTINES[routine] : TREAT_SRCS;

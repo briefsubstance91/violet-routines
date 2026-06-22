@@ -317,15 +317,20 @@
   <div class="help-box">
     <div class="help-title">💬 Completion phrases</div>
     <ul>
-      <li>These are the encouraging messages Violet sees when she finishes a routine — one is picked at random each time</li>
-      <li>Tap any phrase to edit it, <strong>+ Add</strong> for a new one, <strong>×</strong> to remove. Emojis welcome!</li>
-      <li>Rewards live in the routine-rewards feature — these are just cheers</li>
+      <li>When Violet finishes a routine she sees a <strong>title</strong> (the big headline) plus a smaller <strong>encouragement</strong> — each picked at random</li>
+      <li>Titles can be set per routine (Morning / Afternoon / Evening); encouragements are shared across all routines</li>
+      <li>Tap any line to edit, <strong>+ Add</strong> for a new one, <strong>×</strong> to remove. Emojis welcome!</li>
     </ul>
   </div>
+
+  <p class="section-label" style="font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-size:0.78rem;margin:0.5rem 0">Titles · the big headline</p>
+  <div id="titlesWrap"></div>
+
+  <p class="section-label" style="font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-size:0.78rem;margin:1.25rem 0 0.5rem">Encouragements · the smaller line (shared)</p>
   <div class="card">
     <div id="phrasesList"></div>
     <div class="add-ms-wrap">
-      <button class="btn-ghost" onclick="addPhrase()">+ Add phrase</button>
+      <button class="btn-ghost" onclick="addPhrase()">+ Add encouragement</button>
     </div>
   </div>
 </div>
@@ -350,6 +355,7 @@
   let moneyMilestones = {{ money_milestones_json | safe }};
   let givingPct  = {{ giving_pct }};
   let phrases    = {{ encourage_json | safe }};
+  let titles     = {{ titles_json | safe }};
 
   /* ── Tab state ── */
   let activeTab = 'levelup';
@@ -387,7 +393,7 @@
     if (activeTab === 'levelup')    { url = '/admin/save';              body = levelup; }
     if (activeTab === 'milestones') { url = '/admin/milestones/save';   body = milestones; }
     if (activeTab === 'money')      { url = '/admin/money/save';        body = { giving_pct: givingPct, milestones: moneyMilestones }; }
-    if (activeTab === 'phrases')    { url = '/admin/phrases/save';      body = phrases.filter(p => (p || '').trim()); }
+    if (activeTab === 'phrases')    { url = '/admin/phrases/save';      body = { encourage: phrases, titles: titles }; }
     const res = await fetch(url, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(body)
@@ -673,6 +679,40 @@
     renderPhrases();
   }
 
+  const ROUTINE_LABELS = { am: '☀️ Morning', af: '🌸 Afternoon', pm: '🌙 Evening' };
+  function renderTitles() {
+    const wrap = document.getElementById('titlesWrap');
+    wrap.innerHTML = '';
+    ['am','af','pm'].forEach(rid => {
+      if (!titles[rid]) titles[rid] = [];
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.marginBottom = '0.75rem';
+      const rows = titles[rid].map((t, i) =>
+        `<div class="milestone-row">
+           <div class="ms-message" style="flex:1">
+             <input class="inp" value="${esc(t || '')}" placeholder="A title…"
+                    oninput="titles['${rid}'][${i}]=this.value; markDirty('phrases')">
+           </div>
+           <button class="btn-del" onclick="removeTitle('${rid}',${i})">×</button>
+         </div>`).join('');
+      card.innerHTML =
+        `<div style="font-weight:800;color:var(--text);margin-bottom:0.5rem">${ROUTINE_LABELS[rid]}</div>${rows}
+         <div class="add-ms-wrap"><button class="btn-ghost" onclick="addTitle('${rid}')">+ Add title</button></div>`;
+      wrap.appendChild(card);
+    });
+  }
+  function addTitle(rid) {
+    (titles[rid] = titles[rid] || []).push('');
+    markDirty('phrases');
+    renderTitles();
+  }
+  function removeTitle(rid, i) {
+    titles[rid].splice(i, 1);
+    markDirty('phrases');
+    renderTitles();
+  }
+
   /* ══════════════════════════════════════
      MONEY TAB
      ══════════════════════════════════════ */
@@ -738,6 +778,7 @@
   renderMilestones();
   renderMoney();
   renderPhrases();
+  renderTitles();
   updateSaveBtn();
 
   // Deep-link support: /admin#milestones (etc.) opens that tab directly
