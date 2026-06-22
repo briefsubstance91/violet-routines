@@ -1279,18 +1279,6 @@ def import_log():
     return jsonify({'imported': added, 'total': len(existing)})
 
 
-@app.route('/debug')
-def debug():
-    log_rows = load_log()
-    return jsonify({
-        'DATA_DIR': _DATA,
-        'LOG_FILE': LOG_FILE,
-        'log_exists': os.path.isfile(LOG_FILE),
-        'log_row_count': len(log_rows),
-        'last_5_rows': log_rows[-5:] if log_rows else [],
-    })
-
-
 @app.route('/log', methods=['POST'])
 def log_entry():
     data = request.get_json()
