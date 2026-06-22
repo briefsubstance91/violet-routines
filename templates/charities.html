@@ -121,6 +121,29 @@
       letter-spacing: 0.08em; color: var(--muted); margin-top: 0.15rem;
     }
 
+    /* ── Executive summary (donut + trend) ── */
+    .exec {
+      background: var(--card); border: 1.5px solid var(--border); border-radius: 18px;
+      padding: 1.2rem 1.25rem; margin-bottom: 1rem; box-shadow: 0 6px 24px rgba(78,58,180,0.1);
+    }
+    .exec-top { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; align-items: center; }
+    @media (max-width: 540px) { .exec-top { grid-template-columns: 1fr; gap: 1.4rem; } }
+    .exec-donut { display: flex; flex-direction: column; align-items: center; gap: 0.65rem; }
+    .exec-donut svg { width: 150px; height: 150px; }
+    .exec-c-big { font-family: 'Fredoka One', cursive; font-size: 20px; fill: var(--purple); }
+    .exec-c-small { font-family: 'Nunito', sans-serif; font-size: 8px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; fill: var(--muted); }
+    .exec-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3rem 0.7rem; }
+    .exec-leg { font-size: 0.66rem; font-weight: 700; color: var(--text); display: inline-flex; align-items: center; gap: 0.3rem; }
+    .exec-leg b { color: var(--muted); font-weight: 800; }
+    .exec-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .exec-trend-title { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; }
+    .exec-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 1.1rem; }
+    @media (max-width: 540px) { .exec-kpis { grid-template-columns: repeat(2, 1fr); } }
+    .exec-kpi { text-align: center; }
+    .exec-kpi .gk-num { font-family: 'Fredoka One', cursive; font-size: 1.45rem; line-height: 1; background: linear-gradient(135deg, var(--purple), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .exec-kpi .gk-lbl { font-size: 0.56rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-top: 0.25rem; }
+    .exec-empty { color: var(--muted); font-size: 0.85rem; font-weight: 600; text-align: center; padding: 1rem; }
+
     /* ── Giving dashboard ── */
     .give-dash { margin-bottom: 1.75rem; }
     .give-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; margin-bottom: 0.85rem; }
@@ -494,25 +517,74 @@
       }</div>`;
     }
 
-    const kpis = `
-      <div class="give-kpis">
-        <div class="give-kpi"><div class="gk-num">${total}</div><div class="gk-lbl">Donations made</div></div>
-        <div class="give-kpi"><div class="gk-num">${monthsSet.size}</div><div class="gk-lbl">Months giving</div></div>
-        <div class="give-kpi"><div class="gk-num">${charitySet.size}</div><div class="gk-lbl">Charities supported</div></div>
-        <div class="give-kpi"><div class="gk-num">${countrySet.size}</div><div class="gk-lbl">Countries reached</div></div>
+    const kpiChips = `
+      <div class="exec-kpis">
+        <div class="exec-kpi"><div class="gk-num">${total}</div><div class="gk-lbl">Donations</div></div>
+        <div class="exec-kpi"><div class="gk-num">${monthsSet.size}</div><div class="gk-lbl">Months giving</div></div>
+        <div class="exec-kpi"><div class="gk-num">${charitySet.size}</div><div class="gk-lbl">Charities</div></div>
+        <div class="exec-kpi"><div class="gk-num">${countrySet.size}</div><div class="gk-lbl">Countries</div></div>
       </div>`;
 
-    const monthChart = `
-      <div class="give-chart">
-        <div class="gc-title">💜 Giving over time</div>
-        ${months.length ? `<div class="gc-bars">${months.map(m =>
+    // Donut — giving by country (cause), top 6 + Other
+    const cMap = {};
+    donated.forEach(r => { const k = (r.cause || '').trim() || 'Unspecified'; cMap[k] = (cMap[k] || 0) + 1; });
+    let cEntries = Object.entries(cMap).sort((a, b) => b[1] - a[1]);
+    if (cEntries.length > 6) {
+      const other = cEntries.slice(6).reduce((s, e) => s + e[1], 0);
+      cEntries = cEntries.slice(0, 6).concat([['Other', other]]);
+    }
+    const centerBig   = cum > 0 ? fmtMoney(cum) : String(total);
+    const centerSmall = cum > 0 ? 'given' : (total === 1 ? 'donation' : 'donations');
+    const donut = cEntries.length ? donutChart(cEntries, centerBig, centerSmall)
+      : { svg: '<div class="exec-empty">No giving logged yet.</div>', legend: '' };
+
+    // Trend — donations per month
+    const trend = months.length ? `
+      <div class="exec-trend">
+        <div class="exec-trend-title">📈 Giving over time</div>
+        <div class="gc-bars">${months.map(m =>
           `<div class="gc-col"><div class="gc-bar-wrap"><div class="gc-bar" style="height:${Math.round(m.count / maxCount * 100)}%"></div></div><div class="gc-cap">${m.count}</div><div class="gc-day">${m.month.slice(0, 3)}</div></div>`
-        ).join('')}</div>` : `<div class="gc-empty">No donations logged yet.</div>`}
+        ).join('')}</div>
+      </div>` : '<div class="exec-empty">No donations yet.</div>';
+
+    const execCard = `
+      <div class="exec">
+        <div class="exec-top">
+          <div class="exec-donut">${donut.svg}<div class="exec-legend">${donut.legend}</div></div>
+          <div>${trend}</div>
+        </div>
+        ${kpiChips}
       </div>`;
 
-    document.getElementById('statsBar').innerHTML = kpis + monthChart + cumChart
-      + shareBars('charity', 'Share by charity', '🏛️', 'No donations logged yet.')
-      + shareBars('cause', 'Share by country', '🌍', 'Tag donations with a country to see this.');
+    document.getElementById('statsBar').innerHTML = execCard + cumChart
+      + shareBars('charity', 'Share by charity', '🏛️', 'No donations logged yet.');
+  }
+
+  // SVG donut chart — segments by share, big number in the centre
+  function donutChart(entries, centerBig, centerSmall) {
+    const PAL = ['#9b87f5','#f472b6','#4db8ff','#34d399','#fbbf24','#fb7185','#a78bfa'];
+    const centre = `<text x="75" y="73" text-anchor="middle" class="exec-c-big">${escHtml(centerBig)}</text>` +
+                   `<text x="75" y="90" text-anchor="middle" class="exec-c-small">${escHtml(centerSmall)}</text>`;
+    if (entries.length === 1) {
+      const col = PAL[0];
+      return {
+        svg: `<svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="58" fill="${col}"/><circle cx="75" cy="75" r="38" fill="#fff"/>${centre}</svg>`,
+        legend: `<span class="exec-leg"><span class="exec-dot" style="background:${col}"></span>${escHtml(entries[0][0])} <b>100%</b></span>`,
+      };
+    }
+    const sum = entries.reduce((s, e) => s + e[1], 0) || 1;
+    const cx = 75, cy = 75, r = 58, rin = 38;
+    let a0 = -Math.PI / 2, paths = '', legend = '';
+    entries.forEach((e, i) => {
+      const frac = e[1] / sum, a1 = a0 + frac * 2 * Math.PI, col = PAL[i % PAL.length];
+      const p = (ra, an) => [cx + ra * Math.cos(an), cy + ra * Math.sin(an)];
+      const [x0, y0] = p(r, a0), [x1, y1] = p(r, a1), [xi1, yi1] = p(rin, a1), [xi0, yi0] = p(rin, a0);
+      const big = frac > 0.5 ? 1 : 0;
+      paths += `<path d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 ${big} 1 ${x1.toFixed(1)} ${y1.toFixed(1)} L${xi1.toFixed(1)} ${yi1.toFixed(1)} A${rin} ${rin} 0 ${big} 0 ${xi0.toFixed(1)} ${yi0.toFixed(1)} Z" fill="${col}"/>`;
+      legend += `<span class="exec-leg"><span class="exec-dot" style="background:${col}"></span>${escHtml(e[0])} <b>${Math.round(frac * 100)}%</b></span>`;
+      a0 = a1;
+    });
+    return { svg: `<svg viewBox="0 0 150 150">${paths}${centre}</svg>`, legend };
   }
 
   // SVG line chart of cumulative dollars given over time
