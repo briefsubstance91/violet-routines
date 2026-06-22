@@ -127,6 +127,7 @@
     }
 
     .badge-emoji { font-size: 2rem; line-height: 1; }
+    .badge-img { position: relative; z-index: 1; width: 62px; height: 62px; object-fit: contain; }
 
     /* polka-dot inner bg via radial-gradient */
     .badge-inner::before {
@@ -297,10 +298,18 @@
     inner.style.background = badge.bg;
     inner.style.color = badge.ring;
 
-    const emoji = document.createElement('span');
-    emoji.className = 'badge-emoji';
-    emoji.textContent = badge.emoji;
-    inner.appendChild(emoji);
+    if (badge.img) {
+      const img = document.createElement('img');
+      img.className = 'badge-img';
+      img.src = badge.img;
+      img.alt = badge.name;
+      inner.appendChild(img);
+    } else {
+      const emoji = document.createElement('span');
+      emoji.className = 'badge-emoji';
+      emoji.textContent = badge.emoji;
+      inner.appendChild(emoji);
+    }
 
     if (isEarned) {
       const stamp = document.createElement('div');
