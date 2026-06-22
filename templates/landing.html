@@ -47,13 +47,13 @@
     /* ── Hero ── */
     .hero {
       background: transparent;
-      min-height: 52vh;
+      min-height: auto;
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      padding-bottom: 2rem;
+      justify-content: flex-start;
+      padding: 2.25rem 0 1rem;
       z-index: 1;
     }
 
@@ -96,12 +96,17 @@
       margin-bottom: 0.4rem;
     }
 
+    /* ── Hero actions row (weather + CTA) ── */
+    .hero-actions {
+      display: flex; flex-wrap: wrap; align-items: center;
+      gap: 0.85rem; margin-top: 1.1rem; position: relative; z-index: 5;
+    }
+
     /* ── Weather card ── */
-    .weather-wrap { padding: 0 1.5rem; margin-top: 0.25rem; position: relative; z-index: 2; }
     .weather-card {
       display: flex; align-items: stretch;
-      max-width: 440px; margin: 0 auto;
-      border-radius: 18px; padding: 0.85rem 1.1rem;
+      flex: 0 1 320px; max-width: 320px;
+      border-radius: 18px; padding: 0.8rem 1rem;
       color: #fff;
       background: linear-gradient(135deg, #4db8ff, #9b87f5);
       box-shadow: 0 8px 22px rgba(78,58,180,0.2);
@@ -168,8 +173,8 @@
 
     /* ── Hub grid ── */
     .hub {
-      padding: 1.5rem 1rem 5rem;
-      max-width: 900px; margin: 0 auto;
+      padding: 1.1rem 1.5rem 2rem;
+      max-width: 1100px; margin: 0 auto;
     }
 
     .hub-label {
@@ -237,6 +242,24 @@
     .hub-card.wide .hub-card-icon { font-size: 2rem; }
     .hub-card.wide .hub-card-name { font-size: 1.1rem; }
 
+    /* ── Landscape (iPad): two-column hero + single hub row, all above the fold ── */
+    @media (min-width: 820px) {
+      .hero { padding: 2.5rem 0 0.75rem; }
+      .hero-content { max-width: 56%; }
+      .hero-char { width: 46%; }
+      .hero-title { font-size: 2.9rem; }
+      .hero-actions { flex-wrap: nowrap; }
+      .hero-streak { margin-top: 0.8rem; }
+      .hub { padding-top: 0.5rem; }
+      .hub-grid { grid-template-columns: repeat(6, 1fr); gap: 0.6rem; }
+      .hub-card { padding: 0.85rem 0.7rem; }
+      .hub-card-desc { font-size: 0.66rem; }
+      .hub-card.wide { grid-column: span 1; flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.85rem 0.7rem; }
+      .hub-card.wide .hub-card-icon { font-size: 1.7rem; }
+      .hub-card.wide .hub-card-name { font-size: 1.05rem; }
+      .hub-card.routines > span { display: none; }  /* hide the → arrow in compact mode */
+    }
+
     /* ── Menu ── */
     .menu-btn {
       position: absolute; top: calc(env(safe-area-inset-top) + 1rem); right: 1rem;
@@ -285,37 +308,29 @@
     <div class="hero-greeting" id="heroGreeting">Good morning</div>
     <div class="hero-title">Violet's<br>Life OS ✦</div>
     <div class="hero-sub">Your routines, wins &<br>everything in between.</div>
+    <div class="hero-actions">
+      <div class="weather-card" id="weatherCard" style="display:none">
+        <div class="wc-left">
+          <div class="wc-cond" id="wcCond">—</div>
+          <div class="wc-icon" id="wcIcon">⛅</div>
+        </div>
+        <div class="wc-div"></div>
+        <div class="wc-right">
+          <div class="wc-loc">Toronto, ON</div>
+          <div class="wc-day" id="wcDay">Today</div>
+          <div class="wc-temp" id="wcTemp">–°</div>
+          <div class="wc-temp-f" id="wcTempF"></div>
+          <div class="wc-hilo" id="wcHilo"></div>
+        </div>
+      </div>
+      <a href="/routines" class="cta-btn">✦ Open Routines</a>
+    </div>
     <div class="hero-streak" id="heroStreak" style="display:none">
       🌟 <span id="streakVal">0</span> days completed
     </div>
   </div>
   <div class="hero-curve"></div>
 </section>
-
-<!-- ── Weather ── -->
-<div class="weather-wrap">
-  <div class="weather-card" id="weatherCard" style="display:none">
-    <div class="wc-left">
-      <div class="wc-cond" id="wcCond">—</div>
-      <div class="wc-icon" id="wcIcon">⛅</div>
-    </div>
-    <div class="wc-div"></div>
-    <div class="wc-right">
-      <div class="wc-loc">Toronto, ON</div>
-      <div class="wc-day" id="wcDay">Today</div>
-      <div class="wc-temp" id="wcTemp">–°</div>
-      <div class="wc-temp-f" id="wcTempF"></div>
-      <div class="wc-hilo" id="wcHilo"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ── CTA ── -->
-<div class="cta-wrap">
-  <a href="/routines" class="cta-btn">
-    ✦ Open Routines
-  </a>
-</div>
 
 <!-- ── Hub ── -->
 <div class="hub">
