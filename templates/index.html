@@ -1087,14 +1087,9 @@
   const CEL_ROUTINES  = {{ cel_routines_json | safe }};
   const CEL_MILESTONES = {{ cel_milestones_json | safe }};
 
-  // Encouraging phrases shown on the completion screen (rewards live elsewhere now).
-  const ENCOURAGE = [
-    'So proud of you! 💜', 'You showed up — that’s everything.', 'Look at you go! ⭐',
-    'Another one done. Amazing.', 'You’re building something great.',
-    'That’s how legends are made. ✨', 'Keep shining, superstar! 🌟',
-    'You did the thing! 🎉', '1% better every day. 💪', 'Way to follow through!',
-    'Your future self says thank you. 💫', 'Small steps, big magic. 🪄',
-  ];
+  // Encouraging phrases shown on the completion screen — editable in Admin → Phrases.
+  const ENCOURAGE = ({{ encourage_json | safe }}).length ? {{ encourage_json | safe }}
+    : ['You did it! 🎉', 'So proud of you! 💜'];
 
   const TODAY = new Date().toDateString();
 

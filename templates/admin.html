@@ -179,6 +179,7 @@
     <button class="tab-btn active" id="tab-levelup" onclick="switchTab('levelup')">⚡ Level Up</button>
     <button class="tab-btn" id="tab-milestones" onclick="switchTab('milestones')">🏆 Milestones</button>
     <button class="tab-btn" id="tab-money" onclick="switchTab('money')">💰 Money</button>
+    <button class="tab-btn" id="tab-phrases" onclick="switchTab('phrases')">💬 Phrases</button>
   </div>
 </header>
 
@@ -309,6 +310,26 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════
+     TAB — COMPLETION PHRASES
+     ══════════════════════════════════════════ -->
+<div id="section-phrases" class="tab-content">
+  <div class="help-box">
+    <div class="help-title">💬 Completion phrases</div>
+    <ul>
+      <li>These are the encouraging messages Violet sees when she finishes a routine — one is picked at random each time</li>
+      <li>Tap any phrase to edit it, <strong>+ Add</strong> for a new one, <strong>×</strong> to remove. Emojis welcome!</li>
+      <li>Rewards live in the routine-rewards feature — these are just cheers</li>
+    </ul>
+  </div>
+  <div class="card">
+    <div id="phrasesList"></div>
+    <div class="add-ms-wrap">
+      <button class="btn-ghost" onclick="addPhrase()">+ Add phrase</button>
+    </div>
+  </div>
+</div>
+
 <script>
   /* ── Push test ── */
   async function sendTestPush() {
@@ -328,13 +349,14 @@
   let milestones = {{ milestones_json | safe }};
   let moneyMilestones = {{ money_milestones_json | safe }};
   let givingPct  = {{ giving_pct }};
+  let phrases    = {{ encourage_json | safe }};
 
   /* ── Tab state ── */
   let activeTab = 'levelup';
-  let dirty = { routines: false, levelup: false, milestones: false, money: false };
+  let dirty = { routines: false, levelup: false, milestones: false, money: false, phrases: false };
 
   function switchTab(name) {
-    ['routines','levelup','milestones','money'].forEach(t => {
+    ['routines','levelup','milestones','money','phrases'].forEach(t => {
       document.getElementById('section-' + t).classList.toggle('active', t === name);
       document.getElementById('tab-' + t).classList.toggle('active', t === name);
     });
@@ -365,6 +387,7 @@
     if (activeTab === 'levelup')    { url = '/admin/save';              body = levelup; }
     if (activeTab === 'milestones') { url = '/admin/milestones/save';   body = milestones; }
     if (activeTab === 'money')      { url = '/admin/money/save';        body = { giving_pct: givingPct, milestones: moneyMilestones }; }
+    if (activeTab === 'phrases')    { url = '/admin/phrases/save';      body = phrases.filter(p => (p || '').trim()); }
     const res = await fetch(url, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(body)
@@ -620,6 +643,37 @@
   }
 
   /* ══════════════════════════════════════
+     COMPLETION PHRASES TAB
+     ══════════════════════════════════════ */
+  function renderPhrases() {
+    const list = document.getElementById('phrasesList');
+    list.innerHTML = '';
+    phrases.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'milestone-row';
+      row.innerHTML = `
+        <div class="ms-message" style="flex:1">
+          <input class="inp" value="${esc(p || '')}" placeholder="An encouraging phrase…"
+                 oninput="phrases[${i}]=this.value; markDirty('phrases')">
+        </div>
+        <button class="btn-del" onclick="removePhrase(${i})">×</button>`;
+      list.appendChild(row);
+    });
+  }
+  function addPhrase() {
+    phrases.push('');
+    markDirty('phrases');
+    renderPhrases();
+    const rows = document.querySelectorAll('#phrasesList .milestone-row');
+    rows[rows.length - 1]?.querySelector('input')?.focus();
+  }
+  function removePhrase(i) {
+    phrases.splice(i, 1);
+    markDirty('phrases');
+    renderPhrases();
+  }
+
+  /* ══════════════════════════════════════
      MONEY TAB
      ══════════════════════════════════════ */
   function renderMoney() {
@@ -683,6 +737,7 @@
   renderLevelUp();
   renderMilestones();
   renderMoney();
+  renderPhrases();
   updateSaveBtn();
 
   // Deep-link support: /admin#milestones (etc.) opens that tab directly

@@ -32,6 +32,7 @@ LEVELUP_SEED_FILE  = os.path.join(_BASE, 'violet_data.json')
 LEVELUP_LOG_FILE   = os.path.join(_DATA, 'Violet Levelup Log.csv')
 VAPID_FILE         = os.path.join(_DATA, 'vapid_keys.json')
 PUSH_SUBS_FILE     = os.path.join(_DATA, 'push_subscriptions.json')
+ENCOURAGE_FILE     = os.path.join(_DATA, 'encourage_phrases.json')  # editable in Admin
 VAPID_CLAIMS       = {'sub': 'mailto:bgelineau@proton.me'}
 _already_notified   = {}  # {routine_id:date → True}
 CHARITIES_FILE      = os.path.join(_DATA, 'Violet Charities.csv')
@@ -1063,6 +1064,31 @@ def load_phrases():
     return phrases
 
 
+# Encouraging phrases shown on the completion screen — editable in Admin.
+SEED_ENCOURAGE = [
+    'So proud of you! 💜', 'You showed up — that’s everything.', 'Look at you go! ⭐',
+    'Another one done. Amazing.', 'You’re building something great.',
+    'That’s how legends are made. ✨', 'Keep shining, superstar! 🌟',
+    'You did the thing! 🎉', '1% better every day. 💪', 'Way to follow through!',
+    'Your future self says thank you. 💫', 'Small steps, big magic. 🪄',
+]
+
+
+def load_encourage():
+    try:
+        with open(ENCOURAGE_FILE, encoding='utf-8') as f:
+            v = json.load(f)
+        return v if isinstance(v, list) and v else list(SEED_ENCOURAGE)
+    except (FileNotFoundError, ValueError):
+        return list(SEED_ENCOURAGE)
+
+
+def save_encourage(lst):
+    clean = [s.strip() for s in lst if isinstance(s, str) and s.strip()]
+    with open(ENCOURAGE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(clean or list(SEED_ENCOURAGE), f, ensure_ascii=False, indent=2)
+
+
 def load_milestones():
     rows = scan_csv(_data_or_seed(MILESTONES_FILE, MILESTONES_SEED_FILE), 'Streak')
     milestones = {}
@@ -1409,6 +1435,7 @@ def index():
             [{'key': e['key'], 'value': e['value'], 'title': e['title']}
              for e in extras if e['type'] == 'task']),
         phrases_json=json.dumps(phrases),
+        encourage_json=json.dumps(load_encourage()),
         routines_json=json.dumps(routines_cfg),
         milestones_json=json.dumps(milestones),
         images_json=json.dumps(list_images()),
@@ -1530,7 +1557,14 @@ def admin():
         milestones_json=json.dumps(milestones),
         money_milestones_json=json.dumps(money_ms),
         giving_pct=int(round(giving_rate() * 100)),
+        encourage_json=json.dumps(load_encourage()),
     )
+
+
+@app.route('/admin/phrases/save', methods=['POST'])
+def admin_phrases_save():
+    save_encourage(request.get_json() or [])
+    return jsonify({'ok': True})
 
 
 @app.route('/admin/milestones/save', methods=['POST'])
