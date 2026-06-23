@@ -1,5 +1,6 @@
-const CACHE = 'violet-v7';
-const SHELL = ['/manifest.json', '/icon.svg'];
+const CACHE = 'violet-v8';
+const SHELL = ['/manifest.json', '/static/icons/icon-192.png', '/static/icons/icon-512.png',
+               '/static/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -21,8 +22,8 @@ self.addEventListener('push', e => {
   e.waitUntil(
     self.registration.showNotification(data.title || "Violet's Routines", {
       body:    data.body    || '',
-      icon:    data.icon    || '/icon.svg',
-      badge:   data.badge   || '/icon.svg',
+      icon:    data.icon    || '/static/icons/icon-192.png',
+      badge:   data.badge   || '/static/icons/icon-192.png',
       data:    data.data    || {},
       vibrate: [200, 100, 200],
     })

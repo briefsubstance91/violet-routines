@@ -1305,6 +1305,12 @@ def service_worker():
     return resp
 
 
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory(_BASE, 'manifest.json',
+                               mimetype='application/manifest+json')
+
+
 @app.route('/admin/import-log', methods=['POST'])
 def import_log():
     rows = request.get_json()
