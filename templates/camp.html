@@ -84,14 +84,13 @@
     <a class="edit-link" href="/admin/camp">✏️ Edit list</a>
     <button class="menu-btn" onclick="openMenu()">☰</button>
   </div>
-  <div class="sub">Quantities for the <strong id="sessionLabel">2-week</strong> session · tick ☑ when it's in the trunk, and again on the way home.</div>
+  <div class="sub">Quantities for the <strong id="sessionLabel">2-week</strong> session · tick ☑ each item once it's packed.</div>
 
   <div class="summary">
-    <div class="stat"><div class="n" id="toN">0/0</div><div class="l">Packed for camp</div></div>
-    <div class="stat home"><div class="n" id="homeN">0/0</div><div class="l">Packed for home</div></div>
+    <div class="stat"><div class="n" id="toN">0/0</div><div class="l">Packed</div></div>
   </div>
 
-  <div class="hint">💡 Two ticks per item: <strong>Trunk</strong> = packed to take, <strong>Home</strong> = packed to bring back. Synced across devices. Tap an item with a ▸ to see its parts.</div>
+  <div class="hint">💡 Tick each item once it's packed. Synced across devices · tap an item with a ▸ to see its parts.</div>
 
   <div id="list"></div>
 
@@ -156,13 +155,12 @@
   function qtyBadge(q) { return q ? `<span class="ci-qty">×${esc(q)}</span>` : ''; }
 
   function leafRow(node, cls) {
-    const to = !!state[node.id + '-to'], home = !!state[node.id + '-home'];
+    const to = !!state[node.id + '-to'];
     return `<div class="ci${cls ? ' ' + cls : ''}${to ? ' packed' : ''}">
         <div class="ci-body"><div class="ci-label">${esc(node.label)}</div></div>
         ${qtyBadge(node.qty)}
         <div class="ticks">
           <button class="tick to${to ? ' on' : ''}" onclick="toggle('${node.id}','to')">✓</button>
-          <button class="tick home${home ? ' on' : ''}" onclick="toggle('${node.id}','home')">✓</button>
         </div>
       </div>`;
   }
@@ -181,7 +179,6 @@
       const packed = leaves.filter(n => state[n.id + '-to']).length;
       let s = '<div class="sec">';
       s += `<div class="sec-head"><span class="sec-title">${esc(sec.title || '')}</span><span class="sec-count">${packed}/${leaves.length} packed</span></div>`;
-      s += `<div class="col-key"><span>Trunk</span><span>Home</span></div>`;
       (sec.items || []).forEach(it => {
         if (it.subitems && it.subitems.length) {
           const sp = it.subitems.filter(su => state[su.id + '-to']).length;
@@ -210,9 +207,7 @@
   function updateCounts() {
     const ids = leafIds();
     const to = ids.filter(id => state[id + '-to']).length;
-    const home = ids.filter(id => state[id + '-home']).length;
     document.getElementById('toN').textContent = `${to}/${ids.length}`;
-    document.getElementById('homeN').textContent = `${home}/${ids.length}`;
   }
 
   function toggle(id, which) {
