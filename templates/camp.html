@@ -17,7 +17,9 @@
     h1 { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.8rem;
       background:linear-gradient(135deg,#4db8ff,#9b87f5,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
     .sub { font-size:0.82rem; font-weight:700; color:var(--muted); margin-bottom:1rem; }
-    .menu-btn { margin-left:auto; background:rgba(255,255,255,0.7); border:none; font-size:1.5rem; color:var(--purple); cursor:pointer; padding:0.25rem 0.6rem; border-radius:10px; line-height:1; }
+    .edit-link { font-family:'Nunito',sans-serif; font-weight:800; font-size:0.74rem; color:var(--purple); background:rgba(255,255,255,0.7); border:1.5px solid var(--border); border-radius:100px; padding:0.35rem 0.8rem; text-decoration:none; }
+    .edit-link:hover { background:#fff; }
+    .menu-btn { background:rgba(255,255,255,0.7); border:none; font-size:1.5rem; color:var(--purple); cursor:pointer; padding:0.25rem 0.6rem; border-radius:10px; line-height:1; }
     .menu-btn:hover { background:#fff; }
     .menu-backdrop { display:none; position:fixed; inset:0; background:rgba(78,58,180,0.18); z-index:200; backdrop-filter:blur(2px); }
     .menu-backdrop.open { display:block; }
@@ -35,12 +37,9 @@
     .stat .n { font-family:'Fredoka One',cursive; font-size:1.35rem; color:var(--purple); line-height:1; }
     .stat .l { font-size:0.66rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); margin-top:0.25rem; }
     .stat.home .n { color:var(--green); }
-
     .hint { background:#ede9fe; border-left:3px solid var(--purple); border-radius:0 10px 10px 0; padding:0.6rem 0.85rem; font-size:0.78rem; font-weight:700; color:var(--text); line-height:1.45; margin-bottom:1.25rem; }
 
     /* ── Sections + items ── */
-    /* On a wide screen (landscape iPad) the sections sit side by side, like the
-       original packing sheet; on a phone they stack into one column. */
     #list { display:grid; grid-template-columns:repeat(auto-fit, minmax(340px,1fr)); gap:0 1.5rem; align-items:start; }
     .sec { min-width:0; }
     .sec-head { display:flex; align-items:baseline; gap:0.5rem; margin:1.1rem 0 0.5rem; }
@@ -61,24 +60,38 @@
     .tick.to.on { background:linear-gradient(135deg,var(--blue),var(--purple)); }
     .tick.home.on { background:linear-gradient(135deg,#34d399,var(--green)); }
 
+    /* ── Nested (parent item + subitems) ── */
+    .ci-parent { display:flex; align-items:center; gap:0.5rem; background:var(--card); border:1.5px solid var(--border); border-radius:13px; padding:0.6rem 0.7rem; margin-bottom:0.4rem; cursor:pointer; box-shadow:0 2px 10px rgba(78,58,180,0.04); }
+    .ci-parent .chev { font-size:0.8rem; color:var(--muted); transition:transform .2s; flex-shrink:0; width:0.9rem; text-align:center; }
+    .ci-parent.collapsed .chev { transform:rotate(-90deg); }
+    .ci-parent .ci-label { flex:1; font-weight:800; font-size:0.9rem; }
+    .ci-parent.done .ci-label { color:var(--muted); text-decoration:line-through; }
+    .ci-prog { font-size:0.68rem; font-weight:800; color:var(--muted); white-space:nowrap; }
+    .subwrap { margin:0 0 0.5rem 0.95rem; padding-left:0.6rem; border-left:2px solid var(--border); }
+    .subwrap.collapsed { display:none; }
+    .subwrap .ci { background:#fbfaff; }
+
     .actions { margin-top:1.5rem; text-align:center; }
     .reset { font-family:'Nunito',sans-serif; font-weight:800; font-size:0.8rem; color:var(--muted); background:rgba(255,255,255,0.7); border:1.5px solid var(--border); border-radius:100px; padding:0.5rem 1.1rem; cursor:pointer; }
     .reset:hover { color:var(--purple); background:#fff; }
+    .empty { background:var(--card); border:1.5px solid var(--border); border-radius:16px; padding:2rem 1.25rem; text-align:center; color:var(--muted); font-weight:700; }
   </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
     <h1>🏕️ Camp Packing</h1>
+    <a class="edit-link" href="/admin/camp">✏️ Edit list</a>
     <button class="menu-btn" onclick="openMenu()">☰</button>
   </div>
-  <div class="sub">Quantities for the <strong>2-week</strong> session · tick ☑ when it's packed in her trunk.</div>
+  <div class="sub">Quantities for the <strong id="sessionLabel">2-week</strong> session · tick ☑ when it's in the trunk, and again on the way home.</div>
 
   <div class="summary">
     <div class="stat"><div class="n" id="toN">0/0</div><div class="l">Packed for camp</div></div>
+    <div class="stat home"><div class="n" id="homeN">0/0</div><div class="l">Packed for home</div></div>
   </div>
 
-  <div class="hint">💡 Tick each item once it's in the trunk. Saved on this device.</div>
+  <div class="hint">💡 Two ticks per item: <strong>Trunk</strong> = packed to take, <strong>Home</strong> = packed to bring back. Synced across devices. Tap an item with a ▸ to see its parts.</div>
 
   <div id="list"></div>
 
@@ -97,62 +110,21 @@
   <div class="menu-item"><a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
   <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
   <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/admin/camp"><span class="menu-item-icon">✏️</span> Edit Camp List</a></div>
   <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
 </div>
 
 <script>
-  const SECTIONS = [
-    { title: '🎒 Equipment', items: [
-      { l: 'Pillow', q: 1 },
-      { l: 'Pillow cases', q: 2 },
-      { l: 'Bath towels', q: 3 },
-      { l: 'Face cloths', q: 2 },
-      { l: 'Laundry bag', q: 1 },
-      { l: 'Knapsack', q: 1 },
-      { l: 'Flashlight (with extra batteries)', q: 1 },
-      { l: 'Sleeping bag', q: 1 },
-      { l: 'Life jacket — vest-type PFD, Govt-approved, whistle attached', q: 1 },
-      { l: 'Toiletries bag (soap, toothbrush + paste, brush, comb, shampoo, cup…)', q: 1 },
-      { l: 'Writing paper, pen & stamped envelopes' },
-      { l: 'Sunscreen lotion (SPF 30)' },
-      { l: 'Insect repellant' },
-      { l: 'Water bottle', q: 1 },
-      { l: '30-litre waterproof dry sac (for tripping)', q: 1 },
-    ]},
-    { title: '👕 Clothing', items: [
-      { l: 'Long pants', q: 4 },
-      { l: 'Nylon shell jacket or windbreaker', q: 1 },
-      { l: 'Sweatshirts or sweaters', q: 3 },
-      { l: 'Heavy sweater or fleece', q: 2 },
-      { l: 'Summer tops (any colour)', q: 8 },
-      { l: 'Shorts', q: 6 },
-      { l: 'Pyjamas', q: 2 },
-      { l: 'Long-sleeved shirts', q: 3 },
-      { l: 'Underwear', q: 10 },
-      { l: 'Pairs of socks (incl. 2 wool)', q: 6 },
-      { l: 'Beach shoes (Crocs / old runners / flip-flops)', q: 1 },
-      { l: 'Sneakers or closed-toe shoes (sturdy rubber soles)', q: 2 },
-      { l: 'Sun hat', q: 1 },
-      { l: 'Bathing suits', q: 3 },
-      { l: 'Sun shirt / rash guard', q: 1 },
-      { l: 'Rainsuit + rain shoes or boots (waterproof)', q: 1 },
-    ]},
-    { title: '✨ Optional', items: [
-      { l: 'Musical instrument' },
-      { l: 'Books and games' },
-      { l: 'Camera' },
-      { l: 'Washable face masks' },
-    ]},
-  ];
-
+  const DATA = {{ camp_json | safe }};
   const KEY = 'violet-camp-v1';
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  // Server-synced state (shared across devices), merged over any local cache.
+  // Server-synced check state (shared across devices), merged over local cache.
   const SERVER = {{ camp_state_json | safe }} || {};
   let localCache = {};
   try { localCache = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
   let state = Object.assign({}, localCache, SERVER);
+  const collapsed = new Set();   // item ids whose subitems are hidden (local only)
 
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
@@ -161,9 +133,6 @@
       body: JSON.stringify({ key: KEY, value: state }),
     }).catch(() => {});
   }
-
-  // Refresh from the server when the page is reopened/refocused, so checks
-  // made on another device show up here too.
   async function pullRemote() {
     try {
       const all = await (await fetch('/api/progress')).json();
@@ -174,41 +143,76 @@
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) pullRemote(); });
 
-  let TOTAL = 0;
-  SECTIONS.forEach(s => TOTAL += s.items.length);
+  // Every checkable leaf: items with no subitems, plus all subitems.
+  function leafIds() {
+    const ids = [];
+    (DATA.sections || []).forEach(sec => (sec.items || []).forEach(it => {
+      if (it.subitems && it.subitems.length) it.subitems.forEach(su => ids.push(su.id));
+      else ids.push(it.id);
+    }));
+    return ids;
+  }
+
+  function qtyBadge(q) { return q ? `<span class="ci-qty">×${esc(q)}</span>` : ''; }
+
+  function leafRow(node, cls) {
+    const to = !!state[node.id + '-to'], home = !!state[node.id + '-home'];
+    return `<div class="ci${cls ? ' ' + cls : ''}${to ? ' packed' : ''}">
+        <div class="ci-body"><div class="ci-label">${esc(node.label)}</div></div>
+        ${qtyBadge(node.qty)}
+        <div class="ticks">
+          <button class="tick to${to ? ' on' : ''}" onclick="toggle('${node.id}','to')">✓</button>
+          <button class="tick home${home ? ' on' : ''}" onclick="toggle('${node.id}','home')">✓</button>
+        </div>
+      </div>`;
+  }
 
   function render() {
+    const sections = DATA.sections || [];
+    if (!sections.length) {
+      document.getElementById('list').innerHTML = `<div class="empty">No packing list yet. Tap <strong>✏️ Edit list</strong> to add items.</div>`;
+      updateCounts(); return;
+    }
     let html = '';
-    SECTIONS.forEach((sec, si) => {
-      const ids = sec.items.map((_, ii) => `s${si}-${ii}`);
-      const packed = ids.filter(id => state[id + '-to']).length;
+    sections.forEach(sec => {
+      // leaves in this section, for the packed count
+      const leaves = [];
+      (sec.items || []).forEach(it => (it.subitems && it.subitems.length) ? leaves.push(...it.subitems) : leaves.push(it));
+      const packed = leaves.filter(n => state[n.id + '-to']).length;
       let s = '<div class="sec">';
-      s += `<div class="sec-head"><span class="sec-title">${esc(sec.title)}</span><span class="sec-count">${packed}/${sec.items.length} packed</span></div>`;
-      sec.items.forEach((it, ii) => {
-        const id = `s${si}-${ii}`;
-        const to = !!state[id + '-to'];
-        const qty = it.q ? `<span class="ci-qty">×${it.q}</span>` : '';
-        s += `<div class="ci${to ? ' packed' : ''}">
-          <div class="ci-body"><div class="ci-label">${esc(it.l)}</div></div>
-          ${qty}
-          <div class="ticks">
-            <button class="tick to${to ? ' on' : ''}" onclick="toggle('${id}','to')">✓</button>
-          </div>
-        </div>`;
+      s += `<div class="sec-head"><span class="sec-title">${esc(sec.title || '')}</span><span class="sec-count">${packed}/${leaves.length} packed</span></div>`;
+      s += `<div class="col-key"><span>Trunk</span><span>Home</span></div>`;
+      (sec.items || []).forEach(it => {
+        if (it.subitems && it.subitems.length) {
+          const sp = it.subitems.filter(su => state[su.id + '-to']).length;
+          const allDone = sp === it.subitems.length;
+          const isCol = collapsed.has(it.id);
+          s += `<div class="ci-parent${isCol ? ' collapsed' : ''}${allDone ? ' done' : ''}" onclick="toggleExpand('${it.id}')">
+              <span class="chev">▾</span>
+              <span class="ci-label">${esc(it.label)}</span>
+              ${qtyBadge(it.qty)}
+              <span class="ci-prog">${sp}/${it.subitems.length}</span>
+            </div>`;
+          s += `<div class="subwrap${isCol ? ' collapsed' : ''}">${it.subitems.map(su => leafRow(su, 'sub')).join('')}</div>`;
+        } else {
+          s += leafRow(it);
+        }
       });
       s += '</div>';
       html += s;
     });
     document.getElementById('list').innerHTML = html;
+    const lbl = (DATA.session_label || '2-week session').replace(/\s*session\s*$/i, '');
+    document.getElementById('sessionLabel').textContent = lbl;
     updateCounts();
   }
 
   function updateCounts() {
-    let to = 0;
-    SECTIONS.forEach((sec, si) => sec.items.forEach((_, ii) => {
-      if (state[`s${si}-${ii}-to`]) to++;
-    }));
-    document.getElementById('toN').textContent = `${to}/${TOTAL}`;
+    const ids = leafIds();
+    const to = ids.filter(id => state[id + '-to']).length;
+    const home = ids.filter(id => state[id + '-home']).length;
+    document.getElementById('toN').textContent = `${to}/${ids.length}`;
+    document.getElementById('homeN').textContent = `${home}/${ids.length}`;
   }
 
   function toggle(id, which) {
@@ -217,7 +221,10 @@
     save();
     render();
   }
-
+  function toggleExpand(id) {
+    if (collapsed.has(id)) collapsed.delete(id); else collapsed.add(id);
+    render();
+  }
   function resetAll() {
     if (!confirm('Clear all the checkmarks?')) return;
     state = {};

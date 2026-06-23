@@ -50,6 +50,8 @@ TASKS_FILE          = os.path.join(_DATA, 'Violet Tasks.csv')
 MILESTONES_FILE     = os.path.join(_DATA, 'Violet Milestones.csv')
 TOONIES_FILE        = os.path.join(_DATA, 'violet_toonies.json')
 TOONIES_SEED_FILE   = os.path.join(_BASE, 'violet_toonies.json')
+CAMP_FILE           = os.path.join(_DATA, 'violet_camp.json')
+CAMP_SEED_FILE      = os.path.join(_BASE, 'violet_camp.json')
 SURPRISES_FILE      = os.path.join(_DATA, 'violet_surprises.json')
 PROGRESS_FILE       = os.path.join(_DATA, 'violet_progress.json')  # per-profile kid progress (synced)
 SECRET_KEY_FILE     = os.path.join(_DATA, 'flask_secret.txt')      # persisted session signing key
@@ -520,6 +522,56 @@ def load_toonies():
 def save_toonies(data):
     with open(TOONIES_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+# ── Camp packing list (editable, nestable; mirrors routines/tasks) ──
+def _normalize_camp(data):
+    """Coerce camp data into sections → items → subitems, assigning stable ids
+    to anything missing one (so saved check-state survives edits)."""
+    def nid(prefix):
+        return '%s-%s' % (prefix, uuid.uuid4().hex[:8])
+    data = data or {}
+    out = {'session_label': (data.get('session_label') or '2-week session'),
+           'sections': []}
+    for sec in (data.get('sections') or []):
+        section = {'id': sec.get('id') or nid('sec'),
+                   'title': (sec.get('title') or '').strip(), 'items': []}
+        for it in (sec.get('items') or []):
+            subs = []
+            for su in (it.get('subitems') or []):
+                sl = (su.get('label') or '').strip()
+                if not sl:
+                    continue
+                subs.append({'id': su.get('id') or nid('s'), 'label': sl,
+                             'qty': str(su.get('qty') or '').strip()})
+            label = (it.get('label') or '').strip()
+            if not label and not subs:
+                continue
+            section['items'].append({'id': it.get('id') or nid('i'),
+                                     'label': label,
+                                     'qty': str(it.get('qty') or '').strip(),
+                                     'subitems': subs})
+        out['sections'].append(section)
+    return out
+
+
+def load_camp():
+    """Camp packing config — prefer the volume copy, fall back to seed."""
+    data = None
+    for path in (CAMP_FILE, CAMP_SEED_FILE):
+        if os.path.isfile(path):
+            try:
+                with open(path, encoding='utf-8') as f:
+                    data = json.load(f)
+            except (OSError, ValueError):
+                data = None
+            break
+    return _normalize_camp(data or {'sections': []})
+
+
+def save_camp(data):
+    with open(CAMP_FILE, 'w', encoding='utf-8') as f:
+        json.dump(_normalize_camp(data), f, indent=2, ensure_ascii=False)
 
 
 def _fmt_clock(hhmm):
@@ -1923,7 +1975,21 @@ def faq():
 @app.route('/camp')
 def camp():
     camp_state = load_progress(current_profile()).get('violet-camp-v1', {})
-    return render_template('camp.html', camp_state_json=json.dumps(camp_state))
+    return render_template('camp.html',
+                           camp_json=json.dumps(load_camp()),
+                           camp_state_json=json.dumps(camp_state),
+                           is_admin=bool(session.get('admin')))
+
+
+@app.route('/admin/camp')
+def admin_camp():
+    return render_template('admin_camp.html', camp_json=json.dumps(load_camp()))
+
+
+@app.route('/admin/camp/save', methods=['POST'])
+def admin_camp_save():
+    save_camp(request.get_json() or {})
+    return jsonify({'ok': True})
 
 
 @app.route('/badges')

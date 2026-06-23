@@ -1,0 +1,64 @@
+{
+  "session_label": "2-week session",
+  "sections": [
+    {
+      "id": "sec-equipment",
+      "title": "🎒 Equipment",
+      "items": [
+        { "id": "i-pillow", "label": "Pillow", "qty": "1", "subitems": [] },
+        { "id": "i-pillowcases", "label": "Pillow cases", "qty": "2", "subitems": [] },
+        { "id": "i-bathtowels", "label": "Bath towels", "qty": "3", "subitems": [] },
+        { "id": "i-facecloths", "label": "Face cloths", "qty": "2", "subitems": [] },
+        { "id": "i-laundrybag", "label": "Laundry bag", "qty": "1", "subitems": [] },
+        { "id": "i-knapsack", "label": "Knapsack", "qty": "1", "subitems": [] },
+        { "id": "i-flashlight", "label": "Flashlight (with extra batteries)", "qty": "1", "subitems": [] },
+        { "id": "i-sleepingbag", "label": "Sleeping bag", "qty": "1", "subitems": [] },
+        { "id": "i-lifejacket", "label": "Life jacket — vest-type PFD, Govt-approved, whistle attached", "qty": "1", "subitems": [] },
+        { "id": "i-toiletries", "label": "Toiletries bag", "qty": "1", "subitems": [
+          { "id": "s-soap", "label": "Soap & case or body wash", "qty": "" },
+          { "id": "s-toothbrush", "label": "Toothbrush & toothpaste", "qty": "" },
+          { "id": "s-brushcomb", "label": "Brush & comb", "qty": "" },
+          { "id": "s-shampoo", "label": "Shampoo", "qty": "" },
+          { "id": "s-cup", "label": "Plastic cup", "qty": "" }
+        ]},
+        { "id": "i-writing", "label": "Writing paper, pen & stamped envelopes", "qty": "", "subitems": [] },
+        { "id": "i-sunscreen", "label": "Sunscreen lotion (SPF 30)", "qty": "", "subitems": [] },
+        { "id": "i-bugspray", "label": "Insect repellant", "qty": "", "subitems": [] },
+        { "id": "i-waterbottle", "label": "Water bottle", "qty": "1", "subitems": [] },
+        { "id": "i-drysac", "label": "30-litre waterproof dry sac (for tripping)", "qty": "1", "subitems": [] }
+      ]
+    },
+    {
+      "id": "sec-clothing",
+      "title": "👕 Clothing",
+      "items": [
+        { "id": "i-longpants", "label": "Long pants", "qty": "4", "subitems": [] },
+        { "id": "i-windbreaker", "label": "Nylon shell jacket or windbreaker", "qty": "1", "subitems": [] },
+        { "id": "i-sweatshirts", "label": "Sweatshirts or sweaters", "qty": "3", "subitems": [] },
+        { "id": "i-fleece", "label": "Heavy sweater or fleece", "qty": "2", "subitems": [] },
+        { "id": "i-summertops", "label": "Summer tops (any colour)", "qty": "8", "subitems": [] },
+        { "id": "i-shorts", "label": "Shorts", "qty": "6", "subitems": [] },
+        { "id": "i-pyjamas", "label": "Pyjamas", "qty": "2", "subitems": [] },
+        { "id": "i-longsleeve", "label": "Long-sleeved shirts", "qty": "3", "subitems": [] },
+        { "id": "i-underwear", "label": "Underwear", "qty": "10", "subitems": [] },
+        { "id": "i-socks", "label": "Pairs of socks (incl. 2 wool)", "qty": "6", "subitems": [] },
+        { "id": "i-beachshoes", "label": "Beach shoes (Crocs / old runners / flip-flops)", "qty": "1", "subitems": [] },
+        { "id": "i-sneakers", "label": "Sneakers or closed-toe shoes (sturdy rubber soles)", "qty": "2", "subitems": [] },
+        { "id": "i-sunhat", "label": "Sun hat", "qty": "1", "subitems": [] },
+        { "id": "i-bathingsuits", "label": "Bathing suits", "qty": "3", "subitems": [] },
+        { "id": "i-rashguard", "label": "Sun shirt / rash guard", "qty": "1", "subitems": [] },
+        { "id": "i-rainsuit", "label": "Rainsuit + rain shoes or boots (waterproof)", "qty": "1", "subitems": [] }
+      ]
+    },
+    {
+      "id": "sec-optional",
+      "title": "✨ Optional",
+      "items": [
+        { "id": "i-instrument", "label": "Musical instrument", "qty": "", "subitems": [] },
+        { "id": "i-booksgames", "label": "Books and games", "qty": "", "subitems": [] },
+        { "id": "i-camera", "label": "Camera", "qty": "", "subitems": [] },
+        { "id": "i-masks", "label": "Washable face masks", "qty": "", "subitems": [] }
+      ]
+    }
+  ]
+}
