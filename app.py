@@ -1534,7 +1534,6 @@ def index():
         progress_json=json.dumps(load_progress(current_profile())),
         profile_name=PROFILES[current_profile()]['name'],
         levelup_total=len(load_levelup_log()),
-        family_today=family_events_today(),
     )
 
 
