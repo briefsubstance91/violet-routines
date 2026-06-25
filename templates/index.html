@@ -886,10 +886,11 @@
         {% for task in r.tasks %}
           {% if task.subtasks %}
           <div class="task task-parent" id="{{ r.id }}-{{ task.idx }}"
-               onclick="toggleExpand('{{ r.id }}', '{{ task.idx }}')">
+               onclick="toggleParent('{{ r.id }}', '{{ task.idx }}', event)">
             <div class="task-check"></div>
             <span class="task-label">{{ task.label }}</span>
-            <span class="expand-chevron open" id="chev-{{ r.id }}-{{ task.idx }}">›</span>
+            <span class="expand-chevron open" id="chev-{{ r.id }}-{{ task.idx }}"
+                  onclick="event.stopPropagation(); toggleExpand('{{ r.id }}', '{{ task.idx }}')">›</span>
           </div>
           <div class="subtask-group expanded" id="subs-{{ r.id }}-{{ task.idx }}">
             {% for sub in task.subtasks %}
@@ -1253,6 +1254,25 @@
     const chev  = document.getElementById(`chev-${routine}-${parentIdx}`);
     if (group) group.classList.toggle('expanded');
     if (chev)  chev.classList.toggle('open');
+  }
+
+  // Tapping a parent task checks (or unchecks) all of its sub-tasks at once.
+  function toggleParent(routine, parentIdx, event) {
+    const task = (ROUTINES[routine].tasks || []).find(t => t.idx === parentIdx);
+    if (!task || !task.subs.length) return;
+    const wasComplete = topLevelDone(routine) === ROUTINES[routine].total;
+    const s = state[routine] || {};
+    const want = !task.subs.every(sub => !!s[sub]);   // all done → clear; else → complete all
+    const ns = { ...s };
+    task.subs.forEach(sub => { ns[sub] = want; });
+    state[routine] = ns;
+    saveState(state);
+    render();
+    logToServer(routine);
+    if (want && event) popTreat(event.currentTarget);
+    if (!wasComplete && topLevelDone(routine) === ROUTINES[routine].total) {
+      setTimeout(() => celebrate(routine), 200);
+    }
   }
 
   function logToServer(routineId) {
