@@ -521,11 +521,22 @@ def next_money_milestone(earned):
 
 
 # ── Toonie tasks (weekly-planned $2 earners, unlocked per routine window) ──
+def _mint_toonie_ids(tasks):
+    """Every task needs an id — /earn-toonie looks one up by it, so a task
+    without an id is a chore she can never tick off. Minting here means no
+    client can create one: the Admin page and the Life OS console both land
+    on the same guarantee."""
+    for t in tasks:
+        if not (t.get('id') or '').strip():
+            t['id'] = 't-' + uuid.uuid4().hex[:8]
+    return tasks
+
+
 def _normalize_toonie_tasks(tasks):
     """Toonie tasks are one shared daily list. Accept the legacy per-window dict
     ({am:[...], af:[...], pm:[...]}) and flatten it, deduped by id."""
     if isinstance(tasks, list):
-        return tasks
+        return _mint_toonie_ids(tasks)
     if isinstance(tasks, dict):
         flat, seen = [], set()
         for win_tasks in tasks.values():
@@ -535,7 +546,7 @@ def _normalize_toonie_tasks(tasks):
                     continue
                 seen.add(tid)
                 flat.append(t)
-        return flat
+        return _mint_toonie_ids(flat)
     return []
 
 
