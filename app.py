@@ -1,4 +1,6 @@
 import csv
+import functools
+import hmac
 import json
 import os
 import re
@@ -124,6 +126,38 @@ def current_profile():
     return pid if pid in PROFILES else 'violet'
 
 
+# ── Parent API ──────────────────────────────────────────────────────────
+# The parent console lives in Life OS now — a different app on a different host,
+# so it can't read this app's data volume. It asks over HTTPS instead: every
+# parent read and write is a JSON endpoint under /api/parent, authorised by a
+# shared token in the X-Parent-Token header (set PARENT_API_TOKEN on both ends).
+# A signed-in admin session counts too, so these keep answering from inside this
+# app while the console is being ported.
+PARENT_API_TOKEN = os.environ.get('PARENT_API_TOKEN', '')
+
+
+def parent_api(fn):
+    """Guard for /api/parent/*. No token configured means the API is off, not
+    open — a missing env var must never be the thing that unlocks the data."""
+    @functools.wraps(fn)
+    def guard(*args, **kwargs):
+        sent = request.headers.get('X-Parent-Token', '')
+        token_ok = bool(PARENT_API_TOKEN) and hmac.compare_digest(sent, PARENT_API_TOKEN)
+        if not (token_ok or session.get('admin')):
+            return jsonify({'error': 'unauthorized'}), 401
+        # Every parent endpoint is about one kid. The id travels in the query
+        # string so adding a second profile later needs no contract change.
+        if request.args.get('kid', 'violet') not in PROFILES:
+            return jsonify({'error': 'unknown kid'}), 404
+        return fn(*args, **kwargs)
+    return guard
+
+
+def api_kid():
+    """The validated profile id this parent request is about."""
+    return request.args.get('kid', 'violet')
+
+
 # Keys the kid client is allowed to persist server-side. Anything else is
 # rejected so the endpoint can't be used as arbitrary storage.
 PROGRESS_KEYS = {
@@ -201,7 +235,9 @@ def _parse_value(raw, etype):
     DEFAULT_TASK_VALUE when the Value cell is blank or unparseable."""
     if etype != 'task':
         return 0
-    raw = (raw or '').strip().lstrip('$')
+    # CSV cells and form fields arrive as text, but a JSON client sends a real
+    # number — coerce so either shape works.
+    raw = str(raw if raw is not None else '').strip().lstrip('$')
     try:
         return float(raw) if raw else DEFAULT_TASK_VALUE
     except ValueError:
@@ -1161,7 +1197,11 @@ def save_titles(d):
     clean = {}
     if isinstance(d, dict):
         for rid in ('am', 'af', 'pm'):
-            clean[rid] = [s.strip() for s in (d.get(rid) or []) if isinstance(s, str) and s.strip()]
+            # A bare string would iterate character by character — only a list
+            # of titles counts.
+            titles = d.get(rid)
+            titles = titles if isinstance(titles, list) else []
+            clean[rid] = [s.strip() for s in titles if isinstance(s, str) and s.strip()]
     with open(TITLES_FILE, 'w', encoding='utf-8') as f:
         json.dump(clean or _seed_titles(), f, ensure_ascii=False, indent=2)
 
@@ -1768,12 +1808,11 @@ def admin_tasks_save():
     return jsonify({'ok': True})
 
 
-@app.route('/admin/routines/meta', methods=['POST'])
-def admin_routines_meta_save():
+def apply_routine_meta(items):
     """Update only a routine's settings (name/icon/time). Tasks, tags and
-    sub-tasks are loaded fresh and preserved, so saving routine settings from
-    the Admin tab never clobbers task edits made on the Tasks page."""
-    meta = {m.get('id'): m for m in (request.get_json() or []) if m.get('id')}
+    sub-tasks are loaded fresh and preserved, so saving routine settings never
+    clobbers task edits made on the Tasks page (or in the Life OS console)."""
+    meta = {m.get('id'): m for m in (items or []) if m.get('id')}
     routines = load_tasks_raw()
     for r in routines:
         m = meta.get(r['id'])
@@ -1782,6 +1821,12 @@ def admin_routines_meta_save():
             r['icon'] = m.get('icon', r['icon'])
             r['time'] = m.get('time', r['time'])
     save_tasks_raw(routines)
+    return routines
+
+
+@app.route('/admin/routines/meta', methods=['POST'])
+def admin_routines_meta_save():
+    apply_routine_meta(request.get_json() or [])
     return jsonify({'ok': True})
 
 
@@ -1869,12 +1914,11 @@ def admin_surprises():
                            today_iso=_now_local().date().isoformat())
 
 
-@app.route('/admin/surprises/save', methods=['POST'])
-def admin_surprises_save():
-    incoming = request.get_json() or []
+def merge_surprises(incoming):
+    """Save an edited surprise list, keeping the flags the server owns."""
     existing = {s.get('id'): s for s in load_surprises()}
     out = []
-    for s in incoming:
+    for s in (incoming or []):
         sid = (s.get('id') or '').strip() or 's-' + uuid.uuid4().hex[:10]
         prev = existing.get(sid, {})
         # Server-owned flags survive editing; resetting 'active' off re-arms nothing.
@@ -1886,6 +1930,12 @@ def admin_surprises_save():
         out.append(s)
     save_surprises(out)
     notify_ready_surprises()   # push immediately for any now-active / past-date surprise
+    return out
+
+
+@app.route('/admin/surprises/save', methods=['POST'])
+def admin_surprises_save():
+    merge_surprises(request.get_json() or [])
     return jsonify({'ok': True})
 
 
@@ -1914,10 +1964,9 @@ def admin_payout_undo():
     return jsonify({'ok': undone, 'bank': compute_bank()})
 
 
-@app.route('/admin/planning')
-def admin_planning():
-    """Sunday Planning — the weekly ritual hub: review the week, log Level Up
-    wins together, pay out the Bank, then plan next week's Toonie Tasks."""
+def week_summary():
+    """Everything Sunday Planning reviews: the last 7 days of Level Up wins and
+    earnings, alongside the running stats and Bank."""
     today = date.today()
     week_start = (today - timedelta(days=6)).isoformat()
     week_wins = [r for r in reversed(load_levelup_log())
@@ -1929,16 +1978,246 @@ def admin_planning():
                 week_earned += float(r.get('Amount', 0))
             except (TypeError, ValueError):
                 continue
+    return {
+        'stats': compute_stats(load_log()),
+        'bank': compute_bank(),
+        'giving_pct': int(round(giving_rate() * 100)),
+        'levelup_categories': load_levelup_data().get('levelup_categories', []),
+        'week_wins': week_wins,
+        'week_earned': round(week_earned, 2),
+        'week_start': week_start,
+        'today': today.isoformat(),
+    }
+
+
+@app.route('/admin/planning')
+def admin_planning():
+    """Sunday Planning — the weekly ritual hub: review the week, log Level Up
+    wins together, pay out the Bank, then plan next week's Toonie Tasks."""
+    w = week_summary()
     return render_template(
         'planning.html',
-        stats=compute_stats(load_log()),
-        bank=compute_bank(),
-        giving_pct=int(round(giving_rate() * 100)),
-        levelup_categories_json=json.dumps(load_levelup_data().get('levelup_categories', [])),
-        week_wins=week_wins,
-        week_earned=round(week_earned, 2),
-        today_iso=today.isoformat(),
+        stats=w['stats'],
+        bank=w['bank'],
+        giving_pct=w['giving_pct'],
+        levelup_categories_json=json.dumps(w['levelup_categories']),
+        week_wins=w['week_wins'],
+        week_earned=w['week_earned'],
+        today_iso=w['today'],
     )
+
+
+# ── Parent API: the endpoints ───────────────────────────────────────────
+# The payload shapes match what the Admin pages already POST, so this app's own
+# forms and the Life OS console speak the same language. Reads and writes share
+# a URL: GET fetches, POST saves and returns the saved state, so the console can
+# render straight from the response instead of re-fetching.
+
+@app.route('/api/parent/overview')
+@parent_api
+def api_parent_overview():
+    """One cheap call for the console's header — proof this app is reachable,
+    plus the headline numbers."""
+    kid = api_kid()
+    s = compute_stats(load_log())
+    return jsonify({
+        'kid': kid,
+        'name': PROFILES[kid]['name'],
+        # Headline numbers only — the full stats payload (a 35-day calendar
+        # grid) rides along with /api/parent/week, where it's actually drawn.
+        'stats': {k: s[k] for k in ('days_completed', 'total_days', 'overall_pct')},
+        'bank': compute_bank(),
+        'giving_pct': int(round(giving_rate() * 100)),
+        'counts': {
+            'routines':  len(load_tasks_raw()),
+            'toonies':   len(load_toonies().get('tasks', [])),
+            'surprises': len(load_surprises()),
+            'events':    len(load_events()),
+            'camp':      sum(len(s['items']) for s in load_camp()['sections']),
+        },
+    })
+
+
+@app.route('/api/parent/settings', methods=['GET', 'POST'])
+@parent_api
+def api_parent_settings():
+    """Everything the Admin hub edits that isn't a list: the giving share, the
+    Level Up categories, the encouragement copy, and the family calendar feed.
+    POST is a patch — send only the keys you changed."""
+    if request.method == 'POST':
+        body = request.get_json(silent=True) or {}
+        if 'giving_pct' in body:
+            try:
+                pct = float(body['giving_pct'])
+            except (TypeError, ValueError):
+                pct = giving_rate() * 100
+            save_settings({'giving_rate': min(max(pct, 0.0), 100.0) / 100.0})
+        if 'family_calendar_url' in body:
+            save_settings({'family_calendar_url': (body['family_calendar_url'] or '').strip()})
+            refresh_family_calendar(force=True)
+        if 'levelup' in body:
+            save_levelup_data(body['levelup'] or {})
+        if 'encourage' in body:
+            save_encourage(body['encourage'] or [])
+        if 'titles' in body:
+            save_titles(body['titles'] or {})
+    return jsonify({
+        'giving_pct': int(round(giving_rate() * 100)),
+        'family_calendar_url': family_calendar_url(),
+        'calendar_error': _family_cal.get('error'),
+        'levelup': load_levelup_data(),
+        'encourage': load_encourage(),
+        'titles': load_titles(),
+    })
+
+
+@app.route('/api/parent/routines', methods=['GET', 'POST'])
+@parent_api
+def api_parent_routines():
+    """The three routines with their tasks, sub-tasks and tags. POST replaces
+    the whole list — the same payload Edit Routines sends."""
+    if request.method == 'POST':
+        routines = request.get_json(silent=True)
+        if not isinstance(routines, list):
+            return jsonify({'error': 'expected a list of routines'}), 400
+        save_tasks_raw(routines)
+    return jsonify({'routines': load_tasks_raw()})
+
+
+@app.route('/api/parent/routines/meta', methods=['POST'])
+@parent_api
+def api_parent_routines_meta():
+    """Name, icon and window only — safe to save while tasks are being edited
+    somewhere else."""
+    items = request.get_json(silent=True)
+    if not isinstance(items, list):
+        return jsonify({'error': 'expected a list of routines'}), 400
+    return jsonify({'routines': apply_routine_meta(items)})
+
+
+@app.route('/api/parent/toonies', methods=['GET', 'POST'])
+@parent_api
+def api_parent_toonies():
+    """The shared daily $2 chore list. POST takes {'tasks': [...]}; the window
+    and timezone config is preserved, not editable here."""
+    if request.method == 'POST':
+        body = request.get_json(silent=True) or {}
+        cfg = load_toonies()
+        cfg['tasks'] = _normalize_toonie_tasks(body.get('tasks'))
+        save_toonies(cfg)
+    return jsonify({'toonies': load_toonies()})
+
+
+@app.route('/api/parent/surprises', methods=['GET', 'POST'])
+@parent_api
+def api_parent_surprises():
+    """Surprise rewards. POST replaces the list; ids are minted for new rows and
+    the delivered/notified flags are kept."""
+    if request.method == 'POST':
+        incoming = request.get_json(silent=True)
+        if not isinstance(incoming, list):
+            return jsonify({'error': 'expected a list of surprises'}), 400
+        merge_surprises(incoming)
+    return jsonify({'surprises': load_surprises(),
+                    'today': _now_local().date().isoformat()})
+
+
+@app.route('/api/parent/camp', methods=['GET', 'POST'])
+@parent_api
+def api_parent_camp():
+    """The camp packing list — sections, items and sub-items. POST replaces the
+    whole thing; ids are minted for new rows so the kid's saved check-state
+    survives an edit."""
+    if request.method == 'POST':
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({'error': 'expected a camp object'}), 400
+        save_camp(body)
+    return jsonify({'camp': load_camp()})
+
+
+@app.route('/api/parent/milestones', methods=['GET', 'POST'])
+@parent_api
+def api_parent_milestones():
+    """Both reward ladders: `days` (streak thresholds) and `money` (dollar
+    thresholds). POST replaces whichever of the two lists you send."""
+    if request.method == 'POST':
+        body = request.get_json(silent=True) or {}
+        if 'days' in body:
+            save_milestones(body['days'] or [])
+        if 'money' in body:
+            save_money_milestones(body['money'] or [])
+    return jsonify({
+        'days': [{'streak': k, 'message': v['message'], 'category': v.get('category', '')}
+                 for k, v in sorted(load_milestones().items(), key=lambda x: int(x[0]))],
+        'money': [{'amount': k, 'message': v['message'], 'category': v.get('category', '')}
+                  for k, v in sorted(load_money_milestones().items(), key=lambda x: float(x[0]))],
+    })
+
+
+@app.route('/api/parent/events', methods=['GET', 'POST'])
+@parent_api
+def api_parent_events():
+    """Events feeding the kid's calendar. POST replaces the list."""
+    if request.method == 'POST':
+        events = request.get_json(silent=True)
+        if not isinstance(events, list):
+            return jsonify({'error': 'expected a list of events'}), 400
+        save_events(events)
+    return jsonify({'events': load_events(), 'today': date.today().isoformat()})
+
+
+@app.route('/api/parent/bank')
+@parent_api
+def api_parent_bank():
+    """Bank of Mom & Dad: what's owed, what's been paid, and the payout history
+    newest first."""
+    return jsonify({'bank': compute_bank(),
+                    'payouts': list(reversed(load_payouts())),
+                    'giving_pct': int(round(giving_rate() * 100))})
+
+
+@app.route('/api/parent/bank/pay', methods=['POST'])
+@parent_api
+def api_parent_bank_pay():
+    """Record a cash payout. Defaults to the whole balance owed."""
+    body = request.get_json(silent=True) or {}
+    row = add_payout(body.get('amount', compute_bank()['balance']),
+                     (body.get('note') or '').strip())
+    if not row:
+        return jsonify({'error': 'amount must be a number greater than zero'}), 400
+    return jsonify({'ok': True, 'row': row, 'bank': compute_bank()})
+
+
+@app.route('/api/parent/bank/undo', methods=['POST'])
+@parent_api
+def api_parent_bank_undo():
+    """Remove the most recent payout, for corrections."""
+    if not undo_last_payout():
+        return jsonify({'error': 'no payouts to undo'}), 400
+    return jsonify({'ok': True, 'bank': compute_bank()})
+
+
+@app.route('/api/parent/week')
+@parent_api
+def api_parent_week():
+    """The Sunday Planning payload: the week's wins and earnings, the stats and
+    the Bank, plus the Level Up categories to log against."""
+    return jsonify(week_summary())
+
+
+@app.route('/api/parent/levelup', methods=['POST'])
+@parent_api
+def api_parent_levelup():
+    """Log a Level Up win from the planning table."""
+    body = request.get_json(silent=True) or {}
+    win = (body.get('win') or '').strip()
+    category = (body.get('category') or '').strip()
+    if not win or not category:
+        return jsonify({'error': 'category and win are both required'}), 400
+    log_levelup_entry(body.get('date') or date.today().isoformat(),
+                      body.get('category_id', ''), category, win)
+    return jsonify({'ok': True, 'week': week_summary()})
 
 
 BADGES = [
