@@ -1,0 +1,128 @@
+{# Menu + live behaviour shared by the home-page options, so each variant only
+   has to bring its own layout. Every lookup is defensive: a variant that
+   leaves an element out just gets less, never a broken page. #}
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-title">✦ Menu</div>
+  <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
+  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/calendar"><span class="menu-item-icon">📅</span> Family Calendar</a></div>
+  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress &amp; stats</a></div>
+  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
+  <div class="menu-item"><a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
+  <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
+  <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
+  <div class="menu-item"><a href="/admin/planning"><span class="menu-item-icon">🗓️</span> Sunday Planning</a></div>
+  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
+  <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
+</div>
+
+<script>
+  const $ = function (id) { return document.getElementById(id); };
+  const setText = function (id, v) { const el = $(id); if (el) el.textContent = v; };
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  }
+
+  function openMenu()  { $('menuPanel').classList.add('open');    $('menuBackdrop').classList.add('open'); }
+  function closeMenu() { $('menuPanel').classList.remove('open'); $('menuBackdrop').classList.remove('open'); }
+
+  // ── Greeting ──
+  const HOUR = new Date().getHours();
+  const PART = HOUR < 12 ? 'morning' : HOUR < 17 ? 'afternoon' : 'evening';
+  setText('heroGreeting', PART === 'morning' ? 'Good morning ☁️'
+                        : PART === 'afternoon' ? 'Good afternoon 🌸' : 'Good evening 🌙');
+  setText('todayDate', new Date().toLocaleDateString('en-US',
+    { weekday: 'long', month: 'long', day: 'numeric' }));
+
+  // ── Live weather — fixed location: Toronto (M6K) ──
+  const WX_LAT = 43.64, WX_LON = -79.43;
+  function wxInfo(code) {
+    const m = {
+      0:['☀️','Sunny'], 1:['🌤️','Mostly sunny'], 2:['⛅','Partly cloudy'], 3:['☁️','Cloudy'],
+      45:['🌫️','Foggy'], 48:['🌫️','Foggy'],
+      51:['🌦️','Light drizzle'], 53:['🌦️','Drizzle'], 55:['🌦️','Heavy drizzle'],
+      56:['🌧️','Freezing drizzle'], 57:['🌧️','Freezing drizzle'],
+      61:['🌧️','Light rain'], 63:['🌧️','Rain'], 65:['🌧️','Heavy rain'],
+      66:['🌧️','Freezing rain'], 67:['🌧️','Freezing rain'],
+      71:['🌨️','Light snow'], 73:['🌨️','Snow'], 75:['🌨️','Heavy snow'], 77:['🌨️','Snow'],
+      80:['🌦️','Rain showers'], 81:['🌦️','Rain showers'], 82:['🌦️','Heavy showers'],
+      85:['🌨️','Snow showers'], 86:['🌨️','Snow showers'],
+      95:['⛈️','Thunderstorm'], 96:['⛈️','Thunderstorm'], 99:['⛈️','Thunderstorm'],
+    };
+    return m[code] || ['🌡️','—'];
+  }
+  async function loadWeather() {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${WX_LAT}&longitude=${WX_LON}`
+        + `&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min`
+        + `&timezone=auto&temperature_unit=celsius`;
+      const d = await (await fetch(url)).json();
+      const [emoji, desc] = wxInfo(d.current.weather_code);
+      setText('wcIcon', emoji);
+      setText('wcCond', desc);
+      setText('wcTemp', Math.round(d.current.temperature_2m) + '°');
+      setText('wcHilo', 'H ' + Math.round(d.daily.temperature_2m_max[0]) + '° · L '
+                             + Math.round(d.daily.temperature_2m_min[0]) + '°');
+      const card = $('weatherCard');
+      if (card) card.style.visibility = 'visible';
+    } catch (e) { /* network issue — the card just stays quiet */ }
+  }
+  loadWeather();
+  setInterval(loadWeather, 15 * 60 * 1000);
+
+  // ── Days completed, from synced progress (cumulative, never resets) ──
+  const PROGRESS = {{ progress_json | safe }};
+  const daysDone = ('violet-days' in PROGRESS ? PROGRESS['violet-days'] : []).length;
+  if (daysDone > 0) {
+    setText('streakVal', daysDone);
+    const s = $('heroStreak');
+    if (s) s.style.display = '';
+  }
+
+  // ── Push notifications ──
+  function urlBase64ToUint8Array(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+  async function checkSubscribed() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+    const reg = await navigator.serviceWorker.ready;
+    return !!(await reg.pushManager.getSubscription());
+  }
+  async function updateBellCard() {
+    const card = $('bellCard');
+    if (!card) return;
+    const on = await checkSubscribed();
+    setText('bellIcon', on ? '🔔' : '🔕');
+    setText('bellName', on ? 'Reminders On' : 'Enable Reminders');
+    setText('bellDesc', on ? 'Tap to turn off alerts' : "Get notified when it's routine time");
+    card.classList.toggle('on', on);
+  }
+  async function toggleNotifications() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Push notifications require this app to be installed to your home screen on iOS (Safari → Share → Add to Home Screen).');
+      return;
+    }
+    if (await checkSubscribed()) {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch('/push/unsubscribe', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({endpoint: sub.endpoint}) });
+        await sub.unsubscribe();
+      }
+    } else {
+      if (await Notification.requestPermission() !== 'granted') return;
+      const reg = await navigator.serviceWorker.ready;
+      const { key } = await fetch('/push/vapid-public-key').then(r => r.json());
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) });
+      const obj = sub.toJSON();
+      obj.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await fetch('/push/subscribe', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(obj) });
+    }
+    updateBellCard();
+  }
+  updateBellCard();
+</script>

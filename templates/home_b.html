@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Violet's Life OS</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ── Option B · Sticker Board ───────────────────────────────────────────
+       The page as a pinboard: a cherry-print backdrop, stickers taped up at
+       angles, and the links themselves are stickers you peel off. */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --purple: #9b87f5; --pink: #f472b6; --blue: #4db8ff;
+      --text: #1e1b4b; --muted: #9490c0; --card: #fff;
+    }
+    html, body {
+      min-height: 100%; font-family: 'Nunito', sans-serif; color: var(--text);
+      background: #fdf7ff url('/static/misc%20images/030126_CN_WALLPAPER_CherryPattern_1500x2000_b11cf441-0f92-4d2d-8acc-d727156225e7.png') center / 380px repeat;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body::before { content: ''; position: fixed; inset: 0; pointer-events: none;
+      background: linear-gradient(160deg, rgba(204,232,255,0.72), rgba(233,227,255,0.68) 50%, rgba(255,214,240,0.72)); }
+    .wrap { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 0.9rem 1rem 2rem; }
+
+    .menu-btn { position: fixed; top: 0.9rem; right: 1rem; z-index: 150; background: rgba(255,255,255,0.85); border: none;
+      font-size: 1.3rem; color: var(--purple); cursor: pointer; padding: 0.35rem 0.65rem; border-radius: 12px;
+      line-height: 1; box-shadow: 0 4px 16px rgba(78,58,180,0.12); }
+
+    /* ── The note at the top of the board ── */
+    .board-top { display: grid; gap: 0.85rem; grid-template-columns: 1fr; margin-bottom: 1rem; }
+    @media (min-width: 820px) { .board-top { grid-template-columns: 1.5fr 1fr; align-items: stretch; } }
+
+    .note {
+      position: relative; background: white; border-radius: 6px; padding: 1.2rem 1.4rem;
+      box-shadow: 0 10px 30px rgba(78,58,180,0.16); transform: rotate(-1.2deg);
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .note::before {                     /* washi tape */
+      content: ''; position: absolute; top: -12px; left: 50%; transform: translateX(-50%) rotate(-2deg);
+      width: 116px; height: 26px; border-radius: 3px;
+      background: repeating-linear-gradient(45deg, rgba(244,114,182,0.55) 0 8px, rgba(155,135,245,0.55) 8px 16px);
+      box-shadow: 0 2px 6px rgba(78,58,180,0.12);
+    }
+    .note-char { width: 118px; height: 118px; object-fit: contain; flex-shrink: 0; }
+    /* On a phone the note stacks, and the board drops below the hamburger. */
+    @media (max-width: 640px) {
+      .wrap { padding-top: 3.4rem; }
+      .note { flex-direction: column; text-align: center; gap: 0.4rem; }
+      .note-char { width: 96px; height: 96px; }
+      .note-row { justify-content: center; }
+    }
+    .greet { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    h1 { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 1.75rem; line-height: 1.1;
+      background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .date { font-size: 0.78rem; font-weight: 700; color: var(--muted); margin-top: 0.15rem; }
+    .note-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+    .pill { background: #f5f2ff; border-radius: 99px; padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 800;
+      display: flex; align-items: center; gap: 0.35rem; }
+    .pill .big { font-family: 'Fredoka One', cursive; font-size: 1rem; }
+    .pill small { font-size: 0.66rem; color: var(--muted); font-weight: 700; }
+
+    /* ── Today's routines: the big peel-off sticker ── */
+    .go {
+      position: relative; display: flex; flex-direction: column; justify-content: center;
+      background: linear-gradient(135deg, #9b87f5, #f472b6); color: white;
+      border-radius: 20px; padding: 1.1rem 1.2rem; text-decoration: none;
+      box-shadow: 0 12px 32px rgba(155,135,245,0.34); transform: rotate(1deg); overflow: hidden;
+      padding-right: 3.4rem;
+    }
+    .go img { position: absolute; right: -6px; bottom: -10px; width: 126px; opacity: 0.95; }
+    .go-title { font-family: 'Fredoka One', cursive; font-size: 1.35rem; line-height: 1.1; }
+    .go-sub { font-size: 0.82rem; font-weight: 700; opacity: 0.92; max-width: 60%; }
+    .go-arrow { font-family: 'Fredoka One', cursive; font-size: 1.3rem; margin-top: 0.35rem; }
+
+    /* ── Sticker grid ── */
+    .stickers { display: grid; gap: 0.8rem; grid-template-columns: repeat(2, 1fr); }
+    @media (min-width: 620px) { .stickers { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 900px) { .stickers { grid-template-columns: repeat(5, 1fr); } }
+    .sticker {
+      position: relative; display: flex; flex-direction: column; align-items: center; text-align: center;
+      background: white; border-radius: 18px; padding: 1rem 0.6rem 0.9rem; text-decoration: none;
+      color: var(--text); box-shadow: 0 8px 24px rgba(78,58,180,0.14);
+      border: 3px solid white; outline: 2px dashed rgba(155,135,245,0.35); outline-offset: -9px;
+      transition: transform 0.18s ease; font-family: inherit; cursor: pointer; width: 100%;
+    }
+    .sticker:nth-child(odd)  { transform: rotate(-2deg); }
+    .sticker:nth-child(even) { transform: rotate(2deg); }
+    .sticker:nth-child(3n)   { transform: rotate(-0.8deg); }
+    .sticker:active { transform: scale(0.96); }
+    .sticker img { width: 96px; height: 96px; object-fit: contain; margin-bottom: 0.45rem; }
+    .sticker-name { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 0.95rem; }
+    .sticker-desc { font-size: 0.68rem; font-weight: 700; color: var(--muted); line-height: 1.25; margin-top: 0.1rem; }
+    .sticker.on { background: #dcfce7; }
+
+    /* ── Loose treats scattered along the bottom ── */
+    .scatter { display: flex; justify-content: space-around; gap: 1rem; flex-wrap: wrap; margin-top: 1.4rem; opacity: 0.95; }
+    .scatter img { width: 66px; height: 66px; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(78,58,180,0.18)); }
+    .scatter img:nth-child(2n) { transform: rotate(12deg); }
+    .scatter img:nth-child(3n) { transform: rotate(-14deg); }
+
+    /* ── Menu ── */
+    .menu-backdrop { display: none; position: fixed; inset: 0; background: rgba(78,58,180,0.18); z-index: 200; backdrop-filter: blur(2px); }
+    .menu-backdrop.open { display: block; }
+    .menu-panel { position: fixed; top: 0; right: 0; width: min(280px, 85vw); height: 100%; background: white; z-index: 201; transform: translateX(110%); transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1); padding: 2rem 1.5rem; display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(78,58,180,0.15); overflow-y: auto; }
+    .menu-panel.open { transform: translateX(0); }
+    .menu-title { font-family: 'Fredoka One', cursive; font-size: 1.4rem; background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1.75rem; }
+    .menu-item { display: flex; align-items: center; gap: 0.9rem; padding: 0.95rem 0.5rem; border-bottom: 1.5px solid #f3f0ff; font-size: 0.95rem; font-weight: 700; color: #1e1b4b; border-radius: 8px; }
+    .menu-item a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.9rem; width: 100%; }
+    .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <button class="menu-btn" onclick="openMenu()">☰</button>
+
+  <div class="board-top">
+    <div class="note">
+      <img class="note-char" src="/static/gifs/cinnamoroll-dance.gif" alt="">
+      <div>
+        <div class="greet" id="heroGreeting">Hello</div>
+        <h1>Violet's Life OS ✦</h1>
+        <div class="date" id="todayDate"></div>
+        <div class="note-row">
+          <div class="pill" id="weatherCard" style="visibility:hidden">
+            <span id="wcIcon">⛅</span><span class="big" id="wcTemp">–°</span>
+            <small id="wcCond">—</small><small id="wcHilo"></small>
+          </div>
+          <div class="pill" id="heroStreak" style="display:none">🌟 <span class="big" id="streakVal">0</span> <small>days done</small></div>
+        </div>
+      </div>
+    </div>
+
+    <a class="go" href="/routines">
+      <div class="go-title">Today's Routines</div>
+      <div class="go-sub">Morning · Afternoon · Evening</div>
+      <div class="go-arrow">Let's go →</div>
+      <img src="/static/badges/cinnamoroll-flying.png" alt="">
+    </a>
+  </div>
+
+  <div class="stickers">
+    <a class="sticker" href="/stats">
+      <img src="/static/badges/cinnamoroll-cherries.png" alt="">
+      <div class="sticker-name">Stats</div>
+      <div class="sticker-desc">Days &amp; calendar</div>
+    </a>
+    <a class="sticker" href="/badges">
+      <img src="/static/badges/pompompurin-pancakes.png" alt="">
+      <div class="sticker-name">Badges</div>
+      <div class="sticker-desc">Your collection</div>
+    </a>
+    <a class="sticker" href="/bank">
+      <img src="/static/badges/kuromi-wink.png" alt="">
+      <div class="sticker-name">My Bank</div>
+      <div class="sticker-desc">What you've earned</div>
+    </a>
+    <a class="sticker" href="/charities">
+      <img src="/static/badges/mymelody-wave.png" alt="">
+      <div class="sticker-name">Giving</div>
+      <div class="sticker-desc">Who we're helping</div>
+    </a>
+    <a class="sticker" href="/routines">
+      <img src="/static/badges/kuromi-leopard.png" alt="">
+      <div class="sticker-name">Level Up</div>
+      <div class="sticker-desc">Log a win</div>
+    </a>
+    <a class="sticker" href="/calendar">
+      <img src="/static/badges/cinnamoroll-beret.png" alt="">
+      <div class="sticker-name">Calendar</div>
+      <div class="sticker-desc">What's on</div>
+    </a>
+    <button class="sticker" id="bellCard" onclick="toggleNotifications()">
+      <img src="/static/badges/gudetama.png" alt="">
+      <div class="sticker-name"><span id="bellIcon">🔕</span> <span id="bellName">Reminders</span></div>
+      <div class="sticker-desc" id="bellDesc">Tap to turn on</div>
+    </button>
+    <a class="sticker" href="/faq">
+      <img src="/static/badges/cinnamoroll-lollipop.png" alt="">
+      <div class="sticker-name">How it works</div>
+      <div class="sticker-desc">The whole system</div>
+    </a>
+    <a class="sticker" href="/welcome">
+      <img src="/static/badges/cinnamoroll-witch.png" alt="">
+      <div class="sticker-name">Tour</div>
+      <div class="sticker-desc">Start here</div>
+    </a>
+    <a class="sticker" href="/dashboard">
+      <img src="/static/badges/cinnamoroll-parfait.png" alt="">
+      <div class="sticker-name">Grown-ups</div>
+      <div class="sticker-desc">Parent view</div>
+    </a>
+  </div>
+
+  <div class="scatter">
+    <img src="/static/treats/gem-pink.png" alt="">
+    <img src="/static/treats/candy-crystal-1.png" alt="">
+    <img src="/static/treats/icecream-pink.png" alt="">
+    <img src="/static/treats/gummybear-rainbow.png" alt="">
+    <img src="/static/treats/cupcake.png" alt="">
+    <img src="/static/treats/gem-blue.png" alt="">
+    <img src="/static/treats/donut-blue.png" alt="">
+  </div>
+</div>
+
+{% include '_home_core.html' %}
+</body>
+</html>

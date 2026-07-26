@@ -101,16 +101,45 @@ def _admin_open(path):
     return path in ('/admin/login', '/admin/logout')
 
 
+# The parent session goes stale on its own — the iPad lives on the kitchen
+# counter, and a signed-in Admin left open there is a signed-in Admin for
+# whoever picks it up next.
+ADMIN_IDLE_SECONDS = max(30, int(os.environ.get('ADMIN_IDLE_MINUTES', '2')) * 60)
+
+
+def _admin_activity(path):
+    """Paths that count as the parent still using the app. Violet tapping
+    through her own routines must not hold the parent session open."""
+    return (path.startswith('/admin') or path.startswith('/dashboard')
+            or path.startswith('/api/parent'))
+
+
 # ── Kid profiles ────────────────────────────────────────────────────────
 # Single profile today; the store is keyed by id so more can be added later
 # without a data migration.
 PROFILES = {'violet': {'name': 'Violet'}}
 
 
+@app.context_processor
+def _admin_template_vars():
+    """Available to every template, so the idle sign-out snippet needs no
+    per-route plumbing. A route passing is_admin= explicitly still wins."""
+    return {'is_admin': bool(session.get('admin')),
+            'admin_idle_seconds': ADMIN_IDLE_SECONDS}
+
+
 @app.before_request
 def _gate_admin():
-    """Everything under /admin requires the parent PIN, except the login flow."""
+    """Everything under /admin requires the parent PIN, except the login flow.
+    A parent session also expires on its own after a spell of no parent-side
+    activity — the client-side timer signs out promptly, this backs it up."""
     p = request.path
+    if session.get('admin'):
+        if time.time() - session.get('admin_seen', 0) > ADMIN_IDLE_SECONDS:
+            session.pop('admin', None)
+            session.pop('admin_seen', None)
+        elif _admin_activity(p):
+            session['admin_seen'] = int(time.time())
     if p.startswith('/admin') and not _admin_open(p):
         if not session.get('admin'):
             if request.method == 'GET':
@@ -1656,6 +1685,20 @@ def landing():
                            progress_json=json.dumps(load_progress(current_profile())))
 
 
+# Home-page candidates, live at /home/a|b|c so they can be compared on the real
+# iPad before one of them replaces the landing page. Unlinked on purpose.
+HOME_OPTIONS = {'a': 'home_a.html', 'b': 'home_b.html', 'c': 'home_c.html'}
+
+
+@app.route('/home/<option>')
+def home_option(option):
+    template = HOME_OPTIONS.get(option.lower())
+    if not template:
+        return redirect('/')
+    return render_template(template,
+                           progress_json=json.dumps(load_progress(current_profile())))
+
+
 @app.route('/welcome')
 def welcome():
     return render_template('welcome.html')
@@ -1710,6 +1753,7 @@ def admin_login():
     if request.method == 'POST':
         if request.form.get('pin', '').strip() == admin_pin():
             session['admin'] = True
+            session['admin_seen'] = int(time.time())
             session.permanent = True
             return redirect(nxt)
         return render_template('admin_login.html', error=True, next=nxt), 401

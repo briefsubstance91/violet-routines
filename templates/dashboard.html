@@ -43,30 +43,32 @@
     /* ── Header ── */
     header {
       background: transparent;
-      padding: 2rem 1.5rem 1.5rem;
+      padding: 0.9rem 1.1rem 0.6rem;
       position: relative; z-index: 1;
     }
     .header-top {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 1rem;
+      margin-bottom: 0;
     }
     .header-top a {
       font-size: 0.82rem; font-weight: 700;
-      color: rgba(255,255,255,0.7); text-decoration: none;
+      color: var(--muted); text-decoration: none;
     }
-    .header-top a:hover { color: white; }
+    .header-top a:hover { color: var(--purple); }
     .header-label {
       font-size: 0.68rem; font-weight: 800; letter-spacing: 0.15em;
-      text-transform: uppercase; color: rgba(255,255,255,0.55);
-      margin-bottom: 0.25rem;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 0.2rem;
     }
     .header-title {
       font-family: 'Fredoka One', cursive;
-      font-size: 2rem; color: white; line-height: 1;
+      font-size: 1.5rem; line-height: 1;
+      background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
     .header-sub {
-      font-size: 0.82rem; color: rgba(255,255,255,0.6);
-      margin-top: 0.3rem; font-weight: 600;
+      font-size: 0.78rem; color: var(--muted);
+      margin-top: 0.2rem; font-weight: 600;
     }
 
     /* ── Hamburger menu ── */
@@ -83,18 +85,28 @@
     .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
 
     /* ── Layout ── */
-    .page { max-width: 1000px; margin: 0 auto; padding: 0 1rem; }
+    /* Sized so the charts, the KPI strip and the Manage launchpad all land
+       above the fold on a landscape iPad (1024x768). */
+    .page { max-width: 1180px; margin: 0 auto; padding: 0 1rem 2rem; }
+
+    /* Charts lead, then two-up rows for the rest. */
+    .grid-top, .grid-2 { display: grid; gap: 0.85rem; }
+    @media (min-width: 900px) {
+      .grid-top { grid-template-columns: 1fr 1fr; }
+      .grid-2   { grid-template-columns: 1fr 1fr; align-items: start; }
+    }
 
     /* ── KPI row ── */
     .kpi-row {
       display: grid; grid-template-columns: repeat(2, 1fr);
-      gap: 0.85rem; margin: -1.25rem 0 1.25rem;
+      gap: 0.7rem; margin: 0 0 0.9rem;
     }
+    @media (min-width: 700px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
     .kpi-card {
       background: var(--card);
       border: 1.5px solid var(--border);
       border-radius: var(--r);
-      padding: 1.1rem 1rem;
+      padding: 0.75rem 0.9rem;
       box-shadow: 0 4px 20px rgba(78,58,180,0.08);
       display: flex; flex-direction: column; gap: 0.15rem;
     }
@@ -104,12 +116,12 @@
     }
     .kpi-value {
       font-family: 'Fredoka One', cursive;
-      font-size: 2.2rem; line-height: 1;
+      font-size: 1.7rem; line-height: 1;
     }
     .kpi-sub { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
 
     /* ── Manage launchpad ── */
-    .manage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1.25rem; }
+    .manage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); gap: 0.55rem; margin-bottom: 0.5rem; }
     .manage-card { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 0.85rem; background: var(--card); border: 1.5px solid var(--border); border-radius: 14px; text-decoration: none; color: var(--text); box-shadow: 0 4px 20px rgba(78,58,180,0.06); }
     .manage-card:hover { border-color: var(--purple); }
     .manage-icon { font-size: 1.5rem; flex-shrink: 0; }
@@ -121,7 +133,7 @@
     .section-label {
       font-size: 0.68rem; font-weight: 800; letter-spacing: 0.12em;
       text-transform: uppercase; color: var(--muted);
-      margin: 1.5rem 0 0.65rem;
+      margin: 0.75rem 0 0.5rem;
     }
 
     /* ── Card ── */
@@ -172,7 +184,7 @@
     }
     .week-col { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
     .week-bar-wrap {
-      width: 100%; height: 80px;
+      width: 100%; height: 104px;
       display: flex; align-items: flex-end;
       background: #f0ebff; border-radius: 6px; overflow: hidden;
     }
@@ -304,7 +316,6 @@
   <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
   <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
   <div class="menu-item"><a href="/calendar"><span class="menu-item-icon">📅</span> Family Calendar</a></div>
-  <div class="menu-item"><a href="/camp"><span class="menu-item-icon">🏕️</span> Camp Packing</a></div>
   <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
   <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
   <div class="menu-item"><a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
@@ -316,22 +327,58 @@
 
 <div class="page">
 
-  <!-- ── Manage launchpad ── -->
-  <p class="section-label">🛠️ Manage</p>
-  <div class="manage-grid">
-    <a class="manage-card" href="/admin/tasks"><span class="manage-icon">✏️</span><span class="manage-text"><span class="manage-name">Edit Routines</span><span class="manage-sub">Tasks, sub-tasks & tags</span></span></a>
-    <a class="manage-card" href="/admin/planning"><span class="manage-icon">🗓️</span><span class="manage-text"><span class="manage-name">Sunday Planning</span><span class="manage-sub">Weekly ritual</span></span></a>
-    <a class="manage-card" href="/admin#levelup"><span class="manage-icon">⚡</span><span class="manage-text"><span class="manage-name">Level Up</span><span class="manage-sub">Categories & wins</span></span></a>
-    <a class="manage-card" href="/admin#milestones"><span class="manage-icon">🏆</span><span class="manage-text"><span class="manage-name">Milestones</span><span class="manage-sub">Day rewards</span></span></a>
-    <a class="manage-card" href="/admin#money"><span class="manage-icon">💰</span><span class="manage-text"><span class="manage-name">Money & Giving</span><span class="manage-sub">Rates & rewards</span></span></a>
-    <a class="manage-card" href="/charities"><span class="manage-icon">💜</span><span class="manage-text"><span class="manage-name">Family Giving</span><span class="manage-sub">{{ giving_total }} donation{{ 's' if giving_total != 1 }} · {{ giving_months }} month{{ 's' if giving_months != 1 }}</span></span></a>
-    <a class="manage-card" href="/admin/toonies"><span class="manage-icon">🪙</span><span class="manage-text"><span class="manage-name">Toonie Tasks</span><span class="manage-sub">Weekly $2 extras</span></span></a>
-    <a class="manage-card" href="/admin/surprises"><span class="manage-icon">🎁</span><span class="manage-text"><span class="manage-name">Surprises</span><span class="manage-sub">Hidden rewards</span></span></a>
-    <a class="manage-card" href="/admin/payout"><span class="manage-icon">🏦</span><span class="manage-text"><span class="manage-name">Bank of Mom & Dad</span><span class="manage-sub">Pay out & history</span></span></a>
-    <a class="manage-card" href="/admin/events"><span class="manage-icon">✨</span><span class="manage-text"><span class="manage-name">Events</span><span class="manage-sub">One-off & recurring</span></span></a>
+  {# Charts first: the week bars and the routine breakdown are what a
+     glance at this page is for. #}
+  <div class="grid-top">
+  <div>
+  <!-- ── This week ── -->
+    <p class="section-label">📅 This Week</p>
+    <div class="card">
+      <div class="week-grid">
+        {% for day in stats.week %}
+        <div class="week-col">
+          {% if day.pct is none %}
+            <div class="week-bar-wrap"><div class="week-bar no-data" style="height:4px"></div></div>
+            <div class="week-pct" style="opacity:0">0</div>
+          {% else %}
+            <div class="week-bar-wrap">
+              <div class="week-bar {% if day.pct == 1.0 %}full{% endif %}"
+                   style="height: {{ [day.pct * 104, 4] | max }}px"></div>
+            </div>
+            <div class="week-pct">{{ (day.pct * 100) | round | int }}%</div>
+          {% endif %}
+          <div class="week-day">{{ day.label[:1] }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div>
+  <!-- ── Routine breakdown ── -->
+    <p class="section-label">📋 Routines</p>
+    <div class="card">
+      {% for rid, meta in routine_meta.items() %}
+      {% set pct = stats.routine_pct.get(rid, 0) %}
+      <div class="routine-row">
+        <div class="routine-icon-wrap">{{ meta.icon }}</div>
+        <div class="routine-info">
+          <div class="routine-name">{{ meta.name }}</div>
+          <div class="routine-sub">{{ meta.time }}</div>
+          <div class="routine-bar-wrap" style="margin-top:0.4rem">
+            <div class="routine-bar" style="width:{{ pct }}%; background: {% if pct >= 80 %}var(--green){% elif pct >= 50 %}var(--yellow){% else %}var(--purple){% endif %}"></div>
+          </div>
+        </div>
+        <div class="routine-pct-wrap">
+          <div class="routine-pct">{{ pct }}%</div>
+          <div class="routine-pct-label">completion</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
   </div>
 
-  <!-- ── Violet's progress ── -->
+<!-- ── Violet's progress ── -->
   <p class="section-label">✦ Violet's Progress</p>
 
   <!-- ── KPI row ── -->
@@ -358,128 +405,106 @@
     </div>
   </div>
 
-  <!-- Manage launchpad moved to top of page -->
+<!-- ── Manage launchpad ── -->
+  <p class="section-label">🛠️ Manage</p>
+  <div class="manage-grid">
+    <a class="manage-card" href="/admin/tasks"><span class="manage-icon">✏️</span><span class="manage-text"><span class="manage-name">Edit Routines</span><span class="manage-sub">Tasks, sub-tasks & tags</span></span></a>
+    <a class="manage-card" href="/admin/planning"><span class="manage-icon">🗓️</span><span class="manage-text"><span class="manage-name">Sunday Planning</span><span class="manage-sub">Weekly ritual</span></span></a>
+    <a class="manage-card" href="/admin#levelup"><span class="manage-icon">⚡</span><span class="manage-text"><span class="manage-name">Level Up</span><span class="manage-sub">Categories & wins</span></span></a>
+    <a class="manage-card" href="/admin#milestones"><span class="manage-icon">🏆</span><span class="manage-text"><span class="manage-name">Milestones</span><span class="manage-sub">Day rewards</span></span></a>
+    <a class="manage-card" href="/admin#money"><span class="manage-icon">💰</span><span class="manage-text"><span class="manage-name">Money & Giving</span><span class="manage-sub">Rates & rewards</span></span></a>
+    <a class="manage-card" href="/charities"><span class="manage-icon">💜</span><span class="manage-text"><span class="manage-name">Family Giving</span><span class="manage-sub">{{ giving_total }} donation{{ 's' if giving_total != 1 }} · {{ giving_months }} month{{ 's' if giving_months != 1 }}</span></span></a>
+    <a class="manage-card" href="/admin/toonies"><span class="manage-icon">🪙</span><span class="manage-text"><span class="manage-name">Toonie Tasks</span><span class="manage-sub">Weekly $2 extras</span></span></a>
+    <a class="manage-card" href="/admin/surprises"><span class="manage-icon">🎁</span><span class="manage-text"><span class="manage-name">Surprises</span><span class="manage-sub">Hidden rewards</span></span></a>
+    <a class="manage-card" href="/admin/payout"><span class="manage-icon">🏦</span><span class="manage-text"><span class="manage-name">Bank of Mom & Dad</span><span class="manage-sub">Pay out & history</span></span></a>
+    <a class="manage-card" href="/admin/events"><span class="manage-icon">✨</span><span class="manage-text"><span class="manage-name">Events</span><span class="manage-sub">One-off & recurring</span></span></a>
+  </div>
 
+  <div class="grid-2">
+  <div>
   <!-- ── Milestone ── -->
-  <p class="section-label">🏆 Next Reward</p>
-  {% if next_ms %}
-    {% set days_left = next_ms[0] - stats.days_completed %}
-    {% set range_size = next_ms[0] - prev_ms_streak %}
-    {% set progress = ((stats.days_completed - prev_ms_streak) / range_size * 100) | round | int %}
-  <div class="card milestone-card">
-    <div class="ms-header">
-      <div class="ms-reward">{{ next_ms[1].message }}</div>
-      <div>
-        <div class="ms-days-left">{{ days_left }}</div>
-        <div class="ms-days-label">days to go</div>
-      </div>
-    </div>
-    <div class="ms-bar-wrap">
-      <div class="ms-bar" style="width: {{ progress }}%"></div>
-    </div>
-    <div class="ms-bar-labels">
-      <span>Day {{ prev_ms_streak }}</span>
-      <span>{{ progress }}% there</span>
-      <span>Day {{ next_ms[0] }}</span>
-    </div>
-  </div>
-  {% else %}
-  <div class="card milestone-card">
-    <div class="ms-done">🏆 All milestones reached — Violet is a legend!</div>
-  </div>
-  {% endif %}
-
-  <!-- ── This week ── -->
-  <p class="section-label">📅 This Week</p>
-  <div class="card">
-    <div class="week-grid">
-      {% for day in stats.week %}
-      <div class="week-col">
-        {% if day.pct is none %}
-          <div class="week-bar-wrap"><div class="week-bar no-data" style="height:4px"></div></div>
-          <div class="week-pct" style="opacity:0">0</div>
-        {% else %}
-          <div class="week-bar-wrap">
-            <div class="week-bar {% if day.pct == 1.0 %}full{% endif %}"
-                 style="height: {{ [day.pct * 80, 4] | max }}px"></div>
-          </div>
-          <div class="week-pct">{{ (day.pct * 100) | round | int }}%</div>
-        {% endif %}
-        <div class="week-day">{{ day.label[:1] }}</div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- ── Routine breakdown ── -->
-  <p class="section-label">📋 Routines</p>
-  <div class="card">
-    {% for rid, meta in routine_meta.items() %}
-    {% set pct = stats.routine_pct.get(rid, 0) %}
-    <div class="routine-row">
-      <div class="routine-icon-wrap">{{ meta.icon }}</div>
-      <div class="routine-info">
-        <div class="routine-name">{{ meta.name }}</div>
-        <div class="routine-sub">{{ meta.time }}</div>
-        <div class="routine-bar-wrap" style="margin-top:0.4rem">
-          <div class="routine-bar" style="width:{{ pct }}%; background: {% if pct >= 80 %}var(--green){% elif pct >= 50 %}var(--yellow){% else %}var(--purple){% endif %}"></div>
+    <p class="section-label">🏆 Next Reward</p>
+    {% if next_ms %}
+      {% set days_left = next_ms[0] - stats.days_completed %}
+      {% set range_size = next_ms[0] - prev_ms_streak %}
+      {% set progress = ((stats.days_completed - prev_ms_streak) / range_size * 100) | round | int %}
+    <div class="card milestone-card">
+      <div class="ms-header">
+        <div class="ms-reward">{{ next_ms[1].message }}</div>
+        <div>
+          <div class="ms-days-left">{{ days_left }}</div>
+          <div class="ms-days-label">days to go</div>
         </div>
       </div>
-      <div class="routine-pct-wrap">
-        <div class="routine-pct">{{ pct }}%</div>
-        <div class="routine-pct-label">completion</div>
+      <div class="ms-bar-wrap">
+        <div class="ms-bar" style="width: {{ progress }}%"></div>
+      </div>
+      <div class="ms-bar-labels">
+        <span>Day {{ prev_ms_streak }}</span>
+        <span>{{ progress }}% there</span>
+        <span>Day {{ next_ms[0] }}</span>
       </div>
     </div>
-    {% endfor %}
+    {% else %}
+    <div class="card milestone-card">
+      <div class="ms-done">🏆 All milestones reached — Violet is a legend!</div>
+    </div>
+    {% endif %}
   </div>
-
+  <div>
   <!-- ── Task Categories (tag breakdown) ── -->
-  <p class="section-label">🏷️ Task Categories</p>
-  <div class="card">
-    {% if tag_breakdown %}
-      {% set max_count = tag_breakdown.values() | list | max %}
-      {% for tag, count in tag_breakdown.items() %}
-      <div class="tag-row">
-        <span class="tag-pill">{{ tag }}</span>
-        <div class="tag-bar-wrap">
-          <div class="tag-bar" style="width: {{ (count / max_count * 100) | round | int }}%"></div>
+    <p class="section-label">🏷️ Task Categories</p>
+    <div class="card">
+      {% if tag_breakdown %}
+        {% set max_count = tag_breakdown.values() | list | max %}
+        {% for tag, count in tag_breakdown.items() %}
+        <div class="tag-row">
+          <span class="tag-pill">{{ tag }}</span>
+          <div class="tag-bar-wrap">
+            <div class="tag-bar" style="width: {{ (count / max_count * 100) | round | int }}%"></div>
+          </div>
+          <span class="tag-count">{{ count }} task{{ 's' if count != 1 }}</span>
         </div>
-        <span class="tag-count">{{ count }} task{{ 's' if count != 1 }}</span>
-      </div>
-      {% endfor %}
-    {% else %}
-      <div class="empty">No tags yet — open Admin → Routines, expand any task, and type in the <em>+ tag</em> field.</div>
-    {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="empty">No tags yet — open Admin → Routines, expand any task, and type in the <em>+ tag</em> field.</div>
+      {% endif %}
+    </div>
+  </div>
   </div>
 
+  <div class="grid-2">
+  <div>
   <!-- ── Recent Level Up wins ── -->
-  <p class="section-label">⚡ Recent Wins</p>
-  <div class="card">
-    {% if recent_wins %}
-      {% for w in recent_wins %}
-      <div class="win-row">
-        <div class="win-dot">⚡</div>
-        <div class="win-content">
-          <div class="win-text">{{ w.Win }}</div>
-          <div class="win-meta">{{ w.Category }}</div>
+    <p class="section-label">⚡ Recent Wins</p>
+    <div class="card">
+      {% if recent_wins %}
+        {% for w in recent_wins %}
+        <div class="win-row">
+          <div class="win-dot">⚡</div>
+          <div class="win-content">
+            <div class="win-text">{{ w.Win }}</div>
+            <div class="win-meta">{{ w.Category }}</div>
+          </div>
+          <div class="win-date">{{ w.Date[5:] }}</div>
         </div>
-        <div class="win-date">{{ w.Date[5:] }}</div>
-      </div>
-      {% endfor %}
-    {% else %}
-      <div class="empty">No wins logged yet — tap ⚡ in the app to start!</div>
-    {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="empty">No wins logged yet — tap ⚡ in the app to start!</div>
+      {% endif %}
+    </div>
   </div>
-
+  <div>
   <!-- ── Badges ── -->
-  <p class="section-label">🏅 Badges</p>
-  <div class="card">
-    <div class="card-title"><span id="badgeCountLabel">Loading…</span></div>
-    <div class="badge-mini-grid" id="badgeMiniGrid"></div>
+    <p class="section-label">🏅 Badges</p>
+    <div class="card">
+      <div class="card-title"><span id="badgeCountLabel">Loading…</span></div>
+      <div class="badge-mini-grid" id="badgeMiniGrid"></div>
+    </div>
+  </div>
   </div>
 
-
-  <!-- ── How It Works ── -->
+<!-- ── How It Works ── -->
   <div class="card" style="margin-bottom: 2rem">
     <button class="hiw-toggle" onclick="toggleHiw(this)">
       <span>💬 How this app works</span>
@@ -556,5 +581,6 @@
   }
 </script>
 
+{% include '_idle_signout.html' %}
 </body>
 </html>

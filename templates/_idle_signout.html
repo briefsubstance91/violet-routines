@@ -1,0 +1,24 @@
+{# Parent pages sign themselves out after a spell of no interaction, so an
+   iPad left on the counter isn't a signed-in Admin for whoever picks it up.
+   The server enforces the same window; this just makes it immediate. #}
+{% if is_admin %}
+<script>
+(function () {
+  var IDLE_MS = {{ admin_idle_seconds }} * 1000;
+  var timer;
+  function signOut() {
+    fetch('/admin/logout', { method: 'POST' })
+      .catch(function () {})
+      .then(function () { location.href = '/'; });
+  }
+  function reset() { clearTimeout(timer); timer = setTimeout(signOut, IDLE_MS); }
+  ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(function (e) {
+    window.addEventListener(e, reset, { passive: true });
+  });
+  // Coming back to a tab that sat in the background starts the clock over;
+  // the server-side check is what catches a session that went stale there.
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) reset(); });
+  reset();
+})();
+</script>
+{% endif %}
