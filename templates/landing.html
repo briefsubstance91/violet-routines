@@ -2,509 +2,193 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Violet">
+  <title>Violet's Life OS</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
-  <title>Violet's Life OS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    /* ── Option C · Companion of the Day ────────────────────────────────────
+       One big character who changes with the clock — morning, afternoon and
+       night each get their own friend, backdrop and line of encouragement. */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --purple: #9b87f5;
-      --pink:   #f472b6;
-      --blue:   #4db8ff;
-      --green:  #34d399;
-      --text:   #1e1b4b;
-      --muted:  #9490c0;
-      --bg:     #f5f3ff;
-      --card:   #ffffff;
-      --border: #e5e0ff;
+      --purple: #9b87f5; --pink: #f472b6; --blue: #4db8ff;
+      --text: #1e1b4b; --muted: #9490c0; --card: #fff;
+      --sky1: #cce8ff; --sky2: #e9e3ff; --sky3: #ffd6f0; --ink: #1e1b4b;
     }
-
-    html, body { height: 100%; }
-
-    body {
-      font-family: 'Nunito', sans-serif;
-      background: linear-gradient(160deg, #cce8ff 0%, #e9e3ff 50%, #ffd6f0 100%);
-      background-attachment: fixed;
-      color: var(--text);
-      min-height: 100%;
-      overflow-x: hidden;
+    html, body {
+      min-height: 100%; font-family: 'Nunito', sans-serif; color: var(--text);
+      background: linear-gradient(160deg, var(--sky1) 0%, var(--sky2) 52%, var(--sky3) 100%);
+      background-attachment: fixed; -webkit-tap-highlight-color: transparent;
+      transition: background 0.6s ease;
     }
+    /* Evening flips the page dark; the same markup, a different mood. */
+    body.night { --ink: #ffffff; --muted: #b9b4e0; color: #fff; }
+    body.night .panel { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); }
+    body.night .rail-item { background: rgba(255,255,255,0.12); color: #fff; }
+    body.night .rail-name { color: #fff; }
 
-    body::before {
-      content: '✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧';
-      position: fixed; top: 0; left: 0; right: 0;
-      font-size: 1rem; color: rgba(155,135,245,0.18);
-      letter-spacing: 2rem; word-spacing: 2rem; line-height: 3rem;
-      pointer-events: none; z-index: 0; word-break: break-all;
-    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0.9rem 1rem 2rem; }
+    .menu-btn { position: absolute; top: 0.9rem; right: 1rem; background: rgba(255,255,255,0.82); border: none;
+      font-size: 1.3rem; color: var(--purple); cursor: pointer; padding: 0.35rem 0.65rem; border-radius: 12px;
+      line-height: 1; box-shadow: 0 4px 16px rgba(78,58,180,0.12); z-index: 5; }
 
-    /* ── Hero ── */
-    .hero {
-      background: transparent;
-      min-height: auto;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      padding: 2.25rem 0 1rem;
-      z-index: 1;
-    }
-
-    /* decorative circles */
-    .hero::before {
-      content: '';
-      position: absolute; top: -60px; right: -60px;
-      width: 260px; height: 260px;
-      border-radius: 50%;
-      background: rgba(196,132,252,0.15);
-    }
-    .hero::after {
-      content: '';
-      position: absolute; bottom: 20px; left: -40px;
-      width: 180px; height: 180px;
-      border-radius: 50%;
-      background: rgba(244,114,182,0.12);
-    }
-
-    .hero-char {
-      position: absolute;
-      right: -10px; top: 0;
-      height: 100%;
-      width: 55%;
-      object-fit: cover;
-      object-position: center 20%;
-      mask-image: linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
-    }
-
-    .hero-content {
-      position: relative; z-index: 2;
-      padding: 0 1.5rem;
-    }
-
-    .hero-greeting {
-      font-size: 0.75rem; font-weight: 800;
-      letter-spacing: 0.15em; text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 0.4rem;
-    }
-
-    /* ── Hero actions row (weather + CTA) ── */
-    .hero-actions {
-      display: flex; flex-wrap: wrap; align-items: center;
-      gap: 0.85rem; margin-top: 1.1rem; position: relative; z-index: 5;
-    }
-
-    /* ── Weather card ── */
-    .weather-card {
-      display: flex; align-items: stretch;
-      flex: 0 1 320px; max-width: 320px;
-      border-radius: 18px; padding: 0.8rem 1rem;
-      color: #fff;
-      background: linear-gradient(135deg, #4db8ff, #9b87f5);
-      box-shadow: 0 8px 22px rgba(78,58,180,0.2);
-    }
-    .wc-left { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 0.35rem; min-width: 0; }
-    .wc-cond { font-size: 0.8rem; font-weight: 800; }
-    .wc-icon { font-size: clamp(3.4rem, 15vw, 4.6rem); line-height: 1; }
-    .wc-div { width: 1.5px; background: rgba(255,255,255,0.32); margin: 0.1rem 1rem; border-radius: 2px; }
-    .wc-right { flex: 1; display: flex; flex-direction: column; align-items: flex-end; text-align: right; min-width: 0; justify-content: center; }
-    .wc-loc { font-size: 0.82rem; font-weight: 800; }
-    .wc-day { font-size: 0.66rem; font-weight: 700; opacity: 0.85; margin-bottom: 0.3rem; }
-    .wc-temp { font-family: 'Fredoka One', cursive; font-size: clamp(1.9rem, 8vw, 2.4rem); line-height: 1; }
-    .wc-temp-f { font-size: 0.72rem; font-weight: 800; opacity: 0.9; margin-top: 0.1rem; }
-    .wc-hilo { font-size: 0.66rem; font-weight: 700; opacity: 0.82; margin-top: 0.3rem; }
-
-    .hero-title {
-      font-family: 'Fredoka One', cursive;
-      font-size: 2.6rem; line-height: 1.05;
+    /* ── Hero: companion + greeting + today strip ── */
+    .hero { display: grid; gap: 1rem; align-items: center; grid-template-columns: 1fr; margin-bottom: 0.85rem; }
+    @media (min-width: 820px) { .hero { grid-template-columns: 1.1fr 0.9fr; } }
+    .hero-copy { min-width: 0; }
+    .greet { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    h1 { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.05;
       background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0.15rem 0; }
+    body.night h1 { background: linear-gradient(135deg, #a8d8ff, #e9d5ff, #fbcfe8);
+      -webkit-background-clip: text; background-clip: text; }
+    .date { font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+    .say {
+      display: inline-block; position: relative; margin-top: 0.9rem;
+      background: var(--card); border-radius: 18px; padding: 0.7rem 1rem;
+      font-size: 0.92rem; font-weight: 800; color: var(--ink);
+      box-shadow: 0 8px 24px rgba(78,58,180,0.14); max-width: 22rem;
     }
+    body.night .say { background: rgba(255,255,255,0.14); }
+    .say::after { content: ''; position: absolute; left: 26px; bottom: -9px;
+      border: 10px solid transparent; border-top-color: var(--card); border-bottom: 0; }
+    body.night .say::after { border-top-color: rgba(255,255,255,0.14); }
 
-    .hero-sub {
-      font-size: 0.9rem; font-weight: 600;
-      color: var(--muted);
-      margin-top: 0.5rem; line-height: 1.4;
-    }
+    .companion { display: flex; justify-content: center; }
+    /* One fixed card size for every companion — the artwork ranges from square
+       to tall portrait, and an unconstrained portrait pushes the page down. */
+    .companion img { width: min(340px, 66vw); height: clamp(200px, 32vh, 300px);
+      border-radius: 26px; object-fit: cover;
+      box-shadow: 0 16px 40px rgba(78,58,180,0.22); }
 
-    .hero-streak {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      margin-top: 1.1rem;
-      background: rgba(255,255,255,0.7);
-      border: 1.5px solid var(--border);
-      border-radius: 100px;
-      padding: 0.4rem 0.9rem;
-      font-size: 0.82rem; font-weight: 800; color: var(--text);
-    }
+    /* ── Today strip ── */
+    .today { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.7rem; margin-bottom: 0.85rem; }
+    @media (min-width: 700px) { .today { grid-template-columns: repeat(4, 1fr); } }
+    .panel { background: var(--card); border-radius: 18px; padding: 0.75rem 0.9rem;
+      box-shadow: 0 8px 24px rgba(78,58,180,0.1); display: flex; align-items: center; gap: 0.7rem;
+      text-decoration: none; color: inherit; }
+    .panel-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .panel-big { display: block; font-family: 'Fredoka One', cursive; font-size: 1.35rem; line-height: 1.05; color: var(--ink); }
+    .panel-lbl { display: block; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-top: 0.15rem; }
+    .panel.go { background: linear-gradient(135deg, #9b87f5, #f472b6); color: white; }
+    .panel.go .panel-big, .panel.go .panel-lbl { color: white; }
 
-    .hero-curve { display: none; }
-
-    /* ── CTA button ── */
-    .cta-wrap {
-      display: flex; justify-content: center;
-      margin-top: -1.5rem;
-      position: relative; z-index: 5;
-      padding: 0 1.5rem;
-    }
-
-    .cta-btn {
-      display: flex; align-items: center; gap: 0.6rem;
-      background: linear-gradient(135deg, var(--purple), var(--pink));
-      color: white;
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.15rem;
-      padding: 0.85rem 2.2rem;
-      border-radius: 100px;
-      text-decoration: none;
-      box-shadow: 0 8px 28px rgba(155,135,245,0.45);
-      transition: transform 0.15s, box-shadow 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .cta-btn:active { transform: scale(0.96); box-shadow: 0 4px 14px rgba(155,135,245,0.3); }
-
-    /* ── Hub grid ── */
-    .hub {
-      padding: 1.1rem 1.5rem 2rem;
-      max-width: 1100px; margin: 0 auto;
-    }
-
-    .hub-label {
-      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--muted);
-      margin-bottom: 0.85rem;
-    }
-
-    .hub-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 0.75rem;
-    }
-
-    .hub-card {
-      background: var(--card);
-      border-radius: 18px;
-      padding: 1.1rem 1rem;
-      text-decoration: none;
-      color: var(--text);
-      box-shadow: 0 4px 20px rgba(78,58,180,0.08);
-      display: flex; flex-direction: column; gap: 0.35rem;
-      transition: transform 0.15s, box-shadow 0.15s;
-      -webkit-tap-highlight-color: transparent;
-      position: relative;
-      overflow: hidden;
-      border: 1.5px solid var(--border);
-    }
-    .hub-card:active { transform: scale(0.97); box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
-    .hub-card::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: var(--accent, var(--purple));
-      border-radius: 18px 18px 0 0;
-    }
-
-    .hub-card-icon {
-      font-size: 1.7rem; line-height: 1;
-    }
-    .hub-card-name {
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.05rem; color: var(--text);
-      line-height: 1;
-    }
-    .hub-card-desc {
-      font-size: 0.72rem; font-weight: 600;
-      color: var(--muted); line-height: 1.3;
-    }
-
-    /* accent colours per card */
-    .hub-card.routines  { --accent: var(--purple); }
-    .hub-card.stats     { --accent: var(--blue); }
-    .hub-card.levelup   { --accent: var(--pink); }
-    .hub-card.badges    { --accent: #f59e0b; }
-    .hub-card.dashboard { --accent: var(--green); }
-    .hub-card.bell      { --accent: #10b981; cursor: pointer; }
-    .hub-card.bell.on   { background: #f0fdf4; border-color: #10b981; }
-
-    .hub-card.wide {
-      grid-column: span 2;
-      flex-direction: row; align-items: center;
-      gap: 1rem; padding: 1rem 1.15rem;
-    }
-    .hub-card.wide .hub-card-content { flex: 1; }
-    .hub-card.wide .hub-card-icon { font-size: 2rem; }
-    .hub-card.wide .hub-card-name { font-size: 1.1rem; }
-
-    /* ── Landscape (iPad): two-column hero + single hub row, all above the fold ── */
-    @media (min-width: 820px) {
-      .hero { padding: 2.5rem 0 0.75rem; }
-      .hero-content { max-width: 56%; }
-      .hero-char { width: 46%; }
-      .hero-title { font-size: 2.9rem; }
-      .hero-actions { flex-wrap: nowrap; }
-      .hero-streak { margin-top: 0.8rem; }
-      .hub { padding-top: 0.5rem; }
-      .hub-grid { grid-template-columns: repeat(6, 1fr); gap: 0.6rem; }
-      .hub-card { padding: 0.85rem 0.7rem; }
-      .hub-card-desc { font-size: 0.66rem; }
-      .hub-card.wide { grid-column: span 1; flex-direction: column; align-items: flex-start; gap: 0.3rem; padding: 0.85rem 0.7rem; }
-      .hub-card.wide .hub-card-icon { font-size: 1.7rem; }
-      .hub-card.wide .hub-card-name { font-size: 1.05rem; }
-      .hub-card.routines > span { display: none; }  /* hide the → arrow in compact mode */
-    }
+    /* ── Character tiles ──
+       Four across at most, so each friend is big enough to recognise from
+       across the kitchen — seven in a row made them postage stamps. */
+    .rail { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
+    @media (min-width: 560px) { .rail { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 900px) { .rail { grid-template-columns: repeat(4, 1fr); } }
+    .rail-item { background: var(--card); border-radius: 22px; padding: 1.1rem 0.6rem 1rem;
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center;
+      text-decoration: none; color: var(--text); box-shadow: 0 8px 24px rgba(78,58,180,0.12);
+      border: none; font-family: inherit; cursor: pointer; width: 100%; transition: transform 0.16s ease; }
+    .rail-item:active { transform: scale(0.96); }
+    .rail-item img { width: min(124px, 34vw); height: min(124px, 34vw); object-fit: contain; }
+    .rail-name { font-size: 1rem; font-weight: 800; color: var(--text); line-height: 1.15; }
+    .rail-item.on { background: #dcfce7; }
 
     /* ── Menu ── */
-    .menu-btn {
-      position: absolute; top: calc(env(safe-area-inset-top) + 1rem); right: 1rem;
-      background: rgba(255,255,255,0.7); border: none;
-      font-size: 1.4rem; color: var(--purple); cursor: pointer;
-      padding: 0.3rem 0.6rem; border-radius: 10px; line-height: 1;
-      z-index: 10;
-    }
-    .menu-btn:hover { background: white; }
     .menu-backdrop { display: none; position: fixed; inset: 0; background: rgba(78,58,180,0.18); z-index: 200; backdrop-filter: blur(2px); }
     .menu-backdrop.open { display: block; }
-    .menu-panel { position: fixed; top: 0; right: 0; width: min(280px, 85vw); height: 100%; background: white; z-index: 201; transform: translateX(110%); transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1); padding: 2rem 1.5rem; display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(78,58,180,0.15); }
+    .menu-panel { position: fixed; top: 0; right: 0; width: min(280px, 85vw); height: 100%; background: white; z-index: 201; transform: translateX(110%); transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1); padding: 2rem 1.5rem; display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(78,58,180,0.15); color: #1e1b4b; overflow-y: auto; }
     .menu-panel.open { transform: translateX(0); }
     .menu-title { font-family: 'Fredoka One', cursive; font-size: 1.4rem; background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1.75rem; }
     .menu-item { display: flex; align-items: center; gap: 0.9rem; padding: 0.95rem 0.5rem; border-bottom: 1.5px solid #f3f0ff; font-size: 0.95rem; font-weight: 700; color: #1e1b4b; border-radius: 8px; }
-    .menu-item:hover { background: #f8f5ff; }
     .menu-item a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.9rem; width: 100%; }
     .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
   </style>
 </head>
 <body>
+<div class="wrap">
+  <button class="menu-btn" onclick="openMenu()">☰</button>
 
-<button class="menu-btn" onclick="openMenu()">☰</button>
-
-<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
-<div class="menu-panel" id="menuPanel">
-  <div class="menu-title">✦ Menu</div>
-  <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
-  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
-  <div class="menu-item"><a href="/calendar"><span class="menu-item-icon">📅</span> Family Calendar</a></div>
-  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
-  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
-  <div class="menu-item"><a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
-  <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
-  <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
-  <div class="menu-item"><a href="/admin/planning"><span class="menu-item-icon">🗓️</span> Sunday Planning</a></div>
-  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
-  <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
-</div>
-
-<!-- ── Hero ── -->
-<section class="hero">
-  <img class="hero-char" src="/static/welcome/cinnamoroll/cinnamoroll-sparkle.jpg" alt="">
-  <div class="hero-content">
-    <div class="hero-greeting" id="heroGreeting">Good morning</div>
-    <div class="hero-title">Violet's<br>Life OS ✦</div>
-    <div class="hero-sub">Your routines, wins &<br>everything in between.</div>
-    <div class="hero-actions">
-      <div class="weather-card" id="weatherCard" style="display:none">
-        <div class="wc-left">
-          <div class="wc-cond" id="wcCond">—</div>
-          <div class="wc-icon" id="wcIcon">⛅</div>
-        </div>
-        <div class="wc-div"></div>
-        <div class="wc-right">
-          <div class="wc-loc">Toronto, ON</div>
-          <div class="wc-day" id="wcDay">Today</div>
-          <div class="wc-temp" id="wcTemp">–°</div>
-          <div class="wc-temp-f" id="wcTempF"></div>
-          <div class="wc-hilo" id="wcHilo"></div>
-        </div>
-      </div>
-      <a href="/routines" class="cta-btn">✦ Open Routines</a>
+  <div class="hero">
+    <div class="hero-copy">
+      <div class="greet" id="heroGreeting">Hello</div>
+      <h1>Violet's Life OS ✦</h1>
+      <div class="date" id="todayDate"></div>
+      <div class="say" id="companionSay">Ready when you are.</div>
     </div>
-    <div class="hero-streak" id="heroStreak" style="display:none">
-      🌟 <span id="streakVal">0</span> days completed
-    </div>
+    <div class="companion"><img id="companionImg" src="/static/misc%20images/IMG_6645.JPG" alt=""></div>
   </div>
-  <div class="hero-curve"></div>
-</section>
 
-<!-- ── Hub ── -->
-<div class="hub">
-  <p class="hub-label">Everything in one place</p>
-  <div class="hub-grid">
-
-    <a href="/stats" class="hub-card stats">
-      <div class="hub-card-icon">⭐</div>
-      <div class="hub-card-name">Stats</div>
-      <div class="hub-card-desc">Days, completion & calendar</div>
+  <div class="today">
+    <a class="panel go" href="/routines">
+      <span class="panel-icon">✦</span>
+      <span>
+        <span class="panel-big" id="nextRoutine">Routines</span>
+        <span class="panel-lbl" id="nextRoutineWhen">tap to start</span>
+      </span>
     </a>
-
-    <a href="/badges" class="hub-card badges">
-      <div class="hub-card-icon">🏅</div>
-      <div class="hub-card-name">Badges</div>
-      <div class="hub-card-desc">Collect Sanrio-style rewards</div>
-    </a>
-
-    <a href="/routines" class="hub-card levelup">
-      <div class="hub-card-icon">⚡</div>
-      <div class="hub-card-name">Level Up</div>
-      <div class="hub-card-desc">Log a win, even a tiny one</div>
-    </a>
-
-    <a href="/dashboard" class="hub-card dashboard">
-      <div class="hub-card-icon">📊</div>
-      <div class="hub-card-name">Dashboard</div>
-      <div class="hub-card-desc">Parent view & KPIs</div>
-    </a>
-
-    <a href="/routines" class="hub-card routines wide">
-      <div class="hub-card-icon">✦</div>
-      <div class="hub-card-content">
-        <div class="hub-card-name">Today's Routines</div>
-        <div class="hub-card-desc">Morning · Afternoon · Evening</div>
-      </div>
-      <span style="font-size:1.4rem; color:var(--purple); font-family:'Fredoka One',cursive">→</span>
-    </a>
-
-    <div class="hub-card bell wide" id="bellCard" onclick="toggleNotifications()">
-      <div class="hub-card-icon" id="bellIcon">🔔</div>
-      <div class="hub-card-content">
-        <div class="hub-card-name" id="bellName">Enable Reminders</div>
-        <div class="hub-card-desc" id="bellDesc">Get notified when it's routine time</div>
-      </div>
+    <div class="panel" id="weatherCard" style="visibility:hidden">
+      <span class="panel-icon" id="wcIcon">⛅</span>
+      <span>
+        <span class="panel-big" id="wcTemp">–°</span>
+        <span class="panel-lbl"><span id="wcCond">—</span> · <span id="wcHilo"></span></span>
+      </span>
     </div>
+    <a class="panel" href="/stats" id="heroStreak" style="display:none">
+      <span class="panel-icon">🌟</span>
+      <span>
+        <span class="panel-big" id="streakVal">0</span>
+        <span class="panel-lbl">days completed</span>
+      </span>
+    </a>
+    <a class="panel" href="/bank">
+      <span class="panel-icon">🏦</span>
+      <span>
+        <span class="panel-big">Bank</span>
+        <span class="panel-lbl">what you've earned</span>
+      </span>
+    </a>
+  </div>
 
+  <div class="rail">
+    <a class="rail-item" href="/stats"><img src="/static/badges/cinnamoroll-cherries.png" alt=""><span class="rail-name">Stats</span></a>
+    <a class="rail-item" href="/badges"><img src="/static/badges/pompompurin-pancakes.png" alt=""><span class="rail-name">Badges</span></a>
+    <a class="rail-item" href="/routines"><img src="/static/badges/kuromi-leopard.png" alt=""><span class="rail-name">Level Up</span></a>
+    <a class="rail-item" href="/charities"><img src="/static/badges/mymelody-wave.png" alt=""><span class="rail-name">Giving</span></a>
+    <a class="rail-item" href="/calendar"><img src="/static/badges/cinnamoroll-beret.png" alt=""><span class="rail-name">Calendar</span></a>
+    <button class="rail-item" id="bellCard" onclick="toggleNotifications()">
+      <img src="/static/badges/gudetama.png" alt="">
+      <span class="rail-name"><span id="bellIcon">🔕</span> <span id="bellName">Reminders</span></span>
+      <span hidden id="bellDesc"></span>
+    </button>
+    <a class="rail-item" href="/dashboard"><img src="/static/badges/cinnamoroll-parfait.png" alt=""><span class="rail-name">Grown-ups</span></a>
   </div>
 </div>
 
+{% include '_home_core.html' %}
 <script>
-  // Register the service worker so the app installs + works offline from here.
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
-  }
-
-  // (Welcome tour is no longer shown automatically — reach it from the menu.)
-
-  // Greeting
-  const h = new Date().getHours();
-  document.getElementById('heroGreeting').textContent =
-    h < 12 ? 'Good morning ☁️' : h < 17 ? 'Good afternoon 🌸' : 'Good evening 🌙';
-
-  // ── Live weather — fixed location: Toronto (M6K) ──
-  const WX_LAT = 43.64, WX_LON = -79.43;
-  function wxInfo(code) {
-    const m = {
-      0:['☀️','Sunny'], 1:['🌤️','Mostly sunny'], 2:['⛅','Partly cloudy'], 3:['☁️','Cloudy'],
-      45:['🌫️','Foggy'], 48:['🌫️','Foggy'],
-      51:['🌦️','Light drizzle'], 53:['🌦️','Drizzle'], 55:['🌦️','Heavy drizzle'],
-      56:['🌧️','Freezing drizzle'], 57:['🌧️','Freezing drizzle'],
-      61:['🌧️','Light rain'], 63:['🌧️','Rain'], 65:['🌧️','Heavy rain'],
-      66:['🌧️','Freezing rain'], 67:['🌧️','Freezing rain'],
-      71:['🌨️','Light snow'], 73:['🌨️','Snow'], 75:['🌨️','Heavy snow'], 77:['🌨️','Snow'],
-      80:['🌦️','Rain showers'], 81:['🌦️','Rain showers'], 82:['🌦️','Heavy showers'],
-      85:['🌨️','Snow showers'], 86:['🌨️','Snow showers'],
-      95:['⛈️','Thunderstorm'], 96:['⛈️','Thunderstorm'], 99:['⛈️','Thunderstorm'],
-    };
-    return m[code] || ['🌡️','—'];
-  }
-  function wxGradient(code) {
-    if (code === 0 || code === 1)              return 'linear-gradient(135deg,#fbbf24,#f472b6)'; // sunny
-    if (code === 2)                            return 'linear-gradient(135deg,#4db8ff,#9b87f5)'; // partly cloudy
-    if (code === 3 || code === 45 || code === 48) return 'linear-gradient(135deg,#9490c0,#9b87f5)'; // cloudy/fog
-    if (code >= 71 && code <= 86 && code !== 80 && code !== 81 && code !== 82)
-                                               return 'linear-gradient(135deg,#a5d8ff,#c4b5fd)'; // snow
-    if (code >= 95)                            return 'linear-gradient(135deg,#7c83ff,#9b87f5)'; // storm
-    return 'linear-gradient(135deg,#4db8ff,#6c8cf5)'; // rain / drizzle / showers
-  }
-  async function loadWeather() {
-    try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${WX_LAT}&longitude=${WX_LON}`
-        + `&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min`
-        + `&timezone=auto&temperature_unit=celsius`;
-      const d = await (await fetch(url)).json();
-      const code = d.current.weather_code;
-      const [emoji, desc] = wxInfo(code);
-      const c = d.current.temperature_2m;
-      document.getElementById('wcIcon').textContent  = emoji;
-      document.getElementById('wcCond').textContent  = desc;
-      document.getElementById('wcDay').textContent   = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-      document.getElementById('wcTemp').textContent  = Math.round(c) + '°';
-      document.getElementById('wcTempF').textContent = (c * 9 / 5 + 32).toFixed(1) + ' F';
-      document.getElementById('wcHilo').textContent  =
-        'H ' + Math.round(d.daily.temperature_2m_max[0]) + '°  ·  L ' + Math.round(d.daily.temperature_2m_min[0]) + '°';
-      document.getElementById('weatherCard').style.background = wxGradient(code);
-      document.getElementById('weatherCard').style.display = 'flex';
-    } catch (e) { /* network issue — leave the card hidden */ }
-  }
-  loadWeather();
-  setInterval(loadWeather, 15 * 60 * 1000);   // refresh every 15 minutes
-
-  // Days completed from synced progress (cumulative, never resets)
-  const PROGRESS = {{ progress_json | safe }};
-  const daysDone = ('violet-days' in PROGRESS ? PROGRESS['violet-days'] : []).length;
-  if (daysDone > 0) {
-    document.getElementById('streakVal').textContent = daysDone;
-    document.getElementById('heroStreak').style.display = 'inline-flex';
-  }
-
-  function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
-  function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
-
-  // ── Push notifications ──
-  function urlBase64ToUint8Array(b64) {
-    const pad = '='.repeat((4 - b64.length % 4) % 4);
-    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
-    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-  }
-
-  async function checkSubscribed() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
-    return !!sub;
-  }
-
-  async function updateBellCard() {
-    const on = await checkSubscribed();
-    const card = document.getElementById('bellCard');
-    document.getElementById('bellIcon').textContent = on ? '🔔' : '🔕';
-    document.getElementById('bellName').textContent = on ? 'Reminders On' : 'Enable Reminders';
-    document.getElementById('bellDesc').textContent = on ? 'Tap to turn off alerts' : 'Get notified when it\'s routine time';
-    card.classList.toggle('on', on);
-  }
-
-  async function toggleNotifications() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      alert('Push notifications require this app to be installed to your home screen on iOS (Safari → Share → Add to Home Screen).');
-      return;
-    }
-    const on = await checkSubscribed();
-    if (on) {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) {
-        await fetch('/push/unsubscribe', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({endpoint: sub.endpoint}) });
-        await sub.unsubscribe();
-      }
-    } else {
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') return;
-      const reg = await navigator.serviceWorker.ready;
-      const { key } = await fetch('/push/vapid-public-key').then(r => r.json());
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) });
-      const obj = sub.toJSON();
-      obj.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      await fetch('/push/subscribe', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(obj) });
-    }
-    updateBellCard();
-  }
-
-  updateBellCard();
+  // The companion, the backdrop and the line all follow the clock. PART comes
+  // from the shared core, so this stays in step with the greeting.
+  const COMPANIONS = {
+    morning:   { img: '/static/misc%20images/IMG_6645.JPG',
+                 say: "Morning! Let's get the first one done ☁️",
+                 sky: ['#cce8ff', '#e9e3ff', '#ffe9f6'], routine: 'Morning Routine', when: 'first thing' },
+    afternoon: { img: '/static/misc%20images/IMG_6646.JPG',
+                 say: 'Halfway there — one thing at a time 🌸',
+                 sky: ['#ffe3f1', '#ede9fe', '#dbeafe'], routine: 'Afternoon Routine', when: 'after school' },
+    evening:   { img: '/static/misc%20images/9551b75a02e4430f05c8241b465bdfdb.jpg',
+                 say: 'Wind-down time. You did a lot today 🌙',
+                 sky: ['#1e1b4b', '#3b2f7a', '#6d4a8f'], routine: 'Evening Routine', when: 'before bed' },
+  };
+  (function () {
+    const c = COMPANIONS[PART];
+    $('companionImg').src = c.img;
+    setText('companionSay', c.say);
+    setText('nextRoutine', c.routine);
+    setText('nextRoutineWhen', c.when);
+    document.documentElement.style.setProperty('--sky1', c.sky[0]);
+    document.documentElement.style.setProperty('--sky2', c.sky[1]);
+    document.documentElement.style.setProperty('--sky3', c.sky[2]);
+    document.body.classList.toggle('night', PART === 'evening');
+  })();
 </script>
-
 </body>
 </html>

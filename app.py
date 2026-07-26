@@ -1685,20 +1685,6 @@ def landing():
                            progress_json=json.dumps(load_progress(current_profile())))
 
 
-# Home-page candidates, live at /home/a|b|c so they can be compared on the real
-# iPad before one of them replaces the landing page. Unlinked on purpose.
-HOME_OPTIONS = {'a': 'home_a.html', 'b': 'home_b.html', 'c': 'home_c.html'}
-
-
-@app.route('/home/<option>')
-def home_option(option):
-    template = HOME_OPTIONS.get(option.lower())
-    if not template:
-        return redirect('/')
-    return render_template(template,
-                           progress_json=json.dumps(load_progress(current_profile())))
-
-
 @app.route('/welcome')
 def welcome():
     return render_template('welcome.html')
