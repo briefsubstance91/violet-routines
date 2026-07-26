@@ -414,23 +414,82 @@ def set_earning(entry_date, key, title, amount, earned):
         w.writerows(rows)
 
 
+def earnings_by_day():
+    """[{date, amount}] daily earning totals, oldest first — the running-total
+    line on the Bank page is drawn from this."""
+    totals = defaultdict(float)
+    for r in load_earnings():
+        d = (r.get('Date') or '').strip()
+        if not d:
+            continue
+        try:
+            totals[d] += float(r.get('Amount', 0))
+        except (TypeError, ValueError):
+            continue
+    return [{'date': d, 'amount': round(totals[d], 2)} for d in sorted(totals)]
+
+
+def charity_donated():
+    """Cash actually handed to charities — the giving-pot twin of
+    total_paid_out(). Rows with a blank Amount count as $0."""
+    return round(sum(c['amount'] for c in load_charities()
+                     if c['status'] == 'donated'), 2)
+
+
+def charity_donations_by_month():
+    """{'YYYY-MM': dollars donated} — Violet earns for the pot weekly, but the
+    pot goes out to charity monthly, so the giving chart buckets by month."""
+    out = defaultdict(float)
+    for c in load_charities():
+        if c['status'] != 'donated' or not c['amount']:
+            continue
+        n = _MONTH_NUM.get(c['month'].title())
+        if n and c['year']:
+            out['%04d-%02d' % (c['year'], n)] += c['amount']
+    return {k: round(v, 2) for k, v in sorted(out.items())}
+
+
 def compute_bank():
-    total = 0.0
+    """Lifetime running totals plus the two payout clocks: Violet's own cut is
+    settled weekly at Sunday Planning, the giving pot goes out monthly."""
+    today = _now_local().date()
+    week_start  = (today - timedelta(days=6)).isoformat()
+    month_start = today.replace(day=1).isoformat()
+    total = week = month = 0.0
     for r in load_earnings():
         try:
-            total += float(r.get('Amount', 0))
-        except ValueError:
+            amt = float(r.get('Amount', 0))
+        except (TypeError, ValueError):
             continue
+        total += amt
+        d = (r.get('Date') or '')
+        if d >= week_start:
+            week += amt
+        if d >= month_start:
+            month += amt
+    rate = giving_rate()
     total = round(total, 2)
-    given = round(total * giving_rate(), 2)
+    given = round(total * rate, 2)
     spendable = round(total - given, 2)
     paid = total_paid_out()
+    donated = charity_donated()
     return {
         'earned': total,            # lifetime earned (drives milestones/stats)
         'given': given,             # lifetime giving-pot cut
         'spendable': spendable,     # lifetime spendable (earned - giving)
         'paid_out': paid,           # total cash already handed over
         'balance': round(spendable - paid, 2),   # what's still owed to Violet now
+        # ── incremental views ──
+        'week_earned': round(week, 2),                   # earned in the last 7 days
+        'week_spendable': round(week * (1 - rate), 2),   # her share of this week
+        'week_given': round(week * rate, 2),             # this week's giving cut
+        'month_earned': round(month, 2),                 # earned so far this month
+        'month_given': round(month * rate, 2),           # giving accrued this month
+        # ── giving pot (paid out monthly) ──
+        'donated': donated,                              # already sent to charities
+        'giving_balance': round(given - donated, 2),     # waiting to be given away
+        'week_start': week_start,
+        'month_start': month_start,
     }
 
 
@@ -1531,7 +1590,10 @@ def bank():
                       key=lambda x: x[0])
     return render_template('bank.html', bank=b, recent=recent,
                            giving_pct=int(round(giving_rate() * 100)),
-                           next_ms=nxt, prev_amt=prev, money_ms=money_ms)
+                           next_ms=nxt, prev_amt=prev, money_ms=money_ms,
+                           daily_json=json.dumps(earnings_by_day()),
+                           donations_json=json.dumps(charity_donations_by_month()),
+                           today_iso=_now_local().date().isoformat())
 
 
 @app.route('/routines')

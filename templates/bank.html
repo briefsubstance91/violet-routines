@@ -82,9 +82,57 @@
     .ms-chip-amt { font-family: 'Fredoka One', cursive; font-size: 1.05rem; color: var(--green); width: 56px; flex-shrink: 0; }
     .ms-chip-msg { font-size: 0.82rem; font-weight: 600; color: var(--text); }
     .ms-chip-state { margin-left: auto; font-size: 1.1rem; }
+
+    /* ── Charts (running total + giving) ── */
+    .chart-card { background: var(--card); border-radius: 20px; padding: 1.1rem 1.1rem 1rem;
+      box-shadow: 0 8px 24px rgba(78,58,180,0.1); margin-bottom: 1.25rem; }
+    .chart-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+    .chart-title { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 1.05rem; color: var(--text); }
+    .chips { display: flex; gap: 0.3rem; margin-left: auto; }
+    .chip { font-family: 'Nunito', sans-serif; font-size: 0.7rem; font-weight: 800; color: var(--muted);
+      background: #f5f2ff; border: none; border-radius: 99px; padding: 0.35rem 0.7rem; cursor: pointer; }
+    .chip.active { background: var(--purple); color: white; }
+    .chart-card svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .gl-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+    .gl-dot  { fill: #fff; stroke-width: 2.5; }
+    .gl-lbl  { font-family: 'Nunito', sans-serif; font-size: 9px; font-weight: 700; fill: var(--muted); }
+    .gl-val  { font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 800; }
+    .chart-foot { font-size: 0.82rem; font-weight: 700; color: var(--muted); text-align: center; margin-top: 0.55rem; }
+    .chart-foot strong { color: var(--green); }
+    .chart-empty { font-size: 0.85rem; font-weight: 700; color: var(--muted); text-align: center; padding: 1.5rem 0.5rem; }
+
+    /* ── Charity tracker ── */
+    .give-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 0.25rem 0 0.9rem; }
+    .gs { background: #faf8ff; border-radius: 14px; padding: 0.7rem 0.4rem; text-align: center; }
+    .gs-amt { font-family: 'Fredoka One', cursive; font-size: 1.25rem; color: var(--purple); line-height: 1.2; }
+    .gs-lbl { font-size: 0.64rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+    .give-note { background: #f3effe; border-radius: 12px; padding: 0.7rem 0.9rem; font-size: 0.84rem;
+      font-weight: 700; color: #6d28d9; margin-bottom: 0.9rem; }
+    .gc-bars { display: flex; gap: 0.35rem; align-items: flex-end; }
+    .gc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; min-width: 0; }
+    .gc-pair { width: 100%; height: 70px; display: flex; align-items: flex-end; justify-content: center; gap: 2px;
+      background: #f5f2ff; border-radius: 6px; padding: 0 3px; }
+    .gc-bar { flex: 1; border-radius: 5px 5px 0 0; min-height: 3px; transition: height 0.4s ease; }
+    .gc-bar.earned { background: linear-gradient(to top, var(--purple), #c4b5fd); }
+    .gc-bar.given  { background: linear-gradient(to top, var(--pink), #fbcfe8); }
+    .gc-cap { font-size: 0.66rem; font-weight: 800; color: var(--text); }
+    .gc-day { font-size: 0.6rem; font-weight: 700; color: var(--muted); }
+    .gc-given { font-size: 0.62rem; font-weight: 800; color: var(--pink); min-height: 0.9em; }
+    .legend { display: flex; gap: 1rem; justify-content: center; margin-top: 0.7rem; font-size: 0.7rem;
+      font-weight: 800; color: var(--muted); }
+    .legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+      margin-right: 0.35rem; vertical-align: -1px; }
+    .legend .l-earned::before { background: var(--purple); }
+    .legend .l-given::before  { background: var(--pink); }
+    .give-link { display: block; text-align: center; margin-top: 0.9rem; font-size: 0.85rem; font-weight: 800;
+      color: var(--purple); text-decoration: none; }
   </style>
 </head>
 <body>
+{# Whole dollars stay clean ($328); cents always show both places ($14.30). #}
+{%- macro money(v) -%}
+{{ '%g'|format(v) if v == v|round(0) else '%.2f'|format(v) }}
+{%- endmacro -%}
 <div class="wrap">
   <div class="top">
     <a class="back" href="/routines">‹</a>
@@ -93,29 +141,67 @@
   </div>
 
   <div class="balance-card">
-    <div class="balance-label">Total earned</div>
-    <div class="balance-amt">${{ '%g'|format(bank.earned) }}</div>
-    <div class="balance-sub">from your bonus tasks 💪</div>
-  </div>
-
-  <div class="split">
-    <a class="split-card" href="/charities" style="text-decoration:none">
-      <div class="split-icon">💜</div>
-      <div class="split-amt">${{ '%g'|format(bank.given) }}</div>
-      <div class="split-label">Giving</div>
-      <div class="split-note">{{ giving_pct }}% — tap to give →</div>
-    </a>
-    <div class="split-card">
-      <div class="split-icon">💰</div>
-      <div class="split-amt">${{ '%g'|format(bank.balance) }}</div>
-      <div class="split-label">In your bank now</div>
-      <div class="split-note">paid out at Sunday Planning</div>
+    <div class="balance-label">Total earned — all time</div>
+    <div class="balance-amt">${{ money(bank.earned) }}</div>
+    <div class="balance-sub">
+      {% if bank.week_earned %}+${{ money(bank.week_earned) }} earned this week 💪
+      {% else %}every bonus task you tick adds to this 💪{% endif %}
     </div>
   </div>
 
+  <div class="split">
+    <div class="split-card">
+      <div class="split-icon">💰</div>
+      <div class="split-amt">${{ money(bank.balance) }}</div>
+      <div class="split-label">In your bank now</div>
+      <div class="split-note">paid out at Sunday Planning</div>
+    </div>
+    <a class="split-card" href="/charities" style="text-decoration:none">
+      <div class="split-icon">💜</div>
+      <div class="split-amt">${{ money(bank.giving_balance) }}</div>
+      <div class="split-label">Ready to give</div>
+      <div class="split-note">given out once a month →</div>
+    </a>
+  </div>
+
   {% if bank.paid_out %}
-  <div class="paid-note">💵 Cash paid out so far: <strong>${{ '%g'|format(bank.paid_out) }}</strong></div>
+  <div class="paid-note">💵 Cash paid out so far: <strong>${{ money(bank.paid_out) }}</strong></div>
   {% endif %}
+
+  <div class="chart-card">
+    <div class="chart-head">
+      <div class="chart-title">📈 Your running total</div>
+      <div class="chips">
+        <button class="chip" data-range="week" onclick="setRange('week')">Week</button>
+        <button class="chip active" data-range="month" onclick="setRange('month')">Month</button>
+        <button class="chip" data-range="all" onclick="setRange('all')">All time</button>
+      </div>
+    </div>
+    <div id="chart"></div>
+    <div class="chart-foot" id="chartFoot"></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-head"><div class="chart-title">💜 Money for charity</div></div>
+    <div class="give-stats">
+      <div class="gs">
+        <div class="gs-amt">${{ money(bank.given) }}</div>
+        <div class="gs-lbl">Earned for charity</div>
+      </div>
+      <div class="gs">
+        <div class="gs-amt">${{ money(bank.donated) }}</div>
+        <div class="gs-lbl">Given away</div>
+      </div>
+      <div class="gs">
+        <div class="gs-amt">${{ money(bank.giving_balance) }}</div>
+        <div class="gs-lbl">Waiting to give</div>
+      </div>
+    </div>
+    <div class="give-note" id="giveNote"></div>
+    <div id="giveChart"></div>
+    <div class="legend" id="giveLegend"><span class="l-earned">Earned for charity</span><span class="l-given">Given away</span></div>
+    <a class="give-link" href="/charities">Pick who it goes to →</a>
+  </div>
 
   <div class="section-title">Recent earnings</div>
   {% if recent %}
@@ -126,7 +212,7 @@
         <div class="txn-title">{{ t.Title }}</div>
         <div class="txn-date">{{ t.Date }}</div>
       </div>
-      <div class="txn-amt">+${{ '%g'|format(t.Amount|float) }}</div>
+      <div class="txn-amt">+${{ money(t.Amount|float) }}</div>
     </div>
     {% endfor %}
   </div>
@@ -155,6 +241,165 @@
 <script>
   function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
   function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  // ── Money charts ──────────────────────────────────────────────────────────
+  const DAILY     = {{ daily_json | safe }};        // [{date:'YYYY-MM-DD', amount}]
+  const DONATIONS = {{ donations_json | safe }};    // {'YYYY-MM': $ donated}
+  const TODAY     = '{{ today_iso }}';
+  const RATE      = {{ giving_pct }} / 100;
+  const MONTHS    = ['January','February','March','April','May','June',
+                     'July','August','September','October','November','December'];
+
+  function fmtMoney(n) {
+    n = Math.round(n * 100) / 100;
+    return '$' + (Number.isInteger(n) ? n : n.toFixed(2));
+  }
+  function iso(d)              { return d.toISOString().slice(0, 10); }
+  function addDays(isoStr, n)  { const d = new Date(isoStr + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return iso(d); }
+  function daysBetween(a, b)   { return Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / 86400000); }
+  function dayLetter(isoStr)   { return ['S','M','T','W','T','F','S'][new Date(isoStr + 'T00:00:00Z').getUTCDay()]; }
+  function slashLabel(isoStr)  { const p = isoStr.split('-'); return (+p[1]) + '/' + (+p[2]); }
+
+  // Running total at the end of each earning day — every window reads off this.
+  const CUM = [];
+  (function () { let c = 0; DAILY.forEach(d => { c += d.amount; CUM.push({ date: d.date, cum: Math.round(c * 100) / 100 }); }); })();
+
+  function cumAt(isoStr) {
+    let c = 0;
+    for (const r of CUM) { if (r.date <= isoStr) c = r.cum; else break; }
+    return c;
+  }
+
+  function series(range) {
+    if (range === 'week' || range === 'month') {
+      const span = range === 'week' ? 7 : 30;
+      const pts = [];
+      for (let i = span - 1; i >= 0; i--) {
+        const d = addDays(TODAY, -i);
+        pts.push({ date: d, total: cumAt(d), label: range === 'week' ? dayLetter(d) : slashLabel(d) });
+      }
+      return pts;
+    }
+    // All time: up to 12 evenly spaced samples from her first earning to today.
+    if (!DAILY.length) return [];
+    const start = DAILY[0].date;
+    const days  = Math.max(0, daysBetween(start, TODAY));
+    const n     = Math.min(12, Math.max(2, days + 1));
+    const pts   = [];
+    for (let i = 0; i < n; i++) {
+      const d = addDays(start, Math.round(i * days / (n - 1)));
+      pts.push({ date: d, total: cumAt(d), label: slashLabel(d) });
+    }
+    return pts;
+  }
+
+  function lineChart(pts) {
+    const W = 320, H = 145, padL = 10, padR = 10, padT = 24, padB = 22;
+    const n = pts.length;
+    const vals = pts.map(p => p.total);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    // Window-relative scale so a week of growth is still visible next to a big
+    // lifetime total — a 0-based axis would flatten it into a straight line.
+    if (hi === lo) { lo = Math.max(0, hi - 1); hi = hi + 1; }
+    const pad = (hi - lo) * 0.18;
+    lo = Math.max(0, lo - pad); hi = hi + pad;
+    const x = i => padL + (n === 1 ? (W - padL - padR) / 2 : i * (W - padL - padR) / (n - 1));
+    const y = v => (H - padB) - ((v - lo) / (hi - lo)) * (H - padT - padB);
+    const xy = pts.map((p, i) => [x(i), y(p.total)]);
+    const line = xy.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+    const area = `M${x(0).toFixed(1)} ${H - padB} ` +
+                 xy.map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') +
+                 ` L${x(n - 1).toFixed(1)} ${H - padB} Z`;
+    const step = Math.max(1, Math.ceil(n / 7));
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Total money earned over time">`;
+    svg += `<path d="${area}" fill="rgba(22,163,74,0.12)"/>`;
+    svg += `<path class="gl-line" d="${line}" stroke="#16a34a"/>`;
+    pts.forEach((p, i) => {
+      const last = i === n - 1;
+      if (last || (n <= 16 && i % step === 0)) {
+        svg += `<circle class="gl-dot" cx="${x(i).toFixed(1)}" cy="${y(p.total).toFixed(1)}" r="${last ? 4 : 3}" stroke="#16a34a"/>`;
+      }
+      if (last || i % step === 0) {
+        svg += `<text class="gl-lbl" x="${x(i).toFixed(1)}" y="${H - 6}" text-anchor="middle">${p.label}</text>`;
+      }
+    });
+    const lastY = y(pts[n - 1].total);
+    svg += `<text class="gl-val" x="${(W - padR).toFixed(1)}" y="${Math.max(12, lastY - 10).toFixed(1)}" text-anchor="end" fill="#16a34a">${fmtMoney(pts[n - 1].total)}</text>`;
+    svg += `</svg>`;
+    return svg;
+  }
+
+  let currentRange = 'month';
+
+  function setRange(range) {
+    currentRange = range;
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.range === range));
+    renderChart();
+  }
+
+  function renderChart() {
+    const box  = document.getElementById('chart');
+    const foot = document.getElementById('chartFoot');
+    const pts  = series(currentRange);
+    if (!DAILY.length || pts.length < 2) {
+      box.innerHTML = '<div class="chart-empty">Tick off a few bonus tasks and your money line will start climbing 📈</div>';
+      foot.textContent = '';
+      return;
+    }
+    box.innerHTML = lineChart(pts);
+    const before = cumAt(addDays(pts[0].date, -1));
+    const grew   = pts[pts.length - 1].total - before;
+    const word   = currentRange === 'week' ? 'in the last 7 days'
+                 : currentRange === 'month' ? 'in the last 30 days'
+                 : 'since ' + slashLabel(pts[0].date);
+    foot.innerHTML = grew > 0 ? `<strong>+${fmtMoney(grew)}</strong> ${word}`
+                              : `No new earnings ${word} yet`;
+  }
+
+  // ── Charity: earned monthly (10% of everything) vs actually given away ──
+  function renderGiving() {
+    const now       = TODAY.slice(0, 7);
+    const monthName = MONTHS[+TODAY.slice(5, 7) - 1];
+    const thisMonth = DAILY.filter(d => d.date.slice(0, 7) === now)
+                           .reduce((s, d) => s + d.amount, 0) * RATE;
+    document.getElementById('giveNote').textContent = thisMonth > 0
+      ? `You've earned ${fmtMoney(thisMonth)} for charity so far in ${monthName} — it gets given away at the end of the month.`
+      : `${Math.round(RATE * 100)}% of everything you earn goes here, and it's given away at the end of each month.`;
+
+    // Months to plot: everything with earnings or a donation, ending at today.
+    const keys = new Set(DAILY.map(d => d.date.slice(0, 7)).concat(Object.keys(DONATIONS)));
+    keys.add(now);
+    const months = [...keys].sort().slice(-6);
+    const earned = {};
+    DAILY.forEach(d => { const k = d.date.slice(0, 7); earned[k] = (earned[k] || 0) + d.amount; });
+
+    const rows = months.map(k => ({
+      key: k,
+      earned: Math.round((earned[k] || 0) * RATE * 100) / 100,
+      given:  DONATIONS[k] || 0,
+    }));
+    const maxV = Math.max(1, ...rows.map(r => Math.max(r.earned, r.given)));
+    // Nothing earned and nothing given yet — a row of empty bars just looks broken.
+    if (!rows.some(r => r.earned || r.given)) {
+      document.getElementById('giveChart').innerHTML = '';
+      document.getElementById('giveLegend').style.display = 'none';
+      return;
+    }
+    document.getElementById('giveChart').innerHTML =
+      `<div class="gc-bars">` + rows.map(r => `
+        <div class="gc-col">
+          <div class="gc-cap">${r.earned ? fmtMoney(r.earned) : ''}</div>
+          <div class="gc-pair">
+            <div class="gc-bar earned" style="height:${Math.round(r.earned / maxV * 100)}%"></div>
+            <div class="gc-bar given"  style="height:${Math.round(r.given  / maxV * 100)}%"></div>
+          </div>
+          <div class="gc-day">${MONTHS[+r.key.slice(5, 7) - 1].slice(0, 3)}</div>
+          <div class="gc-given">${r.given ? fmtMoney(r.given) : ''}</div>
+        </div>`).join('') + `</div>`;
+  }
+
+  renderChart();
+  renderGiving();
 </script>
 </body>
 </html>
