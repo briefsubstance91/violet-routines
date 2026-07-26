@@ -19,12 +19,14 @@
       background: linear-gradient(160deg, #cce8ff 0%, #e9e3ff 50%, #ffd6f0 100%);
       background-attachment: fixed; -webkit-tap-highlight-color: transparent;
     }
-    .wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
-    .top { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
-    .back { text-decoration: none; font-size: 1.5rem; color: var(--purple);
-      background: rgba(255,255,255,0.7); width: 42px; height: 42px; border-radius: 50%;
+    /* Sized so the charts + the four totals all land above the fold on a
+       landscape iPad (1024×768); everything still stacks on Violet's phone. */
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 1rem 1rem 2rem; }
+    .top { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.85rem; }
+    .back { text-decoration: none; font-size: 1.3rem; color: var(--purple);
+      background: rgba(255,255,255,0.7); width: 36px; height: 36px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(155,135,245,0.2); }
-    h1 { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 1.8rem;
+    h1 { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 1.5rem;
       background: linear-gradient(135deg, #4db8ff, #9b87f5, #f472b6);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
@@ -40,32 +42,30 @@
     .menu-item a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.9rem; width: 100%; }
     .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
 
-    .balance-card {
-      background: linear-gradient(135deg, #16a34a, #22c55e); color: white;
-      border-radius: 28px; padding: 2rem 1.5rem; text-align: center;
-      box-shadow: 0 12px 40px rgba(22,163,74,0.3); margin-bottom: 1.25rem;
-    }
-    .balance-label { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
-    .balance-amt { font-family: 'Fredoka One', cursive; font-size: 3.5rem; line-height: 1.1; margin: 0.25rem 0; }
-    .balance-sub { font-size: 0.9rem; font-weight: 700; opacity: 0.9; }
+    /* Charts first, side by side once there's room for two columns. */
+    .grid-top { display: grid; gap: 0.85rem; margin-bottom: 0.85rem; }
+    @media (min-width: 860px) { .grid-top { grid-template-columns: 1.05fr 1fr; } }
 
-    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
-    .split-card { background: var(--card); border-radius: 20px; padding: 1.25rem 1rem; text-align: center;
-      box-shadow: 0 8px 24px rgba(78,58,180,0.1); }
-    .split-icon { font-size: 1.6rem; }
-    .split-amt { font-family: 'Fredoka One', cursive; font-size: 1.8rem; color: var(--text); line-height: 1.2; }
-    .split-label { font-size: 0.78rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-    .split-note { font-size: 0.72rem; font-weight: 600; color: var(--muted); margin-top: 0.15rem; }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.7rem; margin-bottom: 1.1rem; }
+    @media (min-width: 700px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+    .stat { background: var(--card); border-radius: 16px; padding: 0.8rem 0.85rem; color: var(--text);
+      box-shadow: 0 6px 20px rgba(78,58,180,0.1); }
+    .stat.hero { background: linear-gradient(135deg, #16a34a, #22c55e); color: white;
+      box-shadow: 0 8px 26px rgba(22,163,74,0.28); }
+    .stat-amt { font-family: 'Fredoka One', cursive; font-size: 1.75rem; line-height: 1.1; }
+    .stat-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--muted); margin-top: 0.1rem; }
+    .stat-note { font-size: 0.68rem; font-weight: 600; color: var(--muted); margin-top: 0.1rem; }
+    .stat.hero .stat-label, .stat.hero .stat-note { color: rgba(255,255,255,0.9); }
 
-    .section-title { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 1.2rem; color: var(--text); margin: 0.5rem 0 0.75rem; }
-    .txn-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .txn { background: var(--card); border-radius: 14px; padding: 0.8rem 1rem; display: flex; align-items: center; gap: 0.75rem;
+    .section-title { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 1.1rem; color: var(--text); margin: 0.25rem 0 0.6rem; }
+    .txn-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.5rem; }
+    .txn { background: var(--card); border-radius: 14px; padding: 0.6rem 0.85rem; display: flex; align-items: center; gap: 0.6rem;
       box-shadow: 0 4px 16px rgba(78,58,180,0.08); }
-    .txn-title { font-weight: 700; font-size: 0.95rem; }
-    .txn-date { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+    .txn-title { font-weight: 700; font-size: 0.88rem; }
+    .txn-date { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
     .txn-amt { margin-left: auto; font-weight: 900; color: var(--green); white-space: nowrap; }
     .empty { background: var(--card); border-radius: 16px; padding: 2rem 1rem; text-align: center; color: var(--muted); font-weight: 700; box-shadow: 0 4px 16px rgba(78,58,180,0.08); }
-    .paid-note { margin: 0.25rem 0 0.5rem; padding: 0.6rem 1rem; border-radius: 12px; background: #ede9fe; color: #6d28d9; font-weight: 700; text-align: center; font-size: 0.9rem; }
 
     /* ── Money milestone ── */
     .ms-card { background: var(--card); border-radius: 20px; padding: 1.25rem 1.25rem; box-shadow: 0 8px 24px rgba(78,58,180,0.1); margin-bottom: 1.5rem; }
@@ -84,10 +84,10 @@
     .ms-chip-state { margin-left: auto; font-size: 1.1rem; }
 
     /* ── Charts (running total + giving) ── */
-    .chart-card { background: var(--card); border-radius: 20px; padding: 1.1rem 1.1rem 1rem;
-      box-shadow: 0 8px 24px rgba(78,58,180,0.1); margin-bottom: 1.25rem; }
-    .chart-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
-    .chart-title { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 1.05rem; color: var(--text); }
+    .chart-card { background: var(--card); border-radius: 20px; padding: 0.9rem 1rem 0.8rem;
+      box-shadow: 0 8px 24px rgba(78,58,180,0.1); }
+    .chart-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+    .chart-title { font-family: 'Fredoka One', cursive; font-weight: 400; font-size: 1rem; color: var(--text); }
     .chips { display: flex; gap: 0.3rem; margin-left: auto; }
     .chip { font-family: 'Nunito', sans-serif; font-size: 0.7rem; font-weight: 800; color: var(--muted);
       background: #f5f2ff; border: none; border-radius: 99px; padding: 0.35rem 0.7rem; cursor: pointer; }
@@ -97,20 +97,20 @@
     .gl-dot  { fill: #fff; stroke-width: 2.5; }
     .gl-lbl  { font-family: 'Nunito', sans-serif; font-size: 9px; font-weight: 700; fill: var(--muted); }
     .gl-val  { font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 800; }
-    .chart-foot { font-size: 0.82rem; font-weight: 700; color: var(--muted); text-align: center; margin-top: 0.55rem; }
+    .chart-foot { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-align: center; margin-top: 0.35rem; }
     .chart-foot strong { color: var(--green); }
     .chart-empty { font-size: 0.85rem; font-weight: 700; color: var(--muted); text-align: center; padding: 1.5rem 0.5rem; }
 
     /* ── Charity tracker ── */
-    .give-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 0.25rem 0 0.9rem; }
-    .gs { background: #faf8ff; border-radius: 14px; padding: 0.7rem 0.4rem; text-align: center; }
-    .gs-amt { font-family: 'Fredoka One', cursive; font-size: 1.25rem; color: var(--purple); line-height: 1.2; }
-    .gs-lbl { font-size: 0.64rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
-    .give-note { background: #f3effe; border-radius: 12px; padding: 0.7rem 0.9rem; font-size: 0.84rem;
-      font-weight: 700; color: #6d28d9; margin-bottom: 0.9rem; }
+    .give-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin: 0 0 0.6rem; }
+    .gs { background: #faf8ff; border-radius: 12px; padding: 0.5rem 0.35rem; text-align: center; }
+    .gs-amt { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: var(--purple); line-height: 1.2; }
+    .gs-lbl { font-size: 0.6rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em; }
+    .give-note { background: #f3effe; border-radius: 10px; padding: 0.5rem 0.7rem; font-size: 0.76rem;
+      font-weight: 700; color: #6d28d9; margin-bottom: 0.6rem; }
     .gc-bars { display: flex; gap: 0.35rem; align-items: flex-end; }
-    .gc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; min-width: 0; }
-    .gc-pair { width: 100%; height: 70px; display: flex; align-items: flex-end; justify-content: center; gap: 2px;
+    .gc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; min-width: 0; }
+    .gc-pair { width: 100%; height: 58px; display: flex; align-items: flex-end; justify-content: center; gap: 2px;
       background: #f5f2ff; border-radius: 6px; padding: 0 3px; }
     .gc-bar { flex: 1; border-radius: 5px 5px 0 0; min-height: 3px; transition: height 0.4s ease; }
     .gc-bar.earned { background: linear-gradient(to top, var(--purple), #c4b5fd); }
@@ -118,13 +118,13 @@
     .gc-cap { font-size: 0.66rem; font-weight: 800; color: var(--text); }
     .gc-day { font-size: 0.6rem; font-weight: 700; color: var(--muted); }
     .gc-given { font-size: 0.62rem; font-weight: 800; color: var(--pink); min-height: 0.9em; }
-    .legend { display: flex; gap: 1rem; justify-content: center; margin-top: 0.7rem; font-size: 0.7rem;
+    .legend { display: flex; gap: 1rem; justify-content: center; margin-top: 0.5rem; font-size: 0.66rem;
       font-weight: 800; color: var(--muted); }
     .legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
       margin-right: 0.35rem; vertical-align: -1px; }
     .legend .l-earned::before { background: var(--purple); }
     .legend .l-given::before  { background: var(--pink); }
-    .give-link { display: block; text-align: center; margin-top: 0.9rem; font-size: 0.85rem; font-weight: 800;
+    .give-link { display: block; text-align: center; margin-top: 0.6rem; font-size: 0.8rem; font-weight: 800;
       color: var(--purple); text-decoration: none; }
   </style>
 </head>
@@ -140,67 +140,66 @@
     <button class="menu-btn" onclick="openMenu()">☰</button>
   </div>
 
-  <div class="balance-card">
-    <div class="balance-label">Total earned — all time</div>
-    <div class="balance-amt">${{ money(bank.earned) }}</div>
-    <div class="balance-sub">
-      {% if bank.week_earned %}+${{ money(bank.week_earned) }} earned this week 💪
-      {% else %}every bonus task you tick adds to this 💪{% endif %}
+  {# Charts lead: they're the richest thing on the page and they sit side by
+     side above the fold on the landscape iPad. #}
+  <div class="grid-top">
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-title">📈 Your running total</div>
+        <div class="chips">
+          <button class="chip" data-range="week" onclick="setRange('week')">Week</button>
+          <button class="chip active" data-range="month" onclick="setRange('month')">Month</button>
+          <button class="chip" data-range="all" onclick="setRange('all')">All time</button>
+        </div>
+      </div>
+      <div id="chart"></div>
+      <div class="chart-foot" id="chartFoot"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-head"><div class="chart-title">💜 Money for charity</div></div>
+      <div class="give-stats">
+        <div class="gs">
+          <div class="gs-amt">${{ money(bank.given) }}</div>
+          <div class="gs-lbl">Earned for charity</div>
+        </div>
+        <div class="gs">
+          <div class="gs-amt">${{ money(bank.donated) }}</div>
+          <div class="gs-lbl">Given away</div>
+        </div>
+        <div class="gs">
+          <div class="gs-amt">${{ money(bank.giving_balance) }}</div>
+          <div class="gs-lbl">Waiting to give</div>
+        </div>
+      </div>
+      <div class="give-note" id="giveNote"></div>
+      <div id="giveChart"></div>
+      <div class="legend" id="giveLegend"><span class="l-earned">Earned for charity</span><span class="l-given">Given away</span></div>
+      <a class="give-link" href="/charities">Pick who it goes to →</a>
     </div>
   </div>
 
-  <div class="split">
-    <div class="split-card">
-      <div class="split-icon">💰</div>
-      <div class="split-amt">${{ money(bank.balance) }}</div>
-      <div class="split-label">In your bank now</div>
-      <div class="split-note">paid out at Sunday Planning</div>
+  <div class="stats">
+    <div class="stat hero">
+      <div class="stat-amt">${{ money(bank.earned) }}</div>
+      <div class="stat-label">Total earned</div>
+      <div class="stat-note">all time 💪</div>
     </div>
-    <a class="split-card" href="/charities" style="text-decoration:none">
-      <div class="split-icon">💜</div>
-      <div class="split-amt">${{ money(bank.giving_balance) }}</div>
-      <div class="split-label">Ready to give</div>
-      <div class="split-note">given out once a month →</div>
+    <div class="stat">
+      <div class="stat-amt">+${{ money(bank.week_earned) }}</div>
+      <div class="stat-label">Earned this week</div>
+      <div class="stat-note">in the last 7 days</div>
+    </div>
+    <div class="stat">
+      <div class="stat-amt">${{ money(bank.balance) }}</div>
+      <div class="stat-label">In your bank now</div>
+      <div class="stat-note">paid out at Sunday Planning{% if bank.paid_out %} · ${{ money(bank.paid_out) }} paid so far{% endif %}</div>
+    </div>
+    <a class="stat" href="/charities" style="text-decoration:none">
+      <div class="stat-amt">${{ money(bank.giving_balance) }}</div>
+      <div class="stat-label">Ready to give</div>
+      <div class="stat-note">given out once a month →</div>
     </a>
-  </div>
-
-  {% if bank.paid_out %}
-  <div class="paid-note">💵 Cash paid out so far: <strong>${{ money(bank.paid_out) }}</strong></div>
-  {% endif %}
-
-  <div class="chart-card">
-    <div class="chart-head">
-      <div class="chart-title">📈 Your running total</div>
-      <div class="chips">
-        <button class="chip" data-range="week" onclick="setRange('week')">Week</button>
-        <button class="chip active" data-range="month" onclick="setRange('month')">Month</button>
-        <button class="chip" data-range="all" onclick="setRange('all')">All time</button>
-      </div>
-    </div>
-    <div id="chart"></div>
-    <div class="chart-foot" id="chartFoot"></div>
-  </div>
-
-  <div class="chart-card">
-    <div class="chart-head"><div class="chart-title">💜 Money for charity</div></div>
-    <div class="give-stats">
-      <div class="gs">
-        <div class="gs-amt">${{ money(bank.given) }}</div>
-        <div class="gs-lbl">Earned for charity</div>
-      </div>
-      <div class="gs">
-        <div class="gs-amt">${{ money(bank.donated) }}</div>
-        <div class="gs-lbl">Given away</div>
-      </div>
-      <div class="gs">
-        <div class="gs-amt">${{ money(bank.giving_balance) }}</div>
-        <div class="gs-lbl">Waiting to give</div>
-      </div>
-    </div>
-    <div class="give-note" id="giveNote"></div>
-    <div id="giveChart"></div>
-    <div class="legend" id="giveLegend"><span class="l-earned">Earned for charity</span><span class="l-given">Given away</span></div>
-    <a class="give-link" href="/charities">Pick who it goes to →</a>
   </div>
 
   <div class="section-title">Recent earnings</div>
@@ -294,7 +293,9 @@
   }
 
   function lineChart(pts) {
-    const W = 320, H = 145, padL = 10, padR = 10, padT = 24, padB = 22;
+    // Wide, short viewBox: the card sits in a column on the iPad, and a taller
+    // aspect would push the totals below the fold.
+    const W = 400, H = 150, padL = 10, padR = 10, padT = 24, padB = 22;
     const n = pts.length;
     const vals = pts.map(p => p.total);
     let lo = Math.min(...vals), hi = Math.max(...vals);

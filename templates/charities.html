@@ -82,19 +82,18 @@
     .edit-btn.active { background: var(--purple); color: white; border-color: var(--purple); }
 
     /* ── Page ── */
-    .page { max-width: 880px; margin: 0 auto; padding: 1.5rem 1rem; position: relative; z-index: 1; }
+    .page { max-width: 1180px; margin: 0 auto; padding: 1rem 1rem 2rem; position: relative; z-index: 1; }
 
     /* ── Giving pot ── */
     .pot-card {
       background: linear-gradient(135deg, #9b87f5, #f472b6);
-      color: white; border-radius: 22px; padding: 1.5rem 1.4rem;
-      box-shadow: 0 10px 32px rgba(155,135,245,0.32); margin-bottom: 1.5rem;
+      color: white; border-radius: 16px; padding: 0.8rem 1.1rem;
+      box-shadow: 0 8px 24px rgba(155,135,245,0.28); margin-bottom: 1rem;
     }
     .pot-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
     .pot-label { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9; }
-    .pot-amt { font-family: 'Fredoka One', cursive; font-size: 2.6rem; line-height: 1; margin-top: 0.15rem; }
     .pot-sub { font-size: 0.82rem; font-weight: 700; opacity: 0.92; }
-    .pot-bar-wrap { height: 10px; background: rgba(255,255,255,0.3); border-radius: 99px; margin: 1rem 0 0.5rem; overflow: hidden; }
+    .pot-bar-wrap { height: 9px; background: rgba(255,255,255,0.3); border-radius: 99px; margin: 0.5rem 0 0.35rem; overflow: hidden; }
     .pot-bar { height: 100%; background: white; border-radius: 99px; transition: width 0.4s ease; }
     .pot-foot { display: flex; justify-content: space-between; font-size: 0.74rem; font-weight: 800; opacity: 0.95; }
 
@@ -124,12 +123,12 @@
     /* ── Executive summary (donut + trend) ── */
     .exec {
       background: var(--card); border: 1.5px solid var(--border); border-radius: 18px;
-      padding: 1.2rem 1.25rem; margin-bottom: 1rem; box-shadow: 0 6px 24px rgba(78,58,180,0.1);
+      padding: 0.9rem 1.1rem; margin-bottom: 0.85rem; box-shadow: 0 6px 24px rgba(78,58,180,0.1);
     }
     .exec-top { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; align-items: center; }
     @media (max-width: 540px) { .exec-top { grid-template-columns: 1fr; gap: 1.4rem; } }
     .exec-donut { display: flex; flex-direction: column; align-items: center; gap: 0.65rem; }
-    .exec-donut svg { width: 150px; height: 150px; }
+    .exec-donut svg { width: 124px; height: 124px; }
     .exec-c-big { font-family: 'Fredoka One', cursive; font-size: 20px; fill: var(--purple); }
     .exec-c-small { font-family: 'Nunito', sans-serif; font-size: 8px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; fill: var(--muted); }
     .exec-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3rem 0.7rem; }
@@ -137,7 +136,7 @@
     .exec-leg b { color: var(--muted); font-weight: 800; }
     .exec-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
     .exec-trend-title { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.7rem; }
-    .exec-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 1.1rem; }
+    .exec-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.8rem; }
     @media (max-width: 540px) { .exec-kpis { grid-template-columns: repeat(2, 1fr); } }
     .exec-kpi { text-align: center; }
     .exec-kpi .gk-num { font-family: 'Fredoka One', cursive; font-size: 1.45rem; line-height: 1; background: linear-gradient(135deg, var(--purple), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -145,7 +144,13 @@
     .exec-empty { color: var(--muted); font-size: 0.85rem; font-weight: 600; text-align: center; padding: 1rem; }
 
     /* ── Giving dashboard ── */
-    .give-dash { margin-bottom: 1.75rem; }
+    .give-dash { margin-bottom: 0; }
+    /* Summary and share-of-giving sit side by side on the iPad. */
+    @media (min-width: 900px) {
+      .give-dash { display: grid; grid-template-columns: 1.35fr 1fr; gap: 0.85rem; }
+      .give-dash .exec { margin-bottom: 0; }
+      .give-dash .give-chart { margin-bottom: 0; }
+    }
     .give-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; margin-bottom: 0.85rem; }
     .give-kpi { background: var(--card); border: 1.5px solid var(--border); border-radius: 14px; padding: 0.8rem 0.6rem; text-align: center; box-shadow: 0 2px 10px rgba(78,58,180,0.06); }
     .gk-num { font-family: 'Fredoka One', cursive; font-size: 1.7rem; line-height: 1; background: linear-gradient(135deg, var(--purple), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -154,17 +159,10 @@
     .gc-title { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; }
     .gc-bars { display: flex; gap: 0.3rem; align-items: flex-end; }
     .gc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; min-width: 0; }
-    .gc-bar-wrap { width: 100%; height: 64px; background: #f3effe; border-radius: 6px; display: flex; align-items: flex-end; overflow: hidden; }
+    .gc-bar-wrap { width: 100%; height: 54px; background: #f3effe; border-radius: 6px; display: flex; align-items: flex-end; overflow: hidden; }
     .gc-bar { width: 100%; background: linear-gradient(to top, var(--purple), var(--pink)); border-radius: 6px 6px 0 0; min-height: 3px; transition: height 0.5s; }
     .gc-cap { font-size: 0.66rem; font-weight: 800; color: #1e1b4b; }
     .gc-day { font-size: 0.58rem; font-weight: 700; color: var(--muted); }
-    /* line chart (cumulative $ given) */
-    .give-chart svg { width: 100%; height: auto; display: block; overflow: visible; }
-    .gl-line { fill: none; stroke: var(--purple); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
-    .gl-area { fill: rgba(155,135,245,0.12); stroke: none; }
-    .gl-dot  { fill: #fff; stroke: var(--purple); stroke-width: 2.5; }
-    .gl-lbl  { font-family: 'Nunito', sans-serif; font-size: 9px; font-weight: 700; fill: var(--muted); }
-    .gl-val  { font-family: 'Nunito', sans-serif; font-size: 10px; font-weight: 800; fill: var(--purple); }
     .cause-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
     .cause-row:last-child { margin-bottom: 0; }
     .cause-name { font-size: 0.78rem; font-weight: 700; width: 92px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -174,11 +172,14 @@
     .gc-empty { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-align: center; padding: 0.5rem; }
 
     /* ── Month card ── */
+    #timeline { display: grid; gap: 0.85rem; grid-template-columns: 1fr; align-items: start; }
+    @media (min-width: 760px)  { #timeline { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1040px) { #timeline { grid-template-columns: repeat(3, 1fr); } }
     .month-card {
       background: white; border: 1.5px solid var(--border);
       border-radius: var(--r);
       box-shadow: 0 4px 20px rgba(78,58,180,0.07);
-      margin-bottom: 1rem; overflow: hidden;
+      overflow: hidden;
     }
     .month-header {
       display: flex; align-items: center; justify-content: space-between;
@@ -231,10 +232,6 @@
       margin-top: 0.2rem;
     }
     .charity-notes { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
-    .charity-amt {
-      flex-shrink: 0; font-family: 'Fredoka One', cursive; font-size: 0.95rem;
-      color: var(--purple); white-space: nowrap;
-    }
     .add-input.amt-input { max-width: 90px; }
     .row-amt-input {
       flex-shrink: 0; width: 72px; font-family: 'Nunito', sans-serif;
@@ -352,22 +349,23 @@
 </div>
 
 <div class="page" id="mainPage">
+  {# Charts and month cards lead; the pot is a wordless progress strip. This
+     page tracks who we gave to, not how much — dollar figures live in
+     Violet's Bank. #}
+  <div class="give-dash" id="statsBar"></div>
+
   <div class="pot-card" id="potCard">
     <div class="pot-top">
-      <div>
-        <div class="pot-label">💜 Giving Pot</div>
-        <div class="pot-amt" id="potReady">$0</div>
-      </div>
+      <div class="pot-label">💜 Giving Pot</div>
       <div class="pot-sub" id="potNote">ready to share</div>
     </div>
     <div class="pot-bar-wrap"><div class="pot-bar" id="potBar" style="width:0%"></div></div>
     <div class="pot-foot">
-      <span id="potGiven">$0 given</span>
-      <span id="potEarned">$0 earned</span>
+      <span>shared so far</span>
+      <span>still in the pot</span>
     </div>
   </div>
 
-  <div class="give-dash" id="statsBar"></div>
   <div id="timeline"></div>
 
   <div class="add-month-section" id="addMonthSection">
@@ -407,22 +405,15 @@
   let editMode = false;
   let dirty = false;
 
-  function fmtMoney(n) {
-    n = Math.round(n * 100) / 100;
-    return '$' + (Number.isInteger(n) ? n : n.toFixed(2));
-  }
-
+  // The bar shows how much of the pot has gone out, without naming amounts.
   function renderPot() {
     const given = data.filter(r => r.status === 'donated')
                       .reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
     const ready = Math.max(0, POT_EARNED - given);
     const pct   = POT_EARNED > 0 ? Math.min(100, Math.round(given / POT_EARNED * 100)) : 0;
-    document.getElementById('potReady').textContent  = fmtMoney(ready);
-    document.getElementById('potGiven').textContent  = fmtMoney(given) + ' given';
-    document.getElementById('potEarned').textContent = fmtMoney(POT_EARNED) + ' earned';
-    document.getElementById('potBar').style.width     = pct + '%';
+    document.getElementById('potBar').style.width = pct + '%';
     document.getElementById('potNote').textContent =
-      POT_EARNED === 0 ? `${GIVING_PCT}% of earnings lands here`
+      POT_EARNED === 0 ? `${GIVING_PCT}% of Violet's earnings lands here`
       : ready > 0 ? 'ready to share 💜' : 'all shared — amazing! 🌟';
   }
 
@@ -484,23 +475,17 @@
     const charitySet = new Set(donated.map(r => (r.charity || '').trim()).filter(Boolean));
     const countrySet = new Set(donated.map(r => (r.cause   || '').trim()).filter(Boolean));
 
-    // donations per month (count + $), chronological, last 12
+    // donations per month (count), chronological, last 12
     const mMap = {};
     donated.forEach(r => {
       const k = `${r.month}|${r.year}`;
-      if (!mMap[k]) mMap[k] = { count: 0, amount: 0, month: r.month, year: r.year };
+      if (!mMap[k]) mMap[k] = { count: 0, month: r.month, year: r.year };
       mMap[k].count++;
-      mMap[k].amount += parseFloat(r.amount) || 0;
     });
     const months = Object.values(mMap).sort((a, b) =>
       a.year !== b.year ? a.year - b.year : MONTH_ORDER.indexOf(a.month) - MONTH_ORDER.indexOf(b.month)
     ).slice(-12);
     const maxCount = Math.max(1, ...months.map(m => m.count));
-
-    // cumulative $ given over time → line graph (only if any $ recorded)
-    let cum = 0;
-    const cumPts = months.map(m => { cum += m.amount; return { label: m.month.slice(0, 3), total: cum }; });
-    const cumChart = (months.length >= 2 && cum > 0) ? lineChart(cumPts) : '';
 
     // % share breakdown — bar width and label both show share of all donations
     function shareBars(field, title, icon, emptyMsg) {
@@ -533,8 +518,8 @@
       const other = cEntries.slice(6).reduce((s, e) => s + e[1], 0);
       cEntries = cEntries.slice(0, 6).concat([['Other', other]]);
     }
-    const centerBig   = cum > 0 ? fmtMoney(cum) : String(total);
-    const centerSmall = cum > 0 ? 'given' : (total === 1 ? 'donation' : 'donations');
+    const centerBig   = String(total);
+    const centerSmall = total === 1 ? 'donation' : 'donations';
     const donut = cEntries.length ? donutChart(cEntries, centerBig, centerSmall)
       : { svg: '<div class="exec-empty">No giving logged yet.</div>', legend: '' };
 
@@ -556,7 +541,7 @@
         ${kpiChips}
       </div>`;
 
-    document.getElementById('statsBar').innerHTML = execCard + cumChart
+    document.getElementById('statsBar').innerHTML = execCard
       + shareBars('charity', 'Share by charity', '🏛️', 'No donations logged yet.');
   }
 
@@ -587,28 +572,6 @@
     return { svg: `<svg viewBox="0 0 150 150">${paths}${centre}</svg>`, legend };
   }
 
-  // SVG line chart of cumulative dollars given over time
-  function lineChart(pts) {
-    const W = 300, H = 120, padL = 14, padR = 14, padT = 18, padB = 22;
-    const n = pts.length;
-    const maxV = Math.max(1, ...pts.map(p => p.total));
-    const x = i => padL + (n === 1 ? 0 : i * (W - padL - padR) / (n - 1));
-    const y = v => (H - padB) - (v / maxV) * (H - padT - padB);
-    const xy = pts.map((p, i) => [x(i), y(p.total)]);
-    const line = xy.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
-    const area = `M${x(0).toFixed(1)} ${H - padB} ` +
-      xy.map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ') +
-      ` L${x(n - 1).toFixed(1)} ${H - padB} Z`;
-    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Total given over time">`;
-    svg += `<path class="gl-area" d="${area}"/><path class="gl-line" d="${line}"/>`;
-    pts.forEach((p, i) => {
-      svg += `<circle class="gl-dot" cx="${x(i).toFixed(1)}" cy="${y(p.total).toFixed(1)}" r="3"/>`;
-      svg += `<text class="gl-lbl" x="${x(i).toFixed(1)}" y="${H - 7}" text-anchor="middle">${p.label}</text>`;
-    });
-    svg += `<text class="gl-val" x="${x(n - 1).toFixed(1)}" y="${(y(pts[n - 1].total) - 7).toFixed(1)}" text-anchor="end">${fmtMoney(pts[n - 1].total)}</text>`;
-    svg += `</svg>`;
-    return `<div class="give-chart"><div class="gc-title">📈 Total given over time</div>${svg}</div>`;
-  }
 
   function renderTimeline() {
     const groups = groupByMonth(data);
@@ -646,7 +609,7 @@
           </div>
           ${editMode
             ? `<input class="row-amt-input" type="number" min="0" step="0.01" value="${(parseFloat(c.amount) || 0) || ''}" placeholder="$" onfocus="this.select()" oninput="setAmount(${globalIdx}, this.value)">`
-            : ((parseFloat(c.amount) || 0) ? `<div class="charity-amt">${fmtMoney(parseFloat(c.amount))}</div>` : '')}
+            : ''}
           <button class="delete-btn" onclick="deleteCharity(${globalIdx})" title="Remove">✕</button>
         `;
         card.appendChild(row);
