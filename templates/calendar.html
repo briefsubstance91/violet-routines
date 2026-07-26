@@ -12,7 +12,7 @@
     :root { --purple:#9b87f5; --blue:#4db8ff; --pink:#f472b6; --green:#16a34a; --text:#1e1b4b; --muted:#9490c0; --card:#fff; --border:#e5e0ff; --bg:#f5f3ff; }
     body { font-family:'Nunito',sans-serif; color:var(--text);
       background:linear-gradient(160deg,#cce8ff 0%,#e9e3ff 50%,#ffd6f0 100%); background-attachment:fixed; min-height:100vh; padding-bottom:3rem; }
-    .wrap { max-width:1100px; margin:0 auto; padding:1.5rem 1.1rem 3rem; }
+    .wrap { max-width:1180px; margin:0 auto; padding:1rem 1.1rem 2rem; }
     .top { display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem; }
     h1 { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.8rem;
       background:linear-gradient(135deg,#4db8ff,#9b87f5,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
@@ -118,6 +118,7 @@
     .settings button { margin-top:0.6rem; font-family:'Nunito',sans-serif; font-weight:800; border:none; border-radius:10px; padding:0.6rem 1rem; background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; cursor:pointer; }
     .err { color:#d6336c; font-size:0.78rem; font-weight:700; margin-top:0.5rem; }
   </style>
+{% include '_theme.html' %}
 </head>
 <body>
 <div class="wrap">
@@ -200,7 +201,6 @@
   <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
   <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
   <div class="menu-item"><a href="/admin/planning"><span class="menu-item-icon">🗓️</span> Sunday Planning</a></div>
-  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
   <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
 </div>
 

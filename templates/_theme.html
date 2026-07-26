@@ -1,0 +1,6 @@
+{# Time-of-day theme, on every page. The class goes on <html> from an inline
+   script so it's set before first paint — a deferred script would flash the
+   light theme first. Include this LAST in <head>, after the page's own
+   <style>, so the overrides land on top. #}
+<script>(function () { if (new Date().getHours() >= 17) document.documentElement.classList.add('night'); })();</script>
+<link rel="stylesheet" href="/static/theme.css?v={{ theme_version }}">

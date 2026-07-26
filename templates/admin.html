@@ -162,6 +162,7 @@
     .menu-item a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.9rem; width: 100%; }
     .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
   </style>
+{% include '_theme.html' %}
 </head>
 <body>
 
@@ -199,7 +200,6 @@
   <div class="menu-item"><a href="/admin/surprises"><span class="menu-item-icon">🎁</span> Surprises</a></div>
   <div class="menu-item"><a href="/admin/payout"><span class="menu-item-icon">🏦</span> Bank of Mom & Dad</a></div>
   <div class="menu-item"><a href="/admin/events"><span class="menu-item-icon">✨</span> Events</a></div>
-  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
   <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
   <div class="menu-item" style="cursor:pointer" onclick="changePin()"><span class="menu-item-icon">🔑</span> Change PIN</div>
   <form class="menu-item" method="POST" action="/admin/logout" style="cursor:pointer">
@@ -361,9 +361,14 @@
   let dirty = { routines: false, levelup: false, milestones: false, money: false, phrases: false };
 
   function switchTab(name) {
-    ['routines','levelup','milestones','money','phrases'].forEach(t => {
-      document.getElementById('section-' + t).classList.toggle('active', t === name);
-      document.getElementById('tab-' + t).classList.toggle('active', t === name);
+    // 'routines' left with the tab strip when routine editing moved to
+    // /admin/tasks; looking it up threw before any section could be shown,
+    // which is why this page rendered blank under the tabs.
+    ['levelup','milestones','money','phrases'].forEach(t => {
+      const section = document.getElementById('section-' + t);
+      const button  = document.getElementById('tab-' + t);
+      if (section) section.classList.toggle('active', t === name);
+      if (button)  button.classList.toggle('active', t === name);
     });
     activeTab = name;
     updateSaveBtn();
@@ -780,10 +785,12 @@
   renderTitles();
   updateSaveBtn();
 
-  // Deep-link support: /admin#milestones (etc.) opens that tab directly
+  // Deep-link support: /admin#milestones (etc.) opens that tab directly.
+  // Without a hash, open Level Up — no section carries `active` in the markup,
+  // so a bare /admin used to render as a blank page under the tab strip.
   (function () {
     const t = (location.hash || '').replace('#', '');
-    if (['levelup', 'milestones', 'money'].includes(t)) switchTab(t);
+    switchTab(['levelup', 'milestones', 'money', 'phrases'].includes(t) ? t : 'levelup');
   })();
 </script>
 

@@ -16,7 +16,7 @@
       background: linear-gradient(135deg, var(--green), var(--purple)); -webkit-background-clip: text;
       -webkit-text-fill-color: transparent; background-clip: text; }
     .menu-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; }
-    .container { max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .container { max-width: 1080px; margin: 0 auto; padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 1rem; }
     .balance-card { background: linear-gradient(160deg, #16a34a, #15803d); color: white; border-radius: 22px;
       padding: 1.6rem 1.25rem; text-align: center; box-shadow: 0 12px 30px rgba(22,163,74,0.3); }
     .balance-label { font-size: 0.85rem; font-weight: 800; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -48,6 +48,7 @@
     .menu-item a:hover { background: var(--bg); }
     .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
   </style>
+{% include '_theme.html' %}
 </head>
 <body>
 
@@ -72,7 +73,6 @@
   <div class="menu-item"><a href="/admin/surprises"><span class="menu-item-icon">🎁</span> Surprises</a></div>
   <div class="menu-item"><a href="/admin/payout"><span class="menu-item-icon">🏦</span> Bank of Mom & Dad</a></div>
   <div class="menu-item"><a href="/admin/events"><span class="menu-item-icon">✨</span> Events</a></div>
-  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
   <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
   <form class="menu-item" method="POST" action="/admin/logout" style="cursor:pointer">
     <button type="submit" style="all:unset; display:flex; align-items:center; gap:0.9rem; width:100%; cursor:pointer;">
@@ -84,17 +84,17 @@
 <div class="container">
   <div class="balance-card">
     <div class="balance-label">In Violet's bank now</div>
-    <div class="balance-amt" id="balanceAmt">${{ '%g'|format(bank.balance) }}</div>
+    <div class="balance-amt" id="balanceAmt">${{ bank.balance|money }}</div>
     <div class="balance-sub">cash to hand over at Sunday Planning</div>
     <button class="pay-btn" id="payBtn" onclick="payOut()" {{ 'disabled' if bank.balance <= 0 }}>
-      {% if bank.balance > 0 %}Pay Violet ${{ '%g'|format(bank.balance) }} 💵{% else %}Nothing to pay yet{% endif %}
+      {% if bank.balance > 0 %}Pay Violet ${{ bank.balance|money }} 💵{% else %}Nothing to pay yet{% endif %}
     </button>
   </div>
 
   <div class="stats">
-    <div class="stat"><div class="stat-amt">${{ '%g'|format(bank.earned) }}</div><div class="stat-label">Total earned</div></div>
-    <div class="stat"><div class="stat-amt">${{ '%g'|format(bank.given) }}</div><div class="stat-label">Giving ({{ giving_pct }}%)</div></div>
-    <div class="stat"><div class="stat-amt">${{ '%g'|format(bank.paid_out) }}</div><div class="stat-label">Paid out</div></div>
+    <div class="stat"><div class="stat-amt">${{ bank.earned|money }}</div><div class="stat-label">Total earned</div></div>
+    <div class="stat"><div class="stat-amt">${{ bank.given|money }}</div><div class="stat-label">Giving ({{ giving_pct }}%)</div></div>
+    <div class="stat"><div class="stat-amt">${{ bank.paid_out|money }}</div><div class="stat-label">Paid out</div></div>
   </div>
 
   <div class="help-box">
@@ -107,7 +107,7 @@
   {% if payouts %}
   {% for p in payouts %}
   <div class="pay-row">
-    <span class="pr-amt">${{ '%g'|format(p.Amount|float) }}</span>
+    <span class="pr-amt">${{ p.Amount|float|money }}</span>
     <span class="pr-date">{{ p.Date }}</span>
     {% if p.Note %}<span class="pr-note">{{ p.Note }}</span>{% endif %}
   </div>

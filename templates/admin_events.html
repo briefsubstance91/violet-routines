@@ -25,7 +25,7 @@
     .btn-danger:hover { background: #fff1f1; }
     .save-status { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
     .save-status.saved { color: #34d399; }
-    .container { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 0.85rem; }
+    .container { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 0.85rem; }
     .event-card { background: var(--card); border: 2px solid var(--border); border-radius: var(--r); padding: 0.85rem 1rem; }
     .event-top { display: flex; align-items: center; gap: 0.5rem; }
     .event-grid { display: grid; grid-template-columns: 3.2rem 1fr; gap: 0.5rem; margin-top: 0.5rem; }
@@ -55,6 +55,7 @@
     .menu-item a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.9rem; width: 100%; }
     .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
   </style>
+{% include '_theme.html' %}
 </head>
 <body>
 
@@ -83,7 +84,6 @@
   <div class="menu-item"><a href="/admin/surprises"><span class="menu-item-icon">🎁</span> Surprises</a></div>
   <div class="menu-item"><a href="/admin/payout"><span class="menu-item-icon">🏦</span> Bank of Mom & Dad</a></div>
   <div class="menu-item"><a href="/admin/events"><span class="menu-item-icon">✨</span> Events</a></div>
-  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
   <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
   <form class="menu-item" method="POST" action="/admin/logout" style="cursor:pointer">
     <button type="submit" style="all:unset; display:flex; align-items:center; gap:0.9rem; width:100%; cursor:pointer;">

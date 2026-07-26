@@ -1,0 +1,235 @@
+/* ── Time-of-day theme ────────────────────────────────────────────────────
+   Every page is pastel by day and deep purple in the evening, matching the
+   home page's companion. Loaded last in <head>, and every selector is
+   `.night` + something, so it outranks the page's own rules without
+   needing !important.
+
+   The pages share a small vocabulary of custom properties (--card, --text,
+   --muted, --border, --bg). Re-pointing those covers most of a page; the
+   surface list below catches the cards that hardcode white.            */
+
+.night, .night body {
+  --text:   #ffffff;
+  --muted:  #b9b4e0;
+  --card:   rgba(255, 255, 255, 0.10);
+  --border: rgba(255, 255, 255, 0.16);
+  --bg:     rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.night body {
+  background: linear-gradient(160deg, #1e1b4b 0%, #3b2f7a 52%, #6d4a8f 100%);
+  background-attachment: fixed;
+}
+
+/* The sparkle strip several pages paint behind the header. */
+.night body::before { color: rgba(255, 255, 255, 0.14); }
+
+/* ── Surfaces ── */
+.night .card,
+.night .chart-card,
+.night .stat,
+.night .panel,
+.night .kpi-card,
+.night .manage-card,
+.night .month-card,
+.night .txn,
+.night .empty,
+.night .exec,
+.night .give-chart,
+.night .give-kpi,
+.night .stat-pill,
+.night .routine-stat-card,
+.night .rail-item,
+.night .gs,
+.night .ms-chip,
+.night .hub-card,
+.night .day-card,
+.night .cal-card,
+.night .event-card,
+.night .badge-card,
+.night .sec,
+.night .box {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  box-shadow: 0 8px 26px rgba(10, 6, 40, 0.35);
+}
+
+/* Tracks, wells and other pale-lilac insets. */
+.night .week-bar-wrap,
+.night .gc-bar-wrap,
+.night .gc-pair,
+.night .ms-bar-wrap,
+.night .rs-bar-wrap,
+.night .routine-bar-wrap,
+.night .cause-track,
+.night .tag-bar-wrap,
+.night .pot-bar-wrap,
+.night .cal-cell,
+.night .chip,
+.night .give-note,
+.night .paid-note,
+.night .routine-icon-wrap {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.night .cal-cell.other-month { opacity: 0.35; }
+
+/* Headings that were painted dark rather than inheriting. */
+.night h1, .night h2, .night h3,
+.night .card-title,
+.night .section-title,
+.night .txn-title,
+.night .charity-name,
+.night .stat-amt,
+.night .gc-cap,
+.night .rail-name,
+.night .month-name,
+.night .rs-name { color: #ffffff; }
+
+/* Gradient-clipped wordmarks: brighten so they read on the dark ground. */
+.night h1[style*="clip"], .night .header-title, .night .menu-title,
+.night .hero-title, .night .month-name, .night .stat-num {
+  background-image: linear-gradient(135deg, #a8d8ff, #e9d5ff, #fbcfe8);
+}
+
+.night .section-label,
+.night .muted,
+.night .stat-label,
+.night .stat-note,
+.night .gs-lbl,
+.night .txn-date { color: #b9b4e0; }
+
+/* Chips, pills and inputs. */
+.night .chip.active { background: #9b87f5; color: #fff; }
+.night input, .night select, .night textarea {
+  background: rgba(255, 255, 255, 0.12); color: #fff; border-color: rgba(255, 255, 255, 0.2);
+}
+.night input::placeholder, .night textarea::placeholder { color: rgba(255, 255, 255, 0.5); }
+
+/* The slide-out menu stays a solid light panel — it sits above everything
+   and a translucent one over a dark page is unreadable. */
+.night .menu-panel { background: #241f52; }
+.night .menu-item { border-bottom-color: rgba(255, 255, 255, 0.12); color: #fff; }
+.night .menu-item:hover { background: rgba(255, 255, 255, 0.08); }
+.night .menu-btn, .night .back, .night .edit-btn {
+  background: rgba(255, 255, 255, 0.14); color: #e9d5ff;
+}
+
+/* Row separators. */
+.night .routine-row,
+.night .charity-row,
+.night .win-row,
+.night .rs-task-row,
+.night .tag-row { border-color: rgba(255, 255, 255, 0.12); }
+.night .charity-row:hover { background: rgba(255, 255, 255, 0.06); }
+
+/* ── Routines page ── */
+.night .task,
+.night .routine-card.pm .task,
+.night .extra-item,
+.night .extras-inline .task,
+.night .extras-inline .extra-item,
+.night .toonie-card,
+.night .toonie-item,
+.night .sub-task {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+.night .task.done,
+.night .routine-card.pm .task.done { background: rgba(167, 139, 250, 0.32); }
+.night .task-label, .night .task span, .night .extra-item span { color: #ffffff; }
+.night .progress-track, .night .bar-track { background: rgba(255, 255, 255, 0.16); }
+.night .routine-card.pm .routine-title { color: #c4b5fd; }
+
+/* ── Calendar ── */
+.night .ev, .night .mcell, .night .day-group, .night .settings,
+.night .seg, .night .nav-btn, .night .tl, .night .allday-chip, .night .wstrip {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+.night .ev-title, .night .day-head, .night .dow, .night .wday { color: #ffffff; }
+.night .ev-time, .night .ev-loc, .night .tl-hour { color: #b9b4e0; }
+.night .seg.on, .night .nav-today { background: #9b87f5; color: #fff; }
+
+/* ── Badges ── */
+.night .badge-card, .night .badge-circle, .night .badge-inner {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.night .badge-name { color: #ffffff; }
+.night .badge-desc, .night .earned-count { color: #b9b4e0; }
+.night .badge-progress { background: rgba(255, 255, 255, 0.16); }
+
+/* ── Sunday Planning ── */
+.night .review-row, .night .lu-cat, .night .lu-win, .night .win-chip,
+.night .step, .night .content-card, .night .logged {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+.night .review-val, .night .step-title, .night .logged-title { color: #ffffff; }
+.night .review-lbl, .night .step-sub, .night .bank-note { color: #b9b4e0; }
+.night .wb-bar-wrap { background: rgba(255, 255, 255, 0.16); }
+
+/* ── Admin forms ── */
+.night .btn, .night .btn-primary, .night .btn-pay { color: #fff; }
+.night table, .night th, .night td { color: #fff; border-color: rgba(255,255,255,0.14); }
+.night th { background: rgba(255, 255, 255, 0.08); }
+
+/* Sticky page headers painted as translucent white bands. */
+.night header, .night .header, .night .top-bar, .night .cal-toolbar {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.night .give-note, .night .paid-note, .night .pot-sub { color: #e9d5ff; }
+.night .give-link, .night .hiw-link, .night .edit-link { color: #d8b4fe; }
+
+/* Month cards on Family Giving: the header band is a pale gradient. */
+.night .month-header {
+  background: rgba(255, 255, 255, 0.12);
+  border-bottom-color: rgba(255, 255, 255, 0.14);
+}
+.night .month-count { color: #d8b4fe; }
+.night .charity-cause { background: rgba(255, 255, 255, 0.16); color: #e9d5ff; }
+.night .status-btn { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.3); }
+.night .status-btn.donated { background: rgba(155, 135, 245, 0.45); border-color: #c4b5fd; }
+.night .add-month-section, .night .add-charity-form { color: #fff; }
+
+/* Headline tiles keep their gradient so they still lead the page. */
+.night .stat.hero { background: linear-gradient(135deg, #7c3aed, #db2777); border-color: transparent; }
+.night .stat.hero .stat-label, .night .stat.hero .stat-note { color: rgba(255,255,255,0.92); }
+
+/* Deep-purple accents that vanish against a deep-purple page. */
+.night .rcard-pm .rs-pct, .night .rcard-pm .rs-name { color: #c4b5fd; }
+.night .milestone-card { background: rgba(155, 135, 245, 0.22); }
+.night .ms-reward, .night .ms-days-left { color: #ffffff; }
+.night .hiw-toggle { color: #ffffff; }
+.night .hiw-item, .night .hiw-section-title { color: #e9d5ff; }
+
+/* ── Admin ── */
+.night .tab-btn, .night .edit-routines-cta, .night .routine-card, .night .help-box,
+.night .task-row, .night .subtask-row, .night .milestone-row, .night .wins-list,
+.night .win-row, .night .task-group, .night .add-task-wrap, .night .add-ms-wrap {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+.night .tab-btn.active { background: rgba(155, 135, 245, 0.5); color: #fff; }
+.night .erc-text, .night .routine-name, .night .rt-name, .night .ms-message,
+.night .meta-name, .night .help-title { color: #ffffff; }
+.night .rt-time, .night .meta-time, .night .ms-streak, .night .ms-category,
+.night .routine-time { color: #b9b4e0; }
+.night .inp, .night .task-input, .night .subtask-input, .night .inp-sm, .night .inp-tag {
+  background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.22);
+}
+.night .btn, .night .btn-outline, .night .btn-ghost {
+  background: rgba(255, 255, 255, 0.14); color: #e9d5ff; border-color: rgba(255, 255, 255, 0.22);
+}
+.night .tag-chip { background: rgba(255, 255, 255, 0.18); color: #e9d5ff; }
+.night .card-header, .night .routine-header, .night .month-header, .night .ms-header-row {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.14);
+}

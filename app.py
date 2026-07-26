@@ -120,12 +120,33 @@ def _admin_activity(path):
 PROFILES = {'violet': {'name': 'Violet'}}
 
 
+@app.template_filter('money')
+def money(value):
+    """Whole dollars stay clean ($5); cents always show both places ($14.30)."""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return value
+    return '%g' % v if v == int(v) else '%.2f' % v
+
+
+def asset_version(name):
+    """Cache-buster for a file under static/. The service worker is cache-first
+    on /static/ and keys by full URL, so without this a restyle wouldn't reach
+    an installed app until the cache was cleared by hand."""
+    try:
+        return str(int(os.path.getmtime(os.path.join(_BASE, 'static', name))))
+    except OSError:
+        return '1'
+
+
 @app.context_processor
 def _admin_template_vars():
-    """Available to every template, so the idle sign-out snippet needs no
-    per-route plumbing. A route passing is_admin= explicitly still wins."""
+    """Available to every template, so the idle sign-out and theme snippets
+    need no per-route plumbing. A route passing is_admin= explicitly wins."""
     return {'is_admin': bool(session.get('admin')),
-            'admin_idle_seconds': ADMIN_IDLE_SECONDS}
+            'admin_idle_seconds': ADMIN_IDLE_SECONDS,
+            'theme_version': asset_version('theme.css')}
 
 
 @app.before_request
@@ -463,19 +484,6 @@ def charity_donated():
     total_paid_out(). Rows with a blank Amount count as $0."""
     return round(sum(c['amount'] for c in load_charities()
                      if c['status'] == 'donated'), 2)
-
-
-def charity_donations_by_month():
-    """{'YYYY-MM': dollars donated} — Violet earns for the pot weekly, but the
-    pot goes out to charity monthly, so the giving chart buckets by month."""
-    out = defaultdict(float)
-    for c in load_charities():
-        if c['status'] != 'donated' or not c['amount']:
-            continue
-        n = _MONTH_NUM.get(c['month'].title())
-        if n and c['year']:
-            out['%04d-%02d' % (c['year'], n)] += c['amount']
-    return {k: round(v, 2) for k, v in sorted(out.items())}
 
 
 def compute_bank():
@@ -1621,7 +1629,6 @@ def bank():
                            giving_pct=int(round(giving_rate() * 100)),
                            next_ms=nxt, prev_amt=prev, money_ms=money_ms,
                            daily_json=json.dumps(earnings_by_day()),
-                           donations_json=json.dumps(charity_donations_by_month()),
                            today_iso=_now_local().date().isoformat())
 
 

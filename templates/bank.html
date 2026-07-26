@@ -110,29 +110,18 @@
       font-weight: 700; color: #6d28d9; margin-bottom: 0.6rem; }
     .gc-bars { display: flex; gap: 0.35rem; align-items: flex-end; }
     .gc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; min-width: 0; }
-    .gc-pair { width: 100%; height: 58px; display: flex; align-items: flex-end; justify-content: center; gap: 2px;
-      background: #f5f2ff; border-radius: 6px; padding: 0 3px; }
+    .gc-pair { width: 100%; height: 58px; display: flex; align-items: flex-end; justify-content: center;
+      background: #f5f2ff; border-radius: 6px; padding: 0 4px; }
     .gc-bar { flex: 1; border-radius: 5px 5px 0 0; min-height: 3px; transition: height 0.4s ease; }
     .gc-bar.earned { background: linear-gradient(to top, var(--purple), #c4b5fd); }
-    .gc-bar.given  { background: linear-gradient(to top, var(--pink), #fbcfe8); }
     .gc-cap { font-size: 0.66rem; font-weight: 800; color: var(--text); }
     .gc-day { font-size: 0.6rem; font-weight: 700; color: var(--muted); }
-    .gc-given { font-size: 0.62rem; font-weight: 800; color: var(--pink); min-height: 0.9em; }
-    .legend { display: flex; gap: 1rem; justify-content: center; margin-top: 0.5rem; font-size: 0.66rem;
-      font-weight: 800; color: var(--muted); }
-    .legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
-      margin-right: 0.35rem; vertical-align: -1px; }
-    .legend .l-earned::before { background: var(--purple); }
-    .legend .l-given::before  { background: var(--pink); }
     .give-link { display: block; text-align: center; margin-top: 0.6rem; font-size: 0.8rem; font-weight: 800;
       color: var(--purple); text-decoration: none; }
   </style>
+{% include '_theme.html' %}
 </head>
 <body>
-{# Whole dollars stay clean ($328); cents always show both places ($14.30). #}
-{%- macro money(v) -%}
-{{ '%g'|format(v) if v == v|round(0) else '%.2f'|format(v) }}
-{%- endmacro -%}
 <div class="wrap">
   <div class="top">
     <a class="back" href="/routines">‹</a>
@@ -160,45 +149,44 @@
       <div class="chart-head"><div class="chart-title">💜 Money for charity</div></div>
       <div class="give-stats">
         <div class="gs">
-          <div class="gs-amt">${{ money(bank.given) }}</div>
-          <div class="gs-lbl">Earned for charity</div>
+          <div class="gs-amt">${{ bank.given|money }}</div>
+          <div class="gs-lbl">Earned all time</div>
         </div>
         <div class="gs">
-          <div class="gs-amt">${{ money(bank.donated) }}</div>
-          <div class="gs-lbl">Given away</div>
+          <div class="gs-amt">${{ bank.month_given|money }}</div>
+          <div class="gs-lbl">Earned this month</div>
         </div>
         <div class="gs">
-          <div class="gs-amt">${{ money(bank.giving_balance) }}</div>
-          <div class="gs-lbl">Waiting to give</div>
+          <div class="gs-amt">{{ giving_pct }}%</div>
+          <div class="gs-lbl">Of everything you earn</div>
         </div>
       </div>
       <div class="give-note" id="giveNote"></div>
       <div id="giveChart"></div>
-      <div class="legend" id="giveLegend"><span class="l-earned">Earned for charity</span><span class="l-given">Given away</span></div>
-      <a class="give-link" href="/charities">Pick who it goes to →</a>
+      <a class="give-link" href="/charities">See who it goes to →</a>
     </div>
   </div>
 
   <div class="stats">
     <div class="stat hero">
-      <div class="stat-amt">${{ money(bank.earned) }}</div>
+      <div class="stat-amt">${{ bank.earned|money }}</div>
       <div class="stat-label">Total earned</div>
       <div class="stat-note">all time 💪</div>
     </div>
     <div class="stat">
-      <div class="stat-amt">+${{ money(bank.week_earned) }}</div>
+      <div class="stat-amt">+${{ bank.week_earned|money }}</div>
       <div class="stat-label">Earned this week</div>
       <div class="stat-note">in the last 7 days</div>
     </div>
     <div class="stat">
-      <div class="stat-amt">${{ money(bank.balance) }}</div>
+      <div class="stat-amt">${{ bank.balance|money }}</div>
       <div class="stat-label">In your bank now</div>
-      <div class="stat-note">paid out at Sunday Planning{% if bank.paid_out %} · ${{ money(bank.paid_out) }} paid so far{% endif %}</div>
+      <div class="stat-note">paid out at Sunday Planning{% if bank.paid_out %} · ${{ bank.paid_out|money }} paid so far{% endif %}</div>
     </div>
     <a class="stat" href="/charities" style="text-decoration:none">
-      <div class="stat-amt">${{ money(bank.giving_balance) }}</div>
-      <div class="stat-label">Ready to give</div>
-      <div class="stat-note">given out once a month →</div>
+      <div class="stat-amt">${{ bank.given|money }}</div>
+      <div class="stat-label">Earned for charity</div>
+      <div class="stat-note">{{ giving_pct }}% of everything · given monthly →</div>
     </a>
   </div>
 
@@ -211,7 +199,7 @@
         <div class="txn-title">{{ t.Title }}</div>
         <div class="txn-date">{{ t.Date }}</div>
       </div>
-      <div class="txn-amt">+${{ money(t.Amount|float) }}</div>
+      <div class="txn-amt">+${{ t.Amount|float|money }}</div>
     </div>
     {% endfor %}
   </div>
@@ -232,7 +220,6 @@
   <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
   <div class="menu-item"><a href="/dashboard"><span class="menu-item-icon">📊</span> Parent Dashboard</a></div>
   <div class="menu-item"><a href="/admin/planning"><span class="menu-item-icon">🗓️</span> Sunday Planning</a></div>
-  <div class="menu-item"><a href="/faq"><span class="menu-item-icon">💬</span> How It Works</a></div>
   <div class="menu-item"><a href="/welcome"><span class="menu-item-icon">✨</span> Welcome Tour</a></div>
 </div>
 
@@ -242,7 +229,6 @@
 
   // ── Money charts ──────────────────────────────────────────────────────────
   const DAILY     = {{ daily_json | safe }};        // [{date:'YYYY-MM-DD', amount}]
-  const DONATIONS = {{ donations_json | safe }};    // {'YYYY-MM': $ donated}
   const TODAY     = '{{ today_iso }}';
   const RATE      = {{ giving_pct }} / 100;
   const MONTHS    = ['January','February','March','April','May','June',
@@ -356,7 +342,7 @@
                               : `No new earnings ${word} yet`;
   }
 
-  // ── Charity: earned monthly (10% of everything) vs actually given away ──
+  // ── Charity: what she earns for the giving pot, month by month ──
   function renderGiving() {
     const now       = TODAY.slice(0, 7);
     const monthName = MONTHS[+TODAY.slice(5, 7) - 1];
@@ -366,23 +352,18 @@
       ? `You've earned ${fmtMoney(thisMonth)} for charity so far in ${monthName} — it gets given away at the end of the month.`
       : `${Math.round(RATE * 100)}% of everything you earn goes here, and it's given away at the end of each month.`;
 
-    // Months to plot: everything with earnings or a donation, ending at today.
-    const keys = new Set(DAILY.map(d => d.date.slice(0, 7)).concat(Object.keys(DONATIONS)));
-    keys.add(now);
-    const months = [...keys].sort().slice(-6);
     const earned = {};
     DAILY.forEach(d => { const k = d.date.slice(0, 7); earned[k] = (earned[k] || 0) + d.amount; });
-
-    const rows = months.map(k => ({
+    const keys = new Set(Object.keys(earned));
+    keys.add(now);
+    const rows = [...keys].sort().slice(-6).map(k => ({
       key: k,
       earned: Math.round((earned[k] || 0) * RATE * 100) / 100,
-      given:  DONATIONS[k] || 0,
     }));
-    const maxV = Math.max(1, ...rows.map(r => Math.max(r.earned, r.given)));
-    // Nothing earned and nothing given yet — a row of empty bars just looks broken.
-    if (!rows.some(r => r.earned || r.given)) {
+    const maxV = Math.max(1, ...rows.map(r => r.earned));
+    // Nothing earned yet — a row of empty bars just looks broken.
+    if (!rows.some(r => r.earned)) {
       document.getElementById('giveChart').innerHTML = '';
-      document.getElementById('giveLegend').style.display = 'none';
       return;
     }
     document.getElementById('giveChart').innerHTML =
@@ -391,10 +372,8 @@
           <div class="gc-cap">${r.earned ? fmtMoney(r.earned) : ''}</div>
           <div class="gc-pair">
             <div class="gc-bar earned" style="height:${Math.round(r.earned / maxV * 100)}%"></div>
-            <div class="gc-bar given"  style="height:${Math.round(r.given  / maxV * 100)}%"></div>
           </div>
           <div class="gc-day">${MONTHS[+r.key.slice(5, 7) - 1].slice(0, 3)}</div>
-          <div class="gc-given">${r.given ? fmtMoney(r.given) : ''}</div>
         </div>`).join('') + `</div>`;
   }
 
