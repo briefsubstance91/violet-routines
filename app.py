@@ -2410,7 +2410,8 @@ def camp():
 
 @app.route('/trip')
 def trip():
-    return render_template('trip.html', trip_json=json.dumps(trip_bundle() or {}))
+    return render_template('trip.html', trip_json=json.dumps(trip_bundle() or {}),
+                           lifeos=LIFEOS_API_URL)
 
 
 @app.route('/api/trip/tick', methods=['POST'])

@@ -40,6 +40,9 @@
     .card h2 { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.05rem; margin-bottom:0.6rem; }
     .home-line { font-size:0.84rem; font-weight:700; line-height:1.5; }
     .home-line .quiet { color:var(--muted); }
+    .ph-strip { display:flex; gap:0.45rem; overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:0.6rem; padding-bottom:0.2rem; }
+    .ph-strip a { flex:0 0 auto; }
+    .ph-strip img { height:76px; width:112px; object-fit:cover; border-radius:10px; border:1.5px solid var(--border); display:block; background:#faf8ff; }
 
     .wx { display:flex; gap:0.4rem; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:0.25rem; }
     .wx-d { flex:0 0 3.4rem; background:#faf8ff; border:1.5px solid var(--border); border-radius:12px; padding:0.45rem 0.2rem; text-align:center; }
@@ -117,6 +120,7 @@
 
 <script>
   const TRIP = {{ trip_json | safe }};
+  const LIFEOS = {{ lifeos | tojson }};
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pd = iso => { const p = (iso || '').split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
   const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
@@ -168,11 +172,13 @@
     const m = TRIP.meta || {}, plan = TRIP.plan || [], today = todayIso();
     let html = '';
     const b = m.base || {};
-    if (b.name || b.address) {
+    const photos = (TRIP.photos || []).map(id =>
+      `<a href="${LIFEOS}/trip/photo/${esc(id)}" target="_blank" rel="noopener"><img src="${LIFEOS}/trip/photo/${esc(id)}" alt="Our Airbnb" loading="lazy"></a>`).join('');
+    if (b.name || b.address || photos) {
       html += `<div class="card"><h2>🏡 Home base</h2><div class="home-line">${esc(b.name || 'Our Airbnb')}` +
         (b.address ? ` <span class="quiet">· ${esc(b.address)}</span>` : '') +
         ((b.checkin || b.checkout) ? `<br><span class="quiet">${b.checkin ? 'check-in ' + esc(b.checkin) : ''}${b.checkin && b.checkout ? ' · ' : ''}${b.checkout ? 'checkout ' + esc(b.checkout) : ''}</span>` : '') +
-        `</div></div>`;
+        `</div>` + (photos ? `<div class="ph-strip">${photos}</div>` : '') + `</div>`;
     }
     html += `<div class="card"><h2>🌤️ Island weather</h2><div class="wx" id="wxRow"><div class="empty-line">Checking the sky…</div></div></div>`;
     if (m.start && m.end) {
