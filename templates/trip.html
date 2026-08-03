@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>PEI Trip — Violet's Life OS</title>
+  <link rel="icon" href="/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --purple:#9b87f5; --blue:#4db8ff; --pink:#f472b6; --green:#16a34a; --text:#1e1b4b; --muted:#9490c0; --card:#fff; --border:#e5e0ff; }
+    body { font-family:'Nunito',sans-serif; color:var(--text);
+      background:linear-gradient(160deg,#cce8ff 0%,#e9e3ff 50%,#ffd6f0 100%); background-attachment:fixed; min-height:100vh; padding-bottom:3rem; }
+    .wrap { max-width:980px; margin:0 auto; padding:1.5rem 1.1rem 3rem; }
+    .top { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.4rem; }
+    h1 { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.8rem; flex:1;
+      background:linear-gradient(135deg,#4db8ff,#9b87f5,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .sub { font-size:0.82rem; font-weight:700; color:var(--muted); margin-bottom:1rem; }
+    .menu-btn { background:rgba(255,255,255,0.7); border:none; font-size:1.5rem; color:var(--purple); cursor:pointer; padding:0.25rem 0.6rem; border-radius:10px; line-height:1; }
+    .menu-btn:hover { background:#fff; }
+    .menu-backdrop { display:none; position:fixed; inset:0; background:rgba(78,58,180,0.18); z-index:200; backdrop-filter:blur(2px); }
+    .menu-backdrop.open { display:block; }
+    .menu-panel { position:fixed; top:0; right:0; width:min(280px,85vw); height:100%; background:#fff; z-index:201; transform:translateX(110%); transition:transform .3s cubic-bezier(.34,1.2,.64,1); padding:2rem 1.5rem; display:flex; flex-direction:column; box-shadow:-8px 0 40px rgba(78,58,180,0.15); overflow-y:auto; }
+    .menu-panel.open { transform:translateX(0); }
+    .menu-title { font-family:'Fredoka One',cursive; font-size:1.4rem; background:linear-gradient(135deg,#4db8ff,#9b87f5,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:1.75rem; }
+    .menu-item { display:flex; align-items:center; gap:0.9rem; padding:0.95rem 0.5rem; border-bottom:1.5px solid #f3f0ff; font-size:0.95rem; font-weight:700; color:#1e1b4b; border-radius:8px; }
+    .menu-item:hover { background:#f8f5ff; }
+    .menu-item a { color:inherit; text-decoration:none; display:flex; align-items:center; gap:0.9rem; width:100%; }
+    .menu-item-icon { font-size:1.3rem; width:28px; text-align:center; }
+
+    .summary { display:flex; flex-wrap:wrap; gap:0.6rem; margin-bottom:1.25rem; }
+    .stat { flex:1 1 30%; min-width:7.5rem; background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:0.7rem 0.5rem; text-align:center; box-shadow:0 3px 14px rgba(78,58,180,0.05); }
+    .stat .n { font-family:'Fredoka One',cursive; font-size:1.35rem; color:var(--purple); line-height:1; }
+    .stat .l { font-size:0.66rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); margin-top:0.25rem; }
+    .stat.go .n { color:var(--pink); }
+    .stat.packed .n { color:var(--green); }
+
+    .card { background:var(--card); border:1.5px solid var(--border); border-radius:16px; padding:1rem 1.1rem; margin-bottom:1.1rem; box-shadow:0 3px 14px rgba(78,58,180,0.05); }
+    .card h2 { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.05rem; margin-bottom:0.6rem; }
+    .home-line { font-size:0.84rem; font-weight:700; line-height:1.5; }
+    .home-line .quiet { color:var(--muted); }
+
+    .wx { display:flex; gap:0.4rem; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:0.25rem; }
+    .wx-d { flex:0 0 3.4rem; background:#faf8ff; border:1.5px solid var(--border); border-radius:12px; padding:0.45rem 0.2rem; text-align:center; }
+    .wx-d .dy { font-size:0.62rem; font-weight:900; color:var(--muted); text-transform:uppercase; }
+    .wx-d .ic { font-size:1.15rem; margin:0.15rem 0; }
+    .wx-d .t { font-size:0.7rem; font-weight:800; }
+    .wx-d .t .lo { color:var(--muted); font-weight:700; }
+
+    .day { margin-bottom:0.8rem; }
+    .day-h { font-family:'Fredoka One',cursive; font-size:0.9rem; margin-bottom:0.3rem; }
+    .day-h.today { color:var(--pink); }
+    .pl { display:flex; align-items:baseline; gap:0.5rem; background:#faf8ff; border:1.5px solid var(--border); border-radius:11px; padding:0.4rem 0.6rem; margin-bottom:0.25rem; }
+    .pl .tm { font-weight:900; font-size:0.74rem; color:var(--blue); min-width:2.9rem; }
+    .pl .nm { font-weight:700; font-size:0.86rem; flex:1; }
+    .pl .nm .note { display:block; font-size:0.74rem; color:var(--muted); font-weight:600; }
+    .pl.done .nm { color:var(--muted); text-decoration:line-through; }
+    .empty-line { font-size:0.8rem; font-weight:700; color:var(--muted); padding:0.2rem 0.1rem 0.4rem; }
+
+    .tabs { display:flex; gap:0.45rem; flex-wrap:wrap; margin-bottom:0.75rem; }
+    .tab { font-family:'Nunito',sans-serif; font-weight:800; font-size:0.8rem; color:var(--purple); background:#faf8ff; border:1.5px solid var(--border); border-radius:100px; padding:0.4rem 0.9rem; cursor:pointer; }
+    .tab.on { color:#fff; background:linear-gradient(135deg,var(--blue),var(--purple)); border-color:transparent; }
+    .tab .c { font-size:0.7rem; opacity:0.8; }
+    .sec-head { display:flex; align-items:baseline; gap:0.5rem; margin:0.85rem 0 0.35rem; }
+    .sec-title { font-family:'Fredoka One',cursive; font-size:0.95rem; }
+    .sec-count { font-size:0.7rem; font-weight:800; color:var(--muted); }
+    .ci { display:flex; align-items:center; gap:0.5rem; background:var(--card); border:1.5px solid var(--border); border-radius:11px; padding:0.32rem 0.55rem; margin-bottom:0.25rem; }
+    .ci.sub { margin-left:0.9rem; background:#fbfaff; }
+    .ci-label { flex:1; font-weight:700; font-size:0.86rem; line-height:1.2; }
+    .ci.packed .ci-label { color:var(--muted); text-decoration:line-through; }
+    .ci-qty { font-size:0.7rem; font-weight:900; color:var(--green); background:#dcfce7; padding:0.1rem 0.45rem; border-radius:100px; white-space:nowrap; flex-shrink:0; }
+    .tick { width:2.3rem; height:1.7rem; border-radius:8px; border:2px solid var(--border); background:#faf8ff; cursor:pointer; font-size:0.9rem; color:transparent; display:flex; align-items:center; justify-content:center; transition:all .12s; padding:0; flex-shrink:0; }
+    .tick:active { transform:scale(0.92); }
+    .tick.on { color:#fff; border-color:transparent; background:linear-gradient(135deg,#34d399,var(--green)); }
+
+    .todo { display:flex; align-items:baseline; gap:0.5rem; padding:0.32rem 0.1rem; border-bottom:1.5px solid #f3f0ff; }
+    .todo:last-child { border-bottom:none; }
+    .todo .st { flex-shrink:0; width:1.4rem; text-align:center; }
+    .todo .nm { font-weight:700; font-size:0.86rem; flex:1; }
+    .todo .nm .note { display:block; font-size:0.74rem; color:var(--muted); font-weight:600; }
+    .todo.done .nm { color:var(--muted); text-decoration:line-through; }
+
+    .offline { background:#fff7ed; border-left:3px solid #f59e0b; border-radius:0 10px 10px 0; padding:0.6rem 0.85rem; font-size:0.78rem; font-weight:700; line-height:1.45; margin-bottom:1.1rem; display:none; }
+    .offline.show { display:block; }
+    .empty { background:var(--card); border:1.5px solid var(--border); border-radius:16px; padding:2rem 1.25rem; text-align:center; color:var(--muted); font-weight:700; }
+  </style>
+{% include '_theme.html' %}
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>🏝️ PEI Trip</h1>
+    <button class="menu-btn" onclick="openMenu()">☰</button>
+  </div>
+  <div class="sub" id="tripSub">Our family trip to Prince Edward Island</div>
+
+  <div class="summary" id="stats"></div>
+  <div class="offline" id="tickWarn">⚠️ That tick didn’t reach Mum’s app — try again in a sec.</div>
+
+  <div id="tripBody"></div>
+</div>
+
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-title">✦ Menu</div>
+  <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
+  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/calendar"><span class="menu-item-icon">📅</span> Family Calendar</a></div>
+  <div class="menu-item"><a href="/trip"><span class="menu-item-icon">🏝️</span> PEI Trip</a></div>
+  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress & stats</a></div>
+  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
+  <div class="menu-item"><a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
+  <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
+  <div class="menu-item"><a href="/camp"><span class="menu-item-icon">🏕️</span> Camp Packing</a></div>
+</div>
+
+<script>
+  const TRIP = {{ trip_json | safe }};
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const pd = iso => { const p = (iso || '').split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+  const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+  const fmtDay = iso => pd(iso).toLocaleDateString('en-CA', { weekday:'long', month:'long', day:'numeric' });
+
+  let PACKING = (TRIP.packing || {}).people ? TRIP.packing : { people: [] };
+  let CUR = null;
+
+  // ── the header numbers ──
+  function renderStats() {
+    const m = TRIP.meta || {}, host = document.getElementById('stats');
+    let count = '';
+    if (m.start && m.end) {
+      document.getElementById('tripSub').textContent =
+        `${pd(m.start).toLocaleDateString('en-CA',{month:'long',day:'numeric'})} – ${pd(m.end).toLocaleDateString('en-CA',{month:'long',day:'numeric'})}` +
+        ((m.base || {}).name ? ` · ${m.base.name}` : '');
+      const t = pd(todayIso()), s = pd(m.start), e = pd(m.end);
+      const sleeps = Math.round((s - t) / 86400000);
+      if (sleeps > 0) count = `<div class="stat go"><div class="n">${sleeps}</div><div class="l">${sleeps === 1 ? 'sleep to go!' : 'sleeps to go!'}</div></div>`;
+      else if (t <= e) count = `<div class="stat go"><div class="n">Day ${Math.round((t - s) / 86400000) + 1}</div><div class="l">of ${Math.round((e - s) / 86400000) + 1} island days</div></div>`;
+      else count = `<div class="stat go"><div class="n">🌅</div><div class="l">what a trip!</div></div>`;
+    }
+    const p = person();
+    let packed = '';
+    if (p) {
+      const its = leaves(p);
+      packed = `<div class="stat packed"><div class="n">${its.filter(i => i.checked).length}/${its.length}</div><div class="l">${esc(p.name)} packed</div></div>`;
+    }
+    const ideas = (TRIP.plan || []).filter(i => !i.done && !i.date).length;
+    host.innerHTML = count + packed +
+      (ideas ? `<div class="stat"><div class="n">${ideas}</div><div class="l">things to do</div></div>` : '');
+  }
+
+  // ── weather, straight from Open-Meteo (C0A 1T0's corner of the island) ──
+  const WX = { 0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌦️',61:'🌧️',63:'🌧️',65:'🌧️',80:'🌦️',81:'🌦️',82:'🌦️',95:'⛈️',96:'⛈️',99:'⛈️' };
+  function loadWeather() {
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=46.33&longitude=-62.85&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=America%2FHalifax&forecast_days=7')
+      .then(r => r.json()).then(d => {
+        const rows = d.daily.time.map((t, k) =>
+          `<div class="wx-d"><div class="dy">${k === 0 ? 'Now' : pd(t).toLocaleDateString('en-CA',{weekday:'short'}) + ' ' + pd(t).getDate()}</div>` +
+          `<div class="ic">${WX[d.daily.weather_code[k]] || '🌡️'}</div>` +
+          `<div class="t">${Math.round(d.daily.temperature_2m_max[k])}° <span class="lo">${Math.round(d.daily.temperature_2m_min[k])}°</span></div></div>`).join('');
+        document.getElementById('wxRow').innerHTML = rows;
+      }).catch(() => { document.getElementById('wxRow').innerHTML = '<div class="empty-line">The sky isn’t answering right now.</div>'; });
+  }
+
+  // ── the read-only plan ──
+  function planCards() {
+    const m = TRIP.meta || {}, plan = TRIP.plan || [], today = todayIso();
+    let html = '';
+    const b = m.base || {};
+    if (b.name || b.address) {
+      html += `<div class="card"><h2>🏡 Home base</h2><div class="home-line">${esc(b.name || 'Our Airbnb')}` +
+        (b.address ? ` <span class="quiet">· ${esc(b.address)}</span>` : '') +
+        ((b.checkin || b.checkout) ? `<br><span class="quiet">${b.checkin ? 'check-in ' + esc(b.checkin) : ''}${b.checkin && b.checkout ? ' · ' : ''}${b.checkout ? 'checkout ' + esc(b.checkout) : ''}</span>` : '') +
+        `</div></div>`;
+    }
+    html += `<div class="card"><h2>🌤️ Island weather</h2><div class="wx" id="wxRow"><div class="empty-line">Checking the sky…</div></div></div>`;
+    if (m.start && m.end) {
+      let days = '';
+      for (let d = pd(m.start); d <= pd(m.end); d.setDate(d.getDate() + 1)) {
+        const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const mine = plan.filter(i => i.date === iso).sort((a, b2) => (a.time || '99').localeCompare(b2.time || '99'));
+        days += `<div class="day"><div class="day-h${iso === today ? ' today' : ''}">${fmtDay(iso)}${iso === today ? ' · today!' : ''}</div>` +
+          (mine.length ? mine.map(i =>
+            `<div class="pl${i.done ? ' done' : ''}"><span class="tm">${esc(i.time || '·')}</span><span class="nm">${i.star ? '⭐ ' : ''}${esc(i.title)}${i.note ? `<span class="note">${esc(i.note)}</span>` : ''}</span></div>`).join('')
+          : '<div class="empty-line">Open day — beach, probably 🏖️</div>') + `</div>`;
+      }
+      html += `<div class="card"><h2>🗓️ Day by day</h2>${days}</div>`;
+    }
+    const ideas = plan.filter(i => !i.date);
+    if (ideas.length) {
+      ideas.sort((a, b2) => (b2.star ? 1 : 0) - (a.star ? 1 : 0) || (a.done ? 1 : -1));
+      html += `<div class="card"><h2>💡 Things to do</h2>` +
+        ideas.map(i => `<div class="todo${i.done ? ' done' : ''}"><span class="st">${i.done ? '✅' : i.star ? '⭐' : '·'}</span><span class="nm">${esc(i.title)}${i.note ? `<span class="note">${esc(i.note)}</span>` : ''}</span></div>`).join('') + `</div>`;
+    }
+    html += `<div class="card"><h2>🧳 Packing</h2><div class="tabs" id="packTabs"></div><div id="packList"></div></div>`;
+    return html;
+  }
+
+  // ── packing: the one thing she can touch ──
+  const person = () => (PACKING.people || []).find(p => p.id === CUR) || null;
+  function leaves(p) {
+    const out = [];
+    (p.sections || []).forEach(s => (s.items || []).forEach(it => {
+      if (it.subitems && it.subitems.length) it.subitems.forEach(x => out.push(x));
+      else out.push(it);
+    }));
+    return out;
+  }
+  function renderPacking() {
+    const people = PACKING.people || [];
+    if (people.length && !person()) CUR = people[0].id;
+    const tabs = document.getElementById('packTabs'), list = document.getElementById('packList');
+    if (!tabs) return;
+    if (!people.length) { list.innerHTML = '<div class="empty-line">No packing lists yet — Mum’s on it.</div>'; tabs.innerHTML = ''; return; }
+    tabs.innerHTML = people.map(p => {
+      const its = leaves(p);
+      return `<button class="tab${p.id === CUR ? ' on' : ''}" onclick="pickPerson('${p.id}')">${esc(p.name)} <span class="c">${its.filter(i => i.checked).length}/${its.length}</span></button>`;
+    }).join('');
+    const p = person();
+    list.innerHTML = (p.sections || []).map(s => {
+      const its = [];
+      (s.items || []).forEach(it => { its.push({ node: it, sub: false }); (it.subitems || []).forEach(x => its.push({ node: x, sub: true })); });
+      const packed = its.filter(r => r.node.checked).length;
+      return `<div class="sec-head"><span class="sec-title">${esc(s.title)}</span><span class="sec-count">${packed}/${its.length}</span></div>` +
+        its.map(r => `<div class="ci${r.node.checked ? ' packed' : ''}${r.sub ? ' sub' : ''}">` +
+          `<span class="ci-label">${esc(r.node.label)}</span>` +
+          (r.node.qty ? `<span class="ci-qty">×${esc(r.node.qty)}</span>` : '') +
+          `<button class="tick${r.node.checked ? ' on' : ''}" onclick="tick('${r.node.id}')" aria-label="Packed: ${esc(r.node.label)}">✓</button></div>`).join('');
+    }).join('');
+    renderStats();
+  }
+  window.pickPerson = id => { CUR = id; renderPacking(); };
+  let ticking = false;
+  window.tick = async id => {
+    if (ticking) return; ticking = true;
+    document.getElementById('tickWarn').classList.remove('show');
+    try {
+      const r = await fetch('/api/trip/tick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ person: CUR, item: id }) });
+      const j = await r.json();
+      if (j.ok) { PACKING = { people: j.people || [] }; renderPacking(); }
+      else document.getElementById('tickWarn').classList.add('show');
+    } catch (e) { document.getElementById('tickWarn').classList.add('show'); }
+    ticking = false;
+  };
+
+  function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
+  function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  if (!TRIP || !TRIP.ok) {
+    document.getElementById('tripBody').innerHTML = '<div class="empty">The trip page is warming up — ask Mum to check the connection to Life OS.</div>';
+  } else {
+    document.getElementById('tripBody').innerHTML = planCards();
+    renderPacking(); renderStats(); loadWeather();
+  }
+</script>
+</body>
+</html>

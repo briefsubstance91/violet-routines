@@ -208,6 +208,45 @@ def api_kid():
     return request.args.get('kid', 'violet')
 
 
+# ── The PEI trip, from Life OS ──────────────────────────────────────────
+# Mum's app owns the trip (dates, plan, packing); this app renders the kid
+# view and sends packing ticks back. Same shared token as the parent console,
+# used in the other direction — PARENT_API_TOKEN here already equals
+# VIOLET_PARENT_TOKEN there, so no new secret exists for this.
+LIFEOS_API_URL = os.environ.get('LIFEOS_API_URL', 'https://brittanykira.com').rstrip('/')
+_TRIP_CACHE = {'at': 0.0, 'bundle': None}
+
+
+def lifeos_trip(path='/api/trip/bundle', method='GET', payload=None, timeout=12):
+    if not PARENT_API_TOKEN:
+        return None
+    req = urllib.request.Request(
+        LIFEOS_API_URL + path,
+        data=json.dumps(payload).encode() if payload is not None else None,
+        method=method,
+        headers={'X-Parent-Token': PARENT_API_TOKEN,
+                 'Content-Type': 'application/json', 'User-Agent': 'VioletOS/1.0'})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read().decode())
+    except Exception:
+        return None
+
+
+def trip_bundle(fresh=False):
+    """The trip from Life OS, cached a minute — snappy on her iPad, and Mum's
+    edits still land on the next open. The stale copy stands in when the other
+    app is redeploying."""
+    if not fresh and _TRIP_CACHE['bundle'] and time.time() - _TRIP_CACHE['at'] < 60:
+        return _TRIP_CACHE['bundle']
+    b = lifeos_trip()
+    if b and b.get('ok'):
+        _TRIP_CACHE['at'] = time.time()
+        _TRIP_CACHE['bundle'] = b
+        return b
+    return _TRIP_CACHE['bundle']
+
+
 # Keys the kid client is allowed to persist server-side. Anything else is
 # rejected so the endpoint can't be used as arbitrary storage.
 PROGRESS_KEYS = {
@@ -2367,6 +2406,26 @@ def camp():
                            camp_json=json.dumps(load_camp()),
                            camp_state_json=json.dumps(camp_state),
                            is_admin=bool(session.get('admin')))
+
+
+@app.route('/trip')
+def trip():
+    return render_template('trip.html', trip_json=json.dumps(trip_bundle() or {}))
+
+
+@app.route('/api/trip/tick', methods=['POST'])
+def api_trip_tick():
+    """Her one write: a packing tick, forwarded to Life OS. Everything else on
+    the trip page is read-only by design."""
+    b = request.get_json(silent=True) or {}
+    res = lifeos_trip('/api/trip/tick', 'POST',
+                      {'person': b.get('person'), 'item': b.get('item')})
+    if not res or not res.get('ok'):
+        return jsonify({'ok': False, 'error': 'Couldn’t reach Mum’s app — try again in a sec.'}), 502
+    if _TRIP_CACHE['bundle']:
+        _TRIP_CACHE['bundle']['packing'] = {'people': res.get('people') or []}
+        _TRIP_CACHE['at'] = time.time()
+    return jsonify(res)
 
 
 @app.route('/admin/camp')
