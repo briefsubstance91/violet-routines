@@ -224,7 +224,14 @@
       return `<button class="tab${p.id === CUR ? ' on' : ''}" onclick="pickPerson('${p.id}')">${esc(p.name)} <span class="c">${its.filter(i => i.checked).length}/${its.length}</span></button>`;
     }).join('');
     const p = person();
-    list.innerHTML = (p.sections || []).map(s => {
+    // Same shared section order as Mum's page — every tab, every app, one layout.
+    const ORDER = (PACKING.section_order || []).map(t => t.toLowerCase());
+    const secs = (p.sections || []).slice().sort((a, b) => {
+      let ia = ORDER.indexOf((a.title || '').toLowerCase()); if (ia < 0) ia = 999;
+      let ib = ORDER.indexOf((b.title || '').toLowerCase()); if (ib < 0) ib = 999;
+      return ia - ib;
+    });
+    list.innerHTML = secs.map(s => {
       const its = [];
       (s.items || []).forEach(it => { its.push({ node: it, sub: false }); (it.subitems || []).forEach(x => its.push({ node: x, sub: true })); });
       const packed = its.filter(r => r.node.checked).length;
@@ -244,7 +251,7 @@
     try {
       const r = await fetch('/api/trip/tick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ person: CUR, item: id }) });
       const j = await r.json();
-      if (j.ok) { PACKING = { people: j.people || [] }; renderPacking(); }
+      if (j.ok) { PACKING = { people: j.people || [], section_order: j.section_order || PACKING.section_order || [] }; renderPacking(); }
       else document.getElementById('tickWarn').classList.add('show');
     } catch (e) { document.getElementById('tickWarn').classList.add('show'); }
     ticking = false;

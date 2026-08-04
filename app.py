@@ -2424,7 +2424,10 @@ def api_trip_tick():
     if not res or not res.get('ok'):
         return jsonify({'ok': False, 'error': 'Couldn’t reach Mum’s app — try again in a sec.'}), 502
     if _TRIP_CACHE['bundle']:
-        _TRIP_CACHE['bundle']['packing'] = {'people': res.get('people') or []}
+        _TRIP_CACHE['bundle']['packing'] = {
+            'people': res.get('people') or [],
+            'section_order': res.get('section_order')
+                             or (_TRIP_CACHE['bundle'].get('packing') or {}).get('section_order') or []}
         _TRIP_CACHE['at'] = time.time()
     return jsonify(res)
 
