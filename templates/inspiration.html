@@ -22,13 +22,13 @@
     .sub { font-size:0.82rem; font-weight:700; color:var(--muted); margin-bottom:1rem; }
     .menu-btn { background:rgba(255,255,255,0.08); border:none; font-size:1.5rem; color:var(--purple); cursor:pointer; padding:0.25rem 0.6rem; border-radius:10px; line-height:1; }
     .menu-btn:hover { background:rgba(255,255,255,0.16); }
-    .menu-backdrop { display:none; position:fixed; inset:0; background:rgba(78,58,180,0.18); z-index:200; backdrop-filter:blur(2px); }
+    .menu-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:200; backdrop-filter:blur(2px); }
     .menu-backdrop.open { display:block; }
-    .menu-panel { position:fixed; top:0; right:0; width:min(280px,85vw); height:100%; background:#fff; z-index:201; transform:translateX(110%); transition:transform .3s cubic-bezier(.34,1.2,.64,1); padding:2rem 1.5rem; display:flex; flex-direction:column; box-shadow:-8px 0 40px rgba(78,58,180,0.15); overflow-y:auto; }
+    .menu-panel { position:fixed; top:0; right:0; width:min(280px,85vw); height:100%; background:var(--card); z-index:201; transform:translateX(110%); transition:transform .3s cubic-bezier(.34,1.2,.64,1); padding:2rem 1.5rem; display:flex; flex-direction:column; box-shadow:-8px 0 40px rgba(0,0,0,0.6); border-left:1px solid var(--border); overflow-y:auto; }
     .menu-panel.open { transform:translateX(0); }
     .menu-title { font-family:'Fredoka One',cursive; font-size:1.4rem; background:linear-gradient(135deg,#4db8ff,#9b87f5,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:1.75rem; }
-    .menu-item { display:flex; align-items:center; gap:0.9rem; padding:0.95rem 0.5rem; border-bottom:1.5px solid #f3f0ff; font-size:0.95rem; font-weight:700; color:#1e1b4b; border-radius:8px; }
-    .menu-item:hover { background:#f8f5ff; }
+    .menu-item { display:flex; align-items:center; gap:0.9rem; padding:0.95rem 0.5rem; border-bottom:1.5px solid var(--border); font-size:0.95rem; font-weight:700; color:var(--text); border-radius:8px; }
+    .menu-item:hover { background:rgba(255,255,255,0.06); }
     .menu-item a { color:inherit; text-decoration:none; display:flex; align-items:center; gap:0.9rem; width:100%; }
     .menu-item-icon { font-size:1.3rem; width:28px; text-align:center; }
 
