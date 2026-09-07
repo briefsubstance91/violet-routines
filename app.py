@@ -8,6 +8,7 @@ import time
 import uuid
 import atexit
 import urllib.request
+import xml.etree.ElementTree as ET
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -245,6 +246,113 @@ def trip_bundle(fresh=False):
         _TRIP_CACHE['bundle'] = b
         return b
     return _TRIP_CACHE['bundle']
+
+
+# ── Costume inspiration, from Pinterest ─────────────────────────────────
+# Mum saves costume ideas to a Pinterest board from her phone; a public board
+# serves an RSS feed at <board-url>.rss with its newest pins' images — no API
+# key, no script tag. This app re-reads that feed on a schedule and keeps every
+# pin it has ever seen, so the wall here only grows even though the feed itself
+# shows just the latest handful. Share-sheet links (pin.it/…) are resolved to
+# the real board URL by following their redirect once, then remembered.
+INSPO_FILE          = os.path.join(_DATA, 'violet_inspiration.json')
+INSPO_DEFAULT_BOARD = 'https://pin.it/34EIcz1FS'
+INSPO_FRESH_SECONDS = 3 * 3600   # how stale the cache may get before a view re-fetches
+
+_INSPO_BOARD_RE = re.compile(
+    r'^https?://(?:[a-z0-9-]+\.)?pinterest\.[a-z.]+/([^/?#]+)/([^/?#]+)/?$', re.I)
+
+
+def load_inspiration():
+    data = {'board_url': INSPO_DEFAULT_BOARD, 'resolved': '', 'board_title': '',
+            'pins': [], 'fetched_at': 0, 'last_error': ''}
+    try:
+        with open(INSPO_FILE, encoding='utf-8') as f:
+            data.update(json.load(f))
+    except (FileNotFoundError, ValueError):
+        pass
+    return data
+
+
+def save_inspiration(data):
+    with open(INSPO_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+
+
+def _inspo_get(url, timeout=10):
+    req = urllib.request.Request(
+        url, headers={'User-Agent': 'Mozilla/5.0 (compatible; VioletOS/1.0)'})
+    return urllib.request.urlopen(req, timeout=timeout)
+
+
+def _inspo_board_url(url):
+    """The URL if it names a public board (two path segments, not /pin/…)."""
+    m = _INSPO_BOARD_RE.match((url or '').split('?')[0])
+    if not m or m.group(1).lower() in ('pin', 'search', 'ideas', 'today'):
+        return None
+    return url.split('?')[0].rstrip('/')
+
+
+def _inspo_resolve(url):
+    if _inspo_board_url(url):
+        return _inspo_board_url(url)
+    try:
+        with _inspo_get(url) as r:
+            return _inspo_board_url(r.geturl())
+    except Exception:
+        return None
+
+
+def refresh_inspiration(force=False):
+    """The board, re-read from Pinterest once the cache has gone stale. A
+    failed fetch keeps every pin already gathered — the wall never goes blank
+    because Pinterest had a moment."""
+    data = load_inspiration()
+    if not force and data['pins'] and time.time() - data['fetched_at'] < INSPO_FRESH_SECONDS:
+        return data
+    data['fetched_at'] = time.time()   # a failed try also waits its turn before the next
+    if not data['resolved']:
+        data['resolved'] = _inspo_resolve(data['board_url']) or ''
+    if not data['resolved']:
+        data['last_error'] = ('Couldn’t turn that link into a board address — '
+                              'check it opens a public board, not a single pin.')
+        save_inspiration(data)
+        return data
+    try:
+        with _inspo_get(data['resolved'] + '.rss') as r:
+            root = ET.fromstring(r.read())
+        seen  = {p['link'] for p in data['pins']}
+        fresh = []
+        for item in root.iter('item'):
+            link = (item.findtext('link') or '').strip()
+            im   = re.search(r'<img[^>]+src=["\']([^"\']+)',
+                             item.findtext('description') or '')
+            if not link or link in seen or not im:
+                continue
+            fresh.append({
+                'link': link,
+                # the feed embeds 236px thumbnails; the 564px rendition lives
+                # at the same path and holds up on the iPad
+                'img':   im.group(1).replace('/236x/', '/564x/'),
+                'title': re.sub(r'\s+', ' ', item.findtext('title') or '').strip()[:120],
+                'seen':  date.today().isoformat(),
+            })
+        data['pins'] = fresh + data['pins']   # the feed is newest-first; stay that way
+        title = (root.findtext('channel/title') or '').strip()
+        if title:
+            data['board_title'] = title[:80]
+        data['last_error'] = ''
+    except Exception as exc:
+        data['last_error'] = f'Feed fetch failed: {exc}'
+    save_inspiration(data)
+    return data
+
+
+def inspo_public(data):
+    """What the page needs — the pins plus enough to link back to Pinterest."""
+    return {'pins': data['pins'], 'board_title': data['board_title'],
+            'board_link': data['resolved'] or data['board_url'],
+            'fetched_at': data['fetched_at'], 'last_error': data['last_error']}
 
 
 # Keys the kid client is allowed to persist server-side. Anything else is
@@ -1180,6 +1288,10 @@ def _check_and_notify():
 
 _scheduler = BackgroundScheduler()
 _scheduler.add_job(_check_and_notify, IntervalTrigger(minutes=1), id='notify_check')
+# New pins land on the costume wall within hours of Mum saving them, even if
+# nobody has the page open; a stale view also self-refreshes on load.
+_scheduler.add_job(lambda: refresh_inspiration(force=True),
+                   IntervalTrigger(hours=6), id='inspo_refresh')
 _scheduler.start()
 atexit.register(lambda: _scheduler.shutdown(wait=False))
 
@@ -2430,6 +2542,31 @@ def api_trip_tick():
                              or (_TRIP_CACHE['bundle'].get('packing') or {}).get('section_order') or []}
         _TRIP_CACHE['at'] = time.time()
     return jsonify(res)
+
+
+@app.route('/inspiration')
+def inspiration():
+    # Render straight from the cache — the page itself asks /api/inspiration
+    # after load, so a Pinterest hiccup never slows the first paint.
+    return render_template('inspiration.html',
+                           inspo_json=json.dumps(inspo_public(load_inspiration())),
+                           is_admin=bool(session.get('admin')))
+
+
+@app.route('/api/inspiration')
+def api_inspiration():
+    return jsonify(inspo_public(refresh_inspiration()))
+
+
+@app.route('/admin/inspiration/save', methods=['POST'])
+def admin_inspiration_save():
+    b   = request.get_json(silent=True) or {}
+    url = (b.get('board_url') or '').strip()
+    if url and url != load_inspiration()['board_url']:
+        # A new board starts the wall fresh — the old board's pins aren't its.
+        save_inspiration({'board_url': url, 'resolved': '', 'board_title': '',
+                          'pins': [], 'fetched_at': 0, 'last_error': ''})
+    return jsonify(inspo_public(refresh_inspiration(force=True)))
 
 
 @app.route('/admin/camp')
