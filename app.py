@@ -7,6 +7,7 @@ import re
 import time
 import uuid
 import atexit
+import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from collections import defaultdict
@@ -265,7 +266,7 @@ _INSPO_BOARD_RE = re.compile(
 
 def load_inspiration():
     data = {'board_url': INSPO_DEFAULT_BOARD, 'resolved': '', 'board_title': '',
-            'pins': [], 'fetched_at': 0, 'last_error': ''}
+            'pins': [], 'fetched_at': 0, 'last_error': '', 'note': ''}
     try:
         with open(INSPO_FILE, encoding='utf-8') as f:
             data.update(json.load(f))
@@ -303,6 +304,66 @@ def _inspo_resolve(url):
         return None
 
 
+def _inspo_api(host, resource, options, source_url):
+    """One call to the JSON endpoints the Pinterest site itself pages with."""
+    qs = urllib.parse.urlencode({
+        'source_url': source_url,
+        'data': json.dumps({'options': options, 'context': {}}, separators=(',', ':'))})
+    with _inspo_get(f'{host}/resource/{resource}/get/?{qs}') as r:
+        return json.loads(r.read().decode('utf-8', 'ignore')).get('resource_response') or {}
+
+
+def _inspo_full_board(resolved):
+    """Every pin on the board, in board order. The RSS feed stops at the
+    newest ~25; the site's own paging endpoint serves the lot for a public
+    board. Best-effort by design — it is Pinterest's internal shape, not a
+    promise, so any surprise returns None and the caller falls back to the
+    feed instead of failing the refresh."""
+    try:
+        p = urllib.parse.urlparse(resolved)
+        host = f'{p.scheme}://{p.netloc}'
+        user, slug = p.path.strip('/').split('/')[:2]
+        source = f'/{user}/{slug}/'
+        board = _inspo_api(host, 'BoardResource',
+                           {'username': user, 'slug': slug, 'field_set_key': 'detailed'},
+                           source).get('data') or {}
+        board_id = str(board.get('id') or '')
+        if not board_id:
+            return None
+        pins, seen, bookmark = [], set(), None
+        for _ in range(40):                       # 40 pages × 100 pins is plenty of costume
+            opts = {'board_id': board_id, 'board_url': source, 'page_size': 100}
+            if bookmark:
+                opts['bookmarks'] = [bookmark]
+            rr = _inspo_api(host, 'BoardFeedResource', opts, source)
+            for it in rr.get('data') or []:
+                if it.get('type') != 'pin' or not it.get('id'):
+                    continue                      # section headers, stories, ads
+                imgs = it.get('images') or {}
+                img = ((imgs.get('564x') or imgs.get('orig') or {}).get('url') or
+                       next((v['url'] for v in imgs.values()
+                             if isinstance(v, dict) and v.get('url')), ''))
+                link = f'https://www.pinterest.com/pin/{it["id"]}/'
+                if not img or link in seen:
+                    continue
+                seen.add(link)
+                pins.append({
+                    'link':  link,
+                    'img':   img,
+                    'title': re.sub(r'\s+', ' ', it.get('grid_title')
+                                    or it.get('description') or '').strip()[:120],
+                    'seen':  '',
+                })
+            bookmark = rr.get('bookmark')
+            if not bookmark or bookmark == '-end-':
+                break
+        if not pins:
+            return None
+        return {'name': (board.get('name') or '').strip(), 'pins': pins}
+    except Exception:
+        return None
+
+
 def refresh_inspiration(force=False):
     """The board, re-read from Pinterest once the cache has gone stale. A
     failed fetch keeps every pin already gathered — the wall never goes blank
@@ -318,10 +379,32 @@ def refresh_inspiration(force=False):
                               'check it opens a public board, not a single pin.')
         save_inspiration(data)
         return data
+    full = _inspo_full_board(data['resolved'])
+    if full:
+        # The whole board is the truth: board order kept, deletions honoured.
+        # Pins already known keep their first-seen date; a pin sitting above
+        # the ones we knew is a fresh save (the board is newest-first), so it
+        # gets today's — that's what earns the little green New tag.
+        old   = {p['link']: p for p in data['pins']}
+        pins  = full['pins']
+        first_known = next((i for i, p in enumerate(pins) if p['link'] in old), len(pins))
+        today = date.today().isoformat()
+        for i, p in enumerate(pins):
+            if p['link'] in old:
+                p['seen'] = old[p['link']]['seen']
+            elif old and i < first_known:
+                p['seen'] = today
+        data['pins'] = pins
+        if full['name']:
+            data['board_title'] = full['name'][:80]
+        data['note'] = data['last_error'] = ''
+        save_inspiration(data)
+        return data
     try:
         with _inspo_get(data['resolved'] + '.rss') as r:
             root = ET.fromstring(r.read())
         seen  = {p['link'] for p in data['pins']}
+        mark  = bool(data['pins'])   # a first-ever fill isn't "new", it's the board
         fresh = []
         for item in root.iter('item'):
             link = (item.findtext('link') or '').strip()
@@ -335,12 +418,14 @@ def refresh_inspiration(force=False):
                 # at the same path and holds up on the iPad
                 'img':   im.group(1).replace('/236x/', '/564x/'),
                 'title': re.sub(r'\s+', ' ', item.findtext('title') or '').strip()[:120],
-                'seen':  date.today().isoformat(),
+                'seen':  date.today().isoformat() if mark else '',
             })
         data['pins'] = fresh + data['pins']   # the feed is newest-first; stay that way
         title = (root.findtext('channel/title') or '').strip()
         if title:
             data['board_title'] = title[:80]
+        data['note'] = ('Showing the newest pins only — the whole-board read '
+                        'didn’t work this time.')
         data['last_error'] = ''
     except Exception as exc:
         data['last_error'] = f'Feed fetch failed: {exc}'
@@ -352,7 +437,8 @@ def inspo_public(data):
     """What the page needs — the pins plus enough to link back to Pinterest."""
     return {'pins': data['pins'], 'board_title': data['board_title'],
             'board_link': data['resolved'] or data['board_url'],
-            'fetched_at': data['fetched_at'], 'last_error': data['last_error']}
+            'fetched_at': data['fetched_at'], 'last_error': data['last_error'],
+            'note': data.get('note', '')}
 
 
 # Keys the kid client is allowed to persist server-side. Anything else is

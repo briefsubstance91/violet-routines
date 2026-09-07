@@ -104,8 +104,8 @@
   <div class="admin-card">
     <h2>✏️ Parent corner</h2>
     <div class="hint">Paste a Pinterest board link (a pin.it share link works). Changing it starts the
-      wall fresh from the new board. “Refresh now” re-reads the feed straight away instead of waiting
-      for the next scheduled check.</div>
+      wall fresh from the new board. “Refresh now” re-reads the whole board straight away instead of
+      waiting for the next scheduled check.</div>
     <div class="admin-row">
       <input id="boardInput" type="url" placeholder="https://pin.it/… or https://pinterest.com/you/board/">
       <button class="admin-btn" id="saveBtn" onclick="adminSave()">Save &amp; refresh</button>
@@ -137,16 +137,18 @@
   const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 
   // "New since last peek" lives in this browser only — each device gets its
-  // own little thrill when the wall has grown.
-  const SEEN_KEY = 'inspo-seen-count';
-  let seenAtOpen = null;
+  // own little thrill when the wall has grown. It anchors on the newest pin
+  // shown last visit and counts what now sits above it, so older pins that
+  // back-fill from deep in the board never count as new.
+  const TOP_KEY = 'inspo-seen-top';
+  let topAtOpen = null;
   function newSinceLastPeek() {
-    const n = (DATA.pins || []).length;
-    if (seenAtOpen === null) {
-      seenAtOpen = parseInt(localStorage.getItem(SEEN_KEY) || '-1', 10);
-    }
-    try { localStorage.setItem(SEEN_KEY, String(n)); } catch (e) {}
-    return (seenAtOpen >= 0 && n > seenAtOpen) ? n - seenAtOpen : 0;
+    const pins = DATA.pins || [];
+    if (topAtOpen === null) topAtOpen = localStorage.getItem(TOP_KEY) || '';
+    try { localStorage.setItem(TOP_KEY, pins.length ? pins[0].link : ''); } catch (e) {}
+    if (!pins.length || !topAtOpen) return 0;
+    const i = pins.findIndex(p => p.link === topAtOpen);
+    return i > 0 ? i : 0;
   }
 
   function agoLabel(ts) {
@@ -218,9 +220,11 @@
   function adminDone(d) {
     DATA = d; render();
     if (d.last_error) adminStatusLine('err', d.last_error);
-    else adminStatusLine('ok', `All good — ${ (d.pins || []).length } pins on the wall.`);
+    else if (d.note)  adminStatusLine('', `${(d.pins || []).length} pins — ${d.note}`);
+    else adminStatusLine('ok', `All good — the whole board, ${ (d.pins || []).length } pins.`);
     adminBusy(false);
   }
+  if (DATA.note && !DATA.last_error) adminStatusLine('', DATA.note);
   function adminSave() {
     adminBusy(true); adminStatusLine('', 'Talking to Pinterest…');
     fetch('/admin/inspiration/save', {
