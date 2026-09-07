@@ -4,6 +4,7 @@ import hmac
 import json
 import os
 import re
+import shutil
 import time
 import uuid
 import atexit
@@ -247,6 +248,97 @@ def trip_bundle(fresh=False):
         _TRIP_CACHE['bundle'] = b
         return b
     return _TRIP_CACHE['bundle']
+
+
+# ── Family Trips: past holidays, saved for keeps ────────────────────────
+# Life OS owns the *current* trip and serves it live; the moment Mum reuses
+# that slot for the next adventure, the old one would vanish from here.
+# Archiving takes a snapshot this app owns — the plan plus copies of the
+# photos on this volume — so a past holiday stays browsable forever,
+# whatever Life OS does next. Packing lists are left behind on purpose:
+# a memory book keeps what we did, not what we folded.
+TRIPS_FILE      = os.path.join(_DATA, 'violet_trips.json')
+TRIP_PHOTOS_DIR = os.path.join(_DATA, 'trip_photos')
+_TRIP_ID_RE     = re.compile(r'^[a-z0-9][a-z0-9-]{0,60}$')
+_PHOTO_ID_RE    = re.compile(r'^[A-Za-z0-9_.-]{1,80}$')
+
+
+def load_trips():
+    try:
+        with open(TRIPS_FILE, encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, ValueError):
+        return []
+
+
+def save_trips(trips):
+    with open(TRIPS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(trips, f, indent=2)
+
+
+def _trip_slug(title, start, taken):
+    base = re.sub(r'-+', '-', re.sub(r'[^a-z0-9]+', '-', title.lower())).strip('-') or 'trip'
+    if start:
+        base += '-' + start[:4]
+    slug, n = base, 2
+    while slug in taken:
+        slug, n = f'{base}-{n}', n + 1
+    return slug
+
+
+def _archive_photo(trip_id, pid):
+    """Copy one photo out of Life OS onto this app's volume — the memory page
+    must not depend on Mum's app keeping it forever."""
+    if not _PHOTO_ID_RE.match(pid or ''):
+        return None
+    req = urllib.request.Request(f'{LIFEOS_API_URL}/trip/photo/{pid}',
+                                 headers={'User-Agent': 'VioletOS/1.0'})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        raw = r.read()
+        ct  = r.headers.get_content_type()
+    os.makedirs(os.path.join(TRIP_PHOTOS_DIR, trip_id), exist_ok=True)
+    with open(os.path.join(TRIP_PHOTOS_DIR, trip_id, pid), 'wb') as f:
+        f.write(raw)
+    return {'id': pid, 'ct': ct if (ct or '').startswith('image/') else 'image/jpeg'}
+
+
+def archive_current_trip(title, emoji='🏝️'):
+    """Freeze the live trip into the archive. Returns (trip, note) on success,
+    (None, why) when there is nothing to freeze."""
+    bundle = trip_bundle(fresh=True)
+    if not bundle or not bundle.get('ok'):
+        return None, 'Couldn’t fetch the trip from Mum’s app — is Life OS reachable?'
+    trips = load_trips()
+    meta  = bundle.get('meta') or {}
+    trip_id = _trip_slug(title, meta.get('start') or '', {t['id'] for t in trips})
+    photos, missed = [], 0
+    for pid in bundle.get('photos') or []:
+        try:
+            ph = _archive_photo(trip_id, str(pid))
+        except Exception:
+            ph = None
+        if ph:
+            photos.append(ph)
+        else:
+            missed += 1
+    trips.insert(0, {
+        'id': trip_id,
+        'title': (title or '').strip()[:60] or 'Our Trip',
+        'emoji': (emoji or '🏝️').strip()[:4] or '🏝️',
+        'start': meta.get('start') or '', 'end': meta.get('end') or '',
+        'archived_at': datetime.now(ZoneInfo(DEFAULT_TZ)).date().isoformat(),
+        'photos': photos,
+        'bundle': {'meta': meta, 'plan': bundle.get('plan') or []},
+    })
+    save_trips(trips)
+    return trips[0], (f'{missed} photo(s) couldn’t be copied over.' if missed else '')
+
+
+def _trip_card(t):
+    return {'id': t['id'], 'title': t['title'], 'emoji': t.get('emoji') or '🏝️',
+            'start': t['start'], 'end': t['end'],
+            'cover': (f"/trips/photo/{t['id']}/{t['photos'][0]['id']}"
+                      if t.get('photos') else '')}
 
 
 # ── Costume inspiration, from Pinterest ─────────────────────────────────
@@ -2628,6 +2720,74 @@ def api_trip_tick():
                              or (_TRIP_CACHE['bundle'].get('packing') or {}).get('section_order') or []}
         _TRIP_CACHE['at'] = time.time()
     return jsonify(res)
+
+
+@app.route('/trips')
+def trips_hub():
+    trips = load_trips()
+    live  = trip_bundle() or {}
+    live_meta = (live.get('meta') or {}) if live.get('ok') else {}
+    # once the live trip has been archived, its card belongs to the past —
+    # the same dates showing twice would just be confusing
+    if live_meta and (live_meta.get('start'), live_meta.get('end')) in \
+            {(t['start'], t['end']) for t in trips}:
+        live_meta = {}
+    live_cover = ''
+    if live_meta and (live.get('photos') or []):
+        live_cover = f"{LIFEOS_API_URL}/trip/photo/{live['photos'][0]}"
+    return render_template('trips.html',
+                           trips_json=json.dumps([_trip_card(t) for t in trips]),
+                           live_json=json.dumps({'meta': live_meta, 'cover': live_cover}),
+                           is_admin=bool(session.get('admin')))
+
+
+@app.route('/trips/<trip_id>')
+def trip_memory(trip_id):
+    t = next((t for t in load_trips() if t['id'] == trip_id), None)
+    if not t:
+        return redirect('/trips')
+    view = {'id': t['id'], 'title': t['title'], 'emoji': t.get('emoji') or '🏝️',
+            'start': t['start'], 'end': t['end'],
+            'archived_at': t.get('archived_at') or '',
+            'meta': t['bundle'].get('meta') or {},
+            'plan': t['bundle'].get('plan') or [],
+            'photos': [f"/trips/photo/{t['id']}/{p['id']}" for p in t.get('photos') or []]}
+    return render_template('trip_memory.html', trip_json=json.dumps(view))
+
+
+@app.route('/trips/photo/<trip_id>/<photo_id>')
+def trips_photo(trip_id, photo_id):
+    if not _TRIP_ID_RE.match(trip_id) or not _PHOTO_ID_RE.match(photo_id):
+        return ('', 404)
+    t  = next((t for t in load_trips() if t['id'] == trip_id), None)
+    ph = next((p for p in (t or {}).get('photos', []) if p['id'] == photo_id), None)
+    if not ph:
+        return ('', 404)
+    return send_from_directory(os.path.join(TRIP_PHOTOS_DIR, trip_id), photo_id,
+                               mimetype=ph.get('ct') or 'image/jpeg',
+                               max_age=30 * 86400)
+
+
+@app.route('/admin/trips/archive', methods=['POST'])
+def admin_trips_archive():
+    b = request.get_json(silent=True) or {}
+    t, note = archive_current_trip(b.get('title') or 'Our Trip', b.get('emoji') or '🏝️')
+    if t is None:
+        return jsonify({'ok': False, 'error': note}), 502
+    return jsonify({'ok': True, 'trip': _trip_card(t), 'note': note})
+
+
+@app.route('/admin/trips/delete', methods=['POST'])
+def admin_trips_delete():
+    tid   = (request.get_json(silent=True) or {}).get('id') or ''
+    trips = load_trips()
+    keep  = [t for t in trips if t['id'] != tid]
+    if len(keep) == len(trips):
+        return jsonify({'ok': False, 'error': 'No such trip.'}), 404
+    save_trips(keep)
+    if _TRIP_ID_RE.match(tid):
+        shutil.rmtree(os.path.join(TRIP_PHOTOS_DIR, tid), ignore_errors=True)
+    return jsonify({'ok': True})
 
 
 @app.route('/inspiration')

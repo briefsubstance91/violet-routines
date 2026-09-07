@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Family Trips — Violet's Life OS</title>
+  <link rel="icon" href="/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* A memory book leans warm — the sunset end of the app's palette. */
+    :root { --purple:#9b87f5; --blue:#4db8ff; --pink:#f472b6; --text:#1e1b4b; --muted:#9490c0; --card:#fff; --border:#f3e0ea; }
+    body { font-family:'Nunito',sans-serif; color:var(--text);
+      background:linear-gradient(160deg,#ffe8d6 0%,#ffd6f0 50%,#e9e3ff 100%); background-attachment:fixed; min-height:100vh; padding-bottom:3rem; }
+    .wrap { max-width:980px; margin:0 auto; padding:1.5rem 1.1rem 3rem; }
+    .top { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.4rem; }
+    h1 { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.8rem; flex:1;
+      background:linear-gradient(135deg,#f59e0b,#f472b6,#9b87f5); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .back { font-size:0.8rem; font-weight:800; color:var(--purple); text-decoration:none; background:rgba(255,255,255,0.7); padding:0.35rem 0.8rem; border-radius:100px; }
+    .sub { font-size:0.82rem; font-weight:700; color:var(--muted); margin-bottom:0.5rem; }
+    .chip { display:inline-block; font-size:0.62rem; font-weight:900; text-transform:uppercase; letter-spacing:0.05em;
+      color:#7c3aed; background:#f3e8ff; border-radius:100px; padding:0.2rem 0.65rem; margin-bottom:1.1rem; }
+
+    .card { background:var(--card); border:1.5px solid var(--border); border-radius:16px; padding:1rem 1.1rem; margin-bottom:1.1rem; box-shadow:0 3px 14px rgba(180,58,120,0.05); }
+    .card h2 { font-family:'Fredoka One',cursive; font-weight:400; font-size:1.05rem; margin-bottom:0.6rem; }
+    .home-line { font-size:0.84rem; font-weight:700; line-height:1.5; }
+    .home-line .quiet { color:var(--muted); }
+
+    .ph-grid { columns:2; column-gap:0.6rem; }
+    @media (min-width:640px) { .ph-grid { columns:3; } }
+    .ph-grid a { display:block; break-inside:avoid; margin-bottom:0.6rem; }
+    .ph-grid img { display:block; width:100%; border-radius:12px; border:1.5px solid var(--border); background:#fff7fb; }
+
+    .day { margin-bottom:0.85rem; }
+    .day-h { font-family:'Fredoka One',cursive; font-size:0.9rem; margin-bottom:0.3rem; }
+    .pl { display:flex; align-items:baseline; gap:0.5rem; background:#fffafd; border:1.5px solid var(--border); border-radius:11px; padding:0.4rem 0.6rem; margin-bottom:0.25rem; }
+    .pl .tm { font-weight:900; font-size:0.74rem; color:var(--pink); min-width:2.9rem; }
+    .pl .nm { font-weight:700; font-size:0.86rem; flex:1; }
+    .pl .nm .note { display:block; font-size:0.74rem; color:var(--muted); font-weight:600; }
+    .pl .did { color:#16a34a; font-weight:900; font-size:0.85rem; }
+    .idea { display:flex; align-items:baseline; gap:0.5rem; padding:0.3rem 0.1rem; border-bottom:1.5px solid #fdf1f7; font-weight:700; font-size:0.85rem; }
+    .idea:last-child { border-bottom:none; }
+    .empty-line { font-size:0.8rem; font-weight:700; color:var(--muted); padding:0.2rem 0.1rem 0.4rem; }
+    .keep-line { text-align:center; font-family:'Fredoka One',cursive; font-size:0.9rem; margin-top:1.4rem;
+      background:linear-gradient(135deg,#f59e0b,#f472b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1 id="tripTitle">🏝️ Our Trip</h1>
+    <a class="back" href="/trips">← All trips</a>
+  </div>
+  <div class="sub" id="tripSub"></div>
+  <span class="chip">Past holiday ✨</span>
+
+  <div id="body"></div>
+  <div class="keep-line">Saved for keeps 💛</div>
+</div>
+
+<script>
+  const TRIP = {{ trip_json | safe }};
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const pd = iso => { const p = (iso || '').split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+  const fmtDay = iso => pd(iso).toLocaleDateString('en-CA', { weekday:'long', month:'long', day:'numeric' });
+
+  document.getElementById('tripTitle').textContent = `${TRIP.emoji} ${TRIP.title}`;
+  document.title = `${TRIP.title} — Violet's Life OS`;
+  {
+    let sub = '';
+    if (TRIP.start && TRIP.end) {
+      const a = pd(TRIP.start), b = pd(TRIP.end);
+      sub = `${a.toLocaleDateString('en-CA',{month:'long',day:'numeric'})} – ${b.toLocaleDateString('en-CA',{month:'long',day:'numeric',year:'numeric'})}`;
+    }
+    const base = (TRIP.meta || {}).base || {};
+    if (base.name) sub += (sub ? ' · ' : '') + base.name;
+    document.getElementById('tripSub').textContent = sub || 'One of our adventures';
+  }
+
+  function html() {
+    const b = (TRIP.meta || {}).base || {};
+    let out = '';
+
+    if (TRIP.photos.length) {
+      out += `<div class="card"><h2>📸 Our photos</h2><div class="ph-grid">` +
+        TRIP.photos.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="trip photo" loading="lazy"></a>`).join('') +
+        `</div></div>`;
+    }
+
+    if (b.name || b.address) {
+      out += `<div class="card"><h2>🏡 Where we stayed</h2><div class="home-line">${esc(b.name || 'Our home base')}` +
+        (b.address ? ` <span class="quiet">· ${esc(b.address)}</span>` : '') + `</div></div>`;
+    }
+
+    const plan  = TRIP.plan || [];
+    const dated = plan.filter(i => i.date).sort((x, y) => (x.date + (x.time || '')) < (y.date + (y.time || '')) ? -1 : 1);
+    const ideas = plan.filter(i => !i.date);
+    if (dated.length) {
+      out += `<div class="card"><h2>🗓️ What we got up to</h2>`;
+      let cur = null;
+      dated.forEach(i => {
+        if (i.date !== cur) {
+          if (cur !== null) out += `</div>`;
+          out += `<div class="day"><div class="day-h">${esc(fmtDay(i.date))}</div>`;
+          cur = i.date;
+        }
+        out += `<div class="pl">${i.done ? '<span class="did">✓</span>' : ''}<span class="tm">${esc(i.time || '')}</span>` +
+          `<span class="nm">${esc(i.name)}${i.note ? `<span class="note">${esc(i.note)}</span>` : ''}</span></div>`;
+      });
+      out += `</div></div>`;
+    }
+    if (ideas.length) {
+      out += `<div class="card"><h2>💡 Fun we talked about</h2>` +
+        ideas.map(i => `<div class="idea">${i.done ? '<span class="did">✓</span>' : '•'} <span>${esc(i.name)}</span></div>`).join('') + `</div>`;
+    }
+    if (!out) out = `<div class="card"><div class="empty-line">This memory is a quiet one — just the dates and the feeling. 💛</div></div>`;
+    return out;
+  }
+  document.getElementById('body').innerHTML = html();
+</script>
+</body>
+</html>
