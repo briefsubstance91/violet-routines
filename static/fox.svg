@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- The fox from the party page's hero, big enough for a home-page tile:
+       orange head, white muzzle, black eyes and nose. -->
+  <path d="M14 14 L50 44 L78 44 L114 14 L108 70 Q108 112 64 116 Q20 112 20 70 Z" fill="#ff8a2a"/>
+  <path d="M40 72 L64 112 L88 72 Z" fill="#ffffff"/>
+  <circle cx="64" cy="96" r="7.5" fill="#0a0603"/>
+  <circle cx="44" cy="64" r="5.5" fill="#0a0603"/>
+  <circle cx="84" cy="64" r="5.5" fill="#0a0603"/>
+</svg>

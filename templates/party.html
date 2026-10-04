@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Violet's Fox Party — Violet's Life OS</title>
+  <link rel="icon" href="/icon.svg">
+  <meta name="theme-color" content="#000000">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    /* Violet's birthday — the fox party. Mum's Life OS design (its dark canvas,
+       its section cards, Bebas Neue + DM Sans) in Violet's chosen fox colours:
+       black, orange, white. The one page in this app that isn't pastel, on
+       purpose, and it stays dark at every hour — no time-of-day theme here.
+       Tokens mirror Life OS's design system so the two apps' pages match. */
+    :root {
+      color-scheme: dark;
+      --bg: #000; --surface: #0c0c0c; --raised: #161616; --border: #1c1c1c; --border-strong: #262626;
+      --line: #3a3a3a; --faint: #444; --text: #fff; --soft: #ddd; --muted: #9a9a9a;
+      --fox: #ff8a2a; --fox-soft: #ffb878; --fox-ink: #0a0603;
+      --warning: #e8a33a; --danger: #d70cd8; --danger-soft: #ec91e9; --success: #07e5b2; --success-soft: #9aebcd;
+      --font-display: 'Bebas Neue', Impact, sans-serif; --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+      --fs-1: 0.6rem; --fs-2: 0.7rem; --fs-3: 0.8rem; --fs-4: 0.9rem; --fs-5: 1rem; --fs-6: 1.15rem; --fs-7: 1.35rem;
+      --fs-display: clamp(1.9rem, 4.5vw, 3rem);
+      --s-1: 0.25rem; --s-2: 0.35rem; --s-3: 0.5rem; --s-4: 0.65rem; --s-5: 0.8rem; --s-6: 1rem; --s-7: 1.25rem; --s-8: 1.5rem; --s-9: 2rem;
+      --r-xs: 4px; --r-sm: 6px; --r: 8px; --r-md: 12px; --r-lg: 14px; --r-pill: 999px;
+      --dur-fast: 140ms; --dur: 180ms; --ease: cubic-bezier(.4, 0, .2, 1);
+      --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--fox);
+      --pad: clamp(1.25rem, 4vw, 3rem);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.4;
+      overflow-x: hidden; -webkit-tap-highlight-color: transparent; min-height: 100vh; }
+    [hidden] { display: none !important; }
+    :is(input, textarea, select, button):focus-visible { box-shadow: var(--ring); outline: none; }
+    @media (max-width: 768px) { input, select, textarea { font-size: 16px !important; } }
+
+    /* top bar, the app's menu button in Life OS clothes */
+    .bar { position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center;
+      padding: calc(0.9rem + env(safe-area-inset-top, 0px)) var(--pad) 0.9rem; border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.9); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+    .logo { font-family: var(--font-display); font-size: var(--fs-6); letter-spacing: 0.16em; color: var(--text); text-decoration: none; }
+    .logo span { color: var(--fox); }
+    .menu-btn { background: transparent; border: 1px solid var(--border-strong); color: var(--soft); font-size: 1.1rem; line-height: 1;
+      padding: 0.45rem 0.7rem; border-radius: var(--r); cursor: pointer; }
+    .menu-btn:hover { border-color: var(--line); color: var(--text); }
+    .menu-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; backdrop-filter: blur(2px); }
+    .menu-backdrop.open { display: block; }
+    .menu-panel { position: fixed; top: 0; right: 0; width: min(280px, 85vw); height: 100%; background: var(--surface); border-left: 1px solid var(--border-strong);
+      z-index: 201; transform: translateX(110%); transition: transform 0.3s cubic-bezier(.34, 1.2, .64, 1); padding: calc(2rem + env(safe-area-inset-top, 0px)) 1.5rem 2rem;
+      display: flex; flex-direction: column; overflow-y: auto; }
+    .menu-panel.open { transform: translateX(0); }
+    .menu-title { font-family: var(--font-display); font-size: 1.4rem; letter-spacing: 0.1em; color: var(--fox); margin-bottom: 1.5rem; }
+    .menu-item { border-bottom: 1px solid var(--border); font-size: 0.95rem; font-weight: 500; color: var(--text); border-radius: var(--r); }
+    .menu-item a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.9rem; padding: 0.95rem 0.5rem; }
+    .menu-item:hover { background: var(--raised); }
+    .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
+
+    .page { padding: var(--s-9) var(--pad) 6rem; max-width: 1080px; margin: 0 auto; }
+    .back { display: inline-block; font-size: var(--fs-1); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); text-decoration: none; margin-bottom: var(--s-6); }
+    .back:hover { color: var(--text); }
+    .eyebrow { display: flex; align-items: center; gap: var(--s-3); font-size: var(--fs-1); letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin: 0; }
+
+    /* The fox mark, two colourways: on black (orange head) and on orange (black head). */
+    .fox { width: 26px; height: 26px; flex: none; }
+    .fox .h { fill: var(--fox); } .fox .m { fill: var(--text); } .fox .e { fill: var(--bg); }
+    .fox.dark .h { fill: var(--bg); } .fox.dark .m { fill: var(--text); } .fox.dark .e { fill: var(--fox); }
+
+    /* Hero: the title on the left, the orange countdown block on the right */
+    .hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-7); margin: var(--s-3) 0 var(--s-8); }
+    .title { font-family: var(--font-display); font-size: var(--fs-display); line-height: 0.9; color: var(--text); margin: var(--s-3) 0 0; font-weight: 400; }
+    .title span { color: var(--fox); }
+    .dates { font-size: var(--fs-3); color: var(--muted); margin: var(--s-3) 0 0; }
+    .count { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: var(--s-6);
+      padding: var(--s-5) var(--s-8); background: var(--fox); color: var(--fox-ink); border-radius: var(--r-lg); min-width: 0; }
+    .count .fox { grid-row: 1 / span 2; width: 52px; height: 52px; }
+    .count-n { display: block; font-family: var(--font-display); font-size: clamp(2.6rem, 6vw, 3.6rem); line-height: 0.9; color: var(--fox-ink); font-variant-numeric: tabular-nums; }
+    .count-l { display: block; font-size: var(--fs-1); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fox-ink); margin-top: var(--s-2); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s-7); align-items: start; }
+
+    /* section card — Life OS's .lo-sec */
+    .sec { background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--bc, var(--fox)); border-radius: var(--r-lg); padding: 1rem 1.1rem; min-width: 0; }
+    .sec-h { display: flex; align-items: baseline; gap: 0.55rem; margin-bottom: 0.85rem; min-width: 0; }
+    .sec-t { font-family: var(--font-display); font-size: 1.35rem; letter-spacing: 0.07em; color: var(--bc, var(--text)); margin: 0; line-height: 1; font-weight: 400; }
+    .sec-sub { font-size: 0.55rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .save { display: inline-flex; align-items: center; gap: var(--s-2); font-size: var(--fs-1); color: var(--muted); white-space: nowrap; letter-spacing: 0; text-transform: none; }
+    .save::before { content: ''; width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--line); flex: none; }
+    .save.ok { color: var(--success-soft); } .save.ok::before { background: var(--success); }
+    .save.bad { color: var(--danger-soft); } .save.bad::before { background: var(--danger); }
+
+    /* rows: the one shape every list shares */
+    .row { display: flex; align-items: center; gap: var(--s-4); padding: var(--s-3) 0; border-bottom: 1px solid var(--raised); min-width: 0; }
+    .row:last-child { border-bottom: none; }
+    .lab { flex: none; width: 5.2rem; font-size: var(--fs-1); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .val { flex: 1; font-size: var(--fs-4); color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+    .val a, .m a { color: var(--fox-soft); text-decoration: none; }
+    .val a:hover, .m a:hover { text-decoration: underline; }
+    .main { flex: 1; min-width: 0; }
+    .t { display: block; font-size: var(--fs-4); font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
+    .m { display: block; font-size: var(--fs-2); color: var(--muted); margin-top: var(--s-1); overflow-wrap: anywhere; }
+    .row.done .t { color: var(--muted); text-decoration: line-through; }
+    .note-txt { font-size: var(--fs-2); color: var(--muted); }
+    .empty { font-size: var(--fs-3); color: var(--muted); font-style: italic; padding: var(--s-4) 0; margin: 0; }
+    .price { flex: none; font-family: var(--font-display); font-size: var(--fs-5); color: var(--soft); letter-spacing: 0.03em; font-variant-numeric: tabular-nums; }
+    .time { flex: none; font-family: var(--font-display); font-size: var(--fs-6); color: var(--fox); min-width: 3.6rem; font-variant-numeric: tabular-nums; }
+    .due { flex: none; font-size: var(--fs-1); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .due.late { color: var(--warning); }
+
+    /* buttons */
+    .mini { flex: none; background: transparent; border: 1px solid var(--border-strong); color: var(--muted); font-family: var(--font-sans);
+      font-size: var(--fs-1); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: var(--s-2) var(--s-4);
+      border-radius: var(--r-pill); cursor: pointer; min-height: 30px;
+      transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+    .mini:hover { color: var(--text); border-color: var(--line); }
+    .mini:active { opacity: 0.7; }
+    .mini:disabled { opacity: 0.45; cursor: not-allowed; }
+    .mini.accent { color: var(--fox); border-color: rgba(255,138,42,0.4); }
+    .mini.accent:hover { background: rgba(255,138,42,0.1); }
+    .mini.fill { color: var(--fox-ink); background: var(--fox); border-color: var(--fox); }
+    .mini.fill:hover { color: var(--fox-ink); opacity: 0.85; }
+    .x { flex: none; width: 34px; height: 34px; background: transparent; border: none; border-radius: var(--r-pill); color: var(--muted);
+      font-size: var(--fs-5); cursor: pointer; transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+    .x:hover { color: var(--danger-soft); background: var(--raised); }
+    .x.edit { font-size: var(--fs-3); }
+    .x.edit:hover { color: var(--text); }
+    .check { flex: none; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; padding: 0; }
+    .check i { width: 24px; height: 24px; border-radius: var(--r-pill); border: 2px solid var(--muted); display: inline-flex; align-items: center; justify-content: center;
+      font-style: normal; font-size: var(--fs-2); color: transparent; transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease); }
+    .check.on i { background: var(--fox); border-color: var(--fox); color: var(--fox-ink); }
+
+    /* RSVP pill: tap to cycle not yet → yes → maybe → can't */
+    .rsvp { flex: none; font-family: var(--font-sans); font-size: var(--fs-1); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: var(--s-2) var(--s-4); border-radius: var(--r-pill); border: 1px dashed var(--border-strong); background: transparent; color: var(--soft); cursor: pointer; min-height: 30px; white-space: nowrap;
+      transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+    .rsvp.yes { color: var(--fox-ink); background: var(--fox); border: 1px solid var(--fox); }
+    .rsvp.maybe { color: var(--fox-soft); border: 1px solid rgba(255,138,42,0.45); }
+    .rsvp.no { color: var(--muted); border: 1px solid var(--border-strong); text-decoration: line-through; }
+
+    /* forms */
+    .in { background: var(--surface); border: 1px solid var(--line); color: var(--text); font-family: var(--font-sans); font-size: var(--fs-4);
+      padding: var(--s-3) var(--s-4); border-radius: var(--r); outline: none; min-width: 0; transition: border-color var(--dur) var(--ease); }
+    .in::placeholder { color: var(--muted); }
+    .in:focus-visible { border-color: var(--fox); }
+    textarea.in { min-height: 4.5rem; resize: vertical; line-height: 1.5; }
+    .add { display: flex; gap: var(--s-3); margin-top: var(--s-4); flex-wrap: wrap; align-items: center; }
+    .add .in { flex: 1 1 150px; }
+    .add .in.short { flex: 0 1 7rem; }
+    .add .in.date { flex: 0 1 auto; color: var(--soft); }
+    .form { display: none; flex-direction: column; gap: var(--s-3); margin-top: var(--s-4); }
+    .form.show { display: flex; }
+    .form label { font-size: var(--fs-1); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .form-two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+    .form-btns { display: flex; gap: var(--s-3); align-items: center; margin-top: var(--s-2); }
+
+    /* loot tally + allergy chips */
+    .tally { display: flex; gap: var(--s-7); align-items: baseline; flex-wrap: wrap; margin-top: var(--s-5); padding-top: var(--s-4); border-top: 1px solid var(--border-strong); }
+    .tally .big { font-family: var(--font-display); font-size: var(--fs-7); color: var(--fox); line-height: 1; font-variant-numeric: tabular-nums; }
+    .tally .l { font-size: var(--fs-1); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-left: var(--s-2); }
+    .chips { display: flex; gap: var(--s-2); flex-wrap: wrap; margin-top: var(--s-4); }
+    .chip { font-size: var(--fs-1); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fox-soft);
+      border: 1px solid rgba(255,138,42,0.4); border-radius: var(--r-pill); padding: var(--s-1) var(--s-4); }
+    .hint { font-size: var(--fs-2); color: var(--muted); line-height: 1.5; margin: 0 0 var(--s-4); }
+
+    /* the invitation preview: the party's details as a card, orange on black */
+    .inv { background: var(--fox); color: var(--fox-ink); border-radius: var(--r-md); padding: var(--s-8) var(--s-8) var(--s-7); margin-bottom: var(--s-5); position: relative; overflow: hidden; }
+    .inv .fox { width: 64px; height: 64px; position: absolute; right: var(--s-7); top: var(--s-6); }
+    .inv-k { font-size: var(--fs-1); font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; margin: 0; padding-right: 5rem; }
+    .inv-t { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 2.8rem); line-height: 0.9; margin: var(--s-3) 0 0; padding-right: 5rem; text-wrap: balance; font-weight: 400; }
+    .inv-t em { font-style: normal; color: var(--text); }
+    .inv-msg { font-size: var(--fs-4); font-weight: 500; line-height: 1.5; margin: var(--s-5) 0 0; max-width: 34ch; }
+    .inv-rows { margin-top: var(--s-6); padding-top: var(--s-5); border-top: 1px solid rgba(10,6,3,0.25); display: grid; gap: var(--s-2); }
+    .inv-rows div { display: flex; gap: var(--s-4); align-items: baseline; font-size: var(--fs-3); }
+    .inv-rows b { flex: none; width: 4.4rem; font-size: var(--fs-1); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+    .inv-rows span { font-weight: 500; overflow-wrap: anywhere; }
+
+    .offline { margin: 0 0 var(--s-7); border: 1px solid var(--warning); border-radius: var(--r); padding: var(--s-4) var(--s-6); font-size: var(--fs-3); color: var(--warning); }
+
+    @media (max-width: 600px) {
+      .hero { gap: var(--s-5); }
+      .count { width: 100%; }
+      .form-two { grid-template-columns: 1fr; }
+      .inv .fox { width: 44px; height: 44px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="bar">
+    <a href="/" class="logo">VIOLET'S <span>LIFE OS</span></a>
+    <button class="menu-btn" onclick="openMenu()" aria-label="Menu">☰</button>
+  </nav>
+
+{# The fox mark, drawn once and stamped wherever it's needed (the eyebrow, the countdown, the invitation). #}
+{% macro fox(cls) -%}
+<svg class="fox {{ cls }}" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path class="h" d="M4 4 L16 14 L24 14 L36 4 L34 22 Q34 36 20 37 Q6 36 6 22 Z"/><path class="m" d="M12 22 L20 36 L28 22 Z"/><circle class="e" cx="20" cy="30" r="2.6"/><circle class="e" cx="13" cy="20" r="1.8"/><circle class="e" cx="27" cy="20" r="1.8"/></svg>
+{%- endmacro %}
+
+<main class="page">
+  <a class="back" href="/">‹ Home</a>
+
+  <div class="hero">
+    <div>
+      <p class="eyebrow">{{ fox('') }}Violet's birthday · the fox party</p>
+      <h1 class="title">Violet's Fox <span>Party.</span></h1>
+      <p class="dates" id="fpDates">&nbsp;</p>
+    </div>
+    <div class="count" id="fpCount">
+      {{ fox('dark') }}
+      <span class="count-n" id="fpCountN">—</span>
+      <span class="count-l" id="fpCountL">sleeps to go</span>
+    </div>
+  </div>
+
+  <div class="offline" id="fpOffline" hidden>That didn’t save — check the connection and try again.</div>
+
+  <div class="grid">
+
+    <section class="sec" style="--bc: var(--fox)">
+      <header class="sec-h">
+        <h2 class="sec-t">The party</h2>
+        <span class="sec-sub">when · where · what · <span class="save" id="fpMetaSave" hidden></span></span>
+      </header>
+      <div id="fpInfo"></div>
+      <div class="form" id="fpInfoForm">
+        <div class="form-two">
+          <div><label for="mf-date">The day</label><input class="in" id="mf-date" type="date" style="width:100%"></div>
+          <div><label for="mf-start">Starts</label><input class="in" id="mf-start" type="time" style="width:100%"></div>
+        </div>
+        <div class="form-two">
+          <div><label for="mf-end">Ends</label><input class="in" id="mf-end" type="time" style="width:100%"></div>
+          <div><label for="mf-rsvp">RSVP by</label><input class="in" id="mf-rsvp" type="date" style="width:100%"></div>
+        </div>
+        <input class="in" id="mf-venue" type="text" placeholder="Where — The Bubble">
+        <input class="in" id="mf-address" type="text" placeholder="Address, for the map link">
+        <input class="in" id="mf-url" type="url" placeholder="The venue's website or booking link">
+        <input class="in" id="mf-what" type="text" placeholder="What happens — bounce, pizza, cake…">
+        <textarea class="in" id="mf-notes" placeholder="Notes — drop-off or stay, socks required, parking…"></textarea>
+        <div class="form-two">
+          <div><label for="mf-bags">Loot bags to make</label><input class="in" id="mf-bags" type="number" min="0" inputmode="numeric" placeholder="blank = yes + maybe + Violet" style="width:100%"></div>
+          <div></div>
+        </div>
+        <div class="form-btns">
+          <button class="mini fill" onclick="saveMeta()">Save</button>
+          <button class="mini" onclick="infoForm(false)">Cancel</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" style="--bc: var(--text)">
+      <header class="sec-h">
+        <h2 class="sec-t">Guest list</h2>
+        <span class="sec-sub" id="fpGuestSub">tap the pill as replies come in</span>
+      </header>
+      <div id="fpGuests"></div>
+      <div class="add">
+        <input class="in" id="guest-name" type="text" placeholder="Add a guest">
+        <input class="in" id="guest-note" type="text" placeholder="Allergies, a parent's name, a note…">
+        <button class="mini" id="guest-cancel" hidden onclick="cancelEdit('guest')">Cancel</button>
+        <button class="mini fill" id="guest-btn" onclick="submitRow('guest')">Add</button>
+      </div>
+    </section>
+
+    <section class="sec" style="--bc: var(--fox)">
+      <header class="sec-h">
+        <h2 class="sec-t">Wish list</h2>
+        <span class="sec-sub">tick it when it's bought · <span class="save" id="fpWishSave" hidden></span></span>
+      </header>
+      <div id="fpWishes"></div>
+      <div class="add">
+        <input class="in" id="wish-title" type="text" placeholder="Add a wish">
+        <input class="in short" id="wish-price" type="text" inputmode="decimal" placeholder="$">
+        <input class="in" id="wish-where" type="text" placeholder="Where to get it">
+        <input class="in" id="wish-url" type="url" placeholder="Link (optional)">
+        <input class="in" id="wish-by" type="text" placeholder="Claimed by (optional)">
+        <button class="mini" id="wish-cancel" hidden onclick="cancelEdit('wish')">Cancel</button>
+        <button class="mini fill" id="wish-btn" onclick="submitRow('wish')">Add</button>
+      </div>
+    </section>
+
+    <section class="sec" style="--bc: var(--text)">
+      <header class="sec-h">
+        <h2 class="sec-t">Loot bags</h2>
+        <span class="sec-sub">brainstorm, then tick what we're doing · <span class="save" id="fpLootSave" hidden></span></span>
+      </header>
+      <div id="fpLoot"></div>
+      <div class="add">
+        <input class="in" id="loot-title" type="text" placeholder="An idea — fox masks, stickers, a clementine…">
+        <input class="in short" id="loot-cost" type="text" inputmode="decimal" placeholder="$ each">
+        <button class="mini" id="loot-cancel" hidden onclick="cancelEdit('loot')">Cancel</button>
+        <button class="mini fill" id="loot-btn" onclick="submitRow('loot')">Add</button>
+      </div>
+      <div class="tally" id="fpLootTally" hidden></div>
+    </section>
+
+    <section class="sec" style="--bc: var(--fox)">
+      <header class="sec-h">
+        <h2 class="sec-t">Invitation</h2>
+        <span class="sec-sub">the wording, a preview, design ideas · <span class="save" id="fpInvSave" hidden></span></span>
+      </header>
+      <div class="inv" id="fpInvCard"></div>
+      <div class="form-btns" style="margin: 0 0 var(--s-5)">
+        <button class="mini" onclick="invForm(true)">Edit wording</button>
+        <button class="mini accent" onclick="copyInvite(this)">Copy invite text</button>
+      </div>
+      <div class="form" id="fpInvForm">
+        <input class="in" id="if-headline" type="text" placeholder="Headline — You're invited!">
+        <textarea class="in" id="if-message" placeholder="The message — Come bounce with Violet and the foxes…"></textarea>
+        <input class="in" id="if-rsvp" type="text" placeholder="RSVP line — text Britt at …">
+        <div class="form-btns">
+          <button class="mini fill" onclick="saveInvite()">Save</button>
+          <button class="mini" onclick="invForm(false)">Cancel</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-top: var(--s-5)">Design ideas — the paper, a template, where it's being made, what to steal from.</p>
+      <div id="fpInvIdeas"></div>
+      <div class="add">
+        <input class="in" id="idea-title" type="text" placeholder="An idea — kraft card with orange ears, a Canva template…">
+        <input class="in" id="idea-url" type="url" placeholder="Link (optional)">
+        <button class="mini" id="idea-cancel" hidden onclick="cancelEdit('idea')">Cancel</button>
+        <button class="mini fill" id="idea-btn" onclick="submitRow('idea')">Add</button>
+      </div>
+    </section>
+
+    <section class="sec" style="--bc: var(--text)">
+      <header class="sec-h">
+        <h2 class="sec-t">Run sheet</h2>
+        <span class="sec-sub">the day, hour by hour · <span class="save" id="fpRunSave" hidden></span></span>
+      </header>
+      <div id="fpRun"></div>
+      <div class="add">
+        <input class="in date" id="run-time" type="time" aria-label="The time">
+        <input class="in" id="run-title" type="text" placeholder="What happens — arrivals, pizza, cake…">
+        <button class="mini" id="run-cancel" hidden onclick="cancelEdit('run')">Cancel</button>
+        <button class="mini fill" id="run-btn" onclick="submitRow('run')">Add</button>
+      </div>
+    </section>
+
+    <section class="sec" style="--bc: var(--fox)">
+      <header class="sec-h">
+        <h2 class="sec-t">Before the party</h2>
+        <span class="sec-sub" id="fpTodoSub">the to-do list</span>
+      </header>
+      <div id="fpTodos"></div>
+      <div class="add">
+        <input class="in" id="todo-title" type="text" placeholder="What needs doing before the party?">
+        <input class="in date" id="todo-due" type="date" aria-label="By when">
+        <button class="mini" id="todo-cancel" hidden onclick="cancelEdit('todo')">Cancel</button>
+        <button class="mini fill" id="todo-btn" onclick="submitRow('todo')">Add</button>
+      </div>
+    </section>
+
+    <section class="sec" style="--bc: var(--text)">
+      <header class="sec-h">
+        <h2 class="sec-t">Cake &amp; food</h2>
+        <span class="sec-sub">allergies come from the guest list · <span class="save" id="fpFoodSave" hidden></span></span>
+      </header>
+      <div id="fpFood"></div>
+      <div class="chips" id="fpAllergies"></div>
+      <div class="add">
+        <input class="in short" id="food-label" type="text" placeholder="Cake">
+        <input class="in" id="food-text" type="text" placeholder="Orange and chocolate fox cake, nut-free bakery…">
+        <button class="mini" id="food-cancel" hidden onclick="cancelEdit('food')">Cancel</button>
+        <button class="mini fill" id="food-btn" onclick="submitRow('food')">Add</button>
+      </div>
+    </section>
+
+    <section class="sec" style="--bc: var(--fox)">
+      <header class="sec-h">
+        <h2 class="sec-t">Thank-you cards</h2>
+        <span class="sec-sub" id="fpThanksSub">who gave what · tick when sent</span>
+      </header>
+      <div id="fpThanks"></div>
+      <div id="fpThanksHint"></div>
+      <div class="add">
+        <input class="in" id="thanks-who" type="text" placeholder="Who">
+        <input class="in" id="thanks-gift" type="text" placeholder="What they gave">
+        <button class="mini" id="thanks-cancel" hidden onclick="cancelEdit('thanks')">Cancel</button>
+        <button class="mini fill" id="thanks-btn" onclick="submitRow('thanks')">Add</button>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
+<div class="menu-panel" id="menuPanel">
+  <div class="menu-title">✦ Menu</div>
+  <div class="menu-item"><a href="/"><span class="menu-item-icon">🏠</span> Home</a></div>
+  <div class="menu-item"><a href="/routines"><span class="menu-item-icon">✦</span> Routines</a></div>
+  <div class="menu-item"><a href="/calendar"><span class="menu-item-icon">📅</span> Family Calendar</a></div>
+  <div class="menu-item"><a href="/trips"><span class="menu-item-icon">🧳</span> Family Trips</a></div>
+  <div class="menu-item"><a href="/party"><span class="menu-item-icon">🦊</span> Birthday Party</a></div>
+  <div class="menu-item"><a href="/inspiration"><span class="menu-item-icon">🎃</span> Costume Inspo</a></div>
+  <div class="menu-item"><a href="/stats"><span class="menu-item-icon">⭐</span> Progress &amp; stats</a></div>
+  <div class="menu-item"><a href="/badges"><span class="menu-item-icon">🏅</span> My Badges</a></div>
+  <div class="menu-item"><a href="/bank"><span class="menu-item-icon">🏦</span> Violet's Bank</a></div>
+  <div class="menu-item"><a href="/charities"><span class="menu-item-icon">💜</span> Family Giving</a></div>
+  <div class="menu-item"><a href="/camp"><span class="menu-item-icon">🏕️</span> Camp Packing</a></div>
+</div>
+
+<script>
+  function openMenu()  { document.getElementById('menuPanel').classList.add('open'); document.getElementById('menuBackdrop').classList.add('open'); }
+  function closeMenu() { document.getElementById('menuPanel').classList.remove('open'); document.getElementById('menuBackdrop').classList.remove('open'); }
+
+  // ── state ── the whole party comes down with the page; writes refresh it.
+  var BUNDLE = {{ party_json | safe }};
+  var META = BUNDLE.meta || null, ITEMS = BUNDLE.items || [];
+  // What the page shows before anything is saved: the party as booked. The
+  // first Save in "The party" writes the meta; until then these stand.
+  var DEFAULTS = { date: '2026-10-25', start: '11:00', end: '', rsvp_by: '', venue: 'The Bubble', address: 'North York, Toronto, ON',
+                   url: '', what: '', notes: '', bags: '',
+                   invite: { headline: 'You’re invited!', message: 'Come celebrate Violet’s birthday with the foxes.', rsvp: '' } };
+  function meta() {
+    var m = Object.assign({}, DEFAULTS, META || {});
+    m.invite = Object.assign({}, DEFAULTS.invite, (META || {}).invite || {});
+    return m;
+  }
+
+  // ── save state, said the same way everywhere: a dot and a word ──
+  function saveState(id, state, text) {
+    var el = document.getElementById(id); if (!el) return;
+    el.hidden = false;
+    el.className = 'save' + (state ? ' ' + state : '');
+    el.textContent = text || (state === 'ok' ? 'Saved' : state === 'bad' ? 'Not saved' : 'Saving…');
+  }
+  function saved(id, p, okText) {
+    saveState(id, '', 'Saving…');
+    return p.then(function (r) {
+      saveState(id, r && r.ok ? 'ok' : 'bad', r && r.ok ? (okText || 'Saved') : 'Not saved');
+      document.getElementById('fpOffline').hidden = !!(r && r.ok);
+      return r;
+    }).catch(function (e) { saveState(id, 'bad', 'Not saved — you’re offline'); document.getElementById('fpOffline').hidden = false; throw e; });
+  }
+  var BUSY = {};
+  function busyOnce(key) { if (BUSY[key]) return false; BUSY[key] = true; return function () { BUSY[key] = false; }; }
+  function postJson(url, d) { return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) }); }
+
+  function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pd(iso) { var p = (iso || '').split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function todayIso() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function fmtDay(iso) { return iso ? pd(iso).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' }) : ''; }
+  function fmtShort(iso) { return iso ? pd(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : ''; }
+  function fmtTime(t) {
+    if (!t) return '';
+    var p = t.split(':'), h = +p[0], m = p[1] || '00', ap = h >= 12 ? 'pm' : 'am';
+    h = h % 12 || 12;
+    return h + (m === '00' ? '' : ':' + m) + ' ' + ap;
+  }
+  function timeSpan(m) { return m.start ? fmtTime(m.start) + (m.end ? ' – ' + fmtTime(m.end) : '') : ''; }
+  function mapsUrl(m) { return 'https://maps.apple.com/?q=' + encodeURIComponent([m.venue, m.address].filter(Boolean).join(', ')); }
+  function money(n) { return '$' + (Math.round(n * 100) / 100).toFixed(2); }
+  function num(s) { var n = parseFloat(String(s || '').replace(/[^0-9.]/g, '')); return isNaN(n) ? 0 : n; }
+  function rows(section) { return ITEMS.filter(function (it) { return it.section === section; }); }
+  function byId(id) { return ITEMS.filter(function (x) { return x.id === id; })[0]; }
+  function link(url, label) { return '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(label) + ' ↗</a>'; }
+
+  // ── hero: the dates line + the countdown ──
+  function renderHero() {
+    var m = meta(), n = document.getElementById('fpCountN'), l = document.getElementById('fpCountL');
+    var bits = [fmtDay(m.date), timeSpan(m), m.venue].filter(Boolean);
+    document.getElementById('fpDates').textContent = bits.join(' · ') || 'Set the day in The party — the countdown starts from there.';
+    if (!m.date) { n.textContent = '—'; l.textContent = 'sleeps to go'; return; }
+    var sleeps = Math.round((pd(m.date) - pd(todayIso())) / 86400000);
+    if (sleeps > 0) { n.textContent = sleeps; l.textContent = sleeps === 1 ? 'sleep to go' : 'sleeps to go'; }
+    else if (sleeps === 0) { n.textContent = '!'; l.textContent = 'it’s today'; }
+    else { n.textContent = '·'; l.textContent = 'that was fun'; }
+  }
+
+  // ── the party: meta ──
+  function infoRow(lab, val) { return '<div class="row"><span class="lab">' + lab + '</span><span class="val">' + val + '</span></div>'; }
+  function renderInfo() {
+    var m = meta(), host = document.getElementById('fpInfo'), out = '';
+    out += infoRow('When', esc(fmtDay(m.date)) + (timeSpan(m) ? ' · ' + esc(timeSpan(m)) : ''));
+    out += infoRow('Where', esc(m.venue || '') + (m.address ? (m.venue ? ' · ' : '') + link(mapsUrl(m), m.address) : ''));
+    if (m.url) out += infoRow('Venue', link(m.url, 'Open the website'));
+    if (m.what) out += infoRow('What', esc(m.what));
+    if (m.rsvp_by) {
+      var waiting = rows('guest').filter(function (g) { return (g.rsvp || 'waiting') === 'waiting'; }).length;
+      out += infoRow('RSVP', 'by ' + esc(fmtShort(m.rsvp_by)) + (waiting ? ' <span class="note-txt">· ' + waiting + ' still to hear from</span>' : ''));
+    }
+    if (m.notes) out += infoRow('Notes', esc(m.notes).replace(/\n/g, '<br>'));
+    host.innerHTML = out + '<div class="form-btns"><button class="mini" onclick="infoForm(true)">Edit</button></div>';
+  }
+  var META_FIELDS = ['date', 'start', 'end', 'rsvp', 'venue', 'address', 'url', 'what', 'notes', 'bags'];
+  function metaKey(k) { return k === 'rsvp' ? 'rsvp_by' : k; }
+  window.infoForm = function (show) {
+    document.getElementById('fpInfoForm').classList.toggle('show', !!show);
+    if (show) {
+      var m = meta();
+      META_FIELDS.forEach(function (k) { document.getElementById('mf-' + k).value = m[metaKey(k)] || ''; });
+      document.getElementById('mf-date').focus();
+    }
+  };
+  async function putMeta(m, saveId) {
+    var r = await saved(saveId, postJson('/api/party/meta', m));
+    if (r.ok) { META = m; }
+    return r.ok;
+  }
+  window.saveMeta = async function () {
+    var done = busyOnce('party-meta'); if (!done) return;
+    var m = meta();
+    META_FIELDS.forEach(function (k) { m[metaKey(k)] = document.getElementById('mf-' + k).value.trim(); });
+    try { if (await putMeta(m, 'fpMetaSave')) { infoForm(false); renderAll(); } } catch (e) {} finally { done(); }
+  };
+
+  // ── the invitation ──
+  function renderInvite() {
+    var m = meta(), i = m.invite;
+    var lines = '';
+    if (m.date) lines += '<div><b>When</b><span>' + esc(fmtDay(m.date)) + (timeSpan(m) ? ', ' + esc(timeSpan(m)) : '') + '</span></div>';
+    if (m.venue || m.address) lines += '<div><b>Where</b><span>' + esc(m.venue || '') + (m.address ? (m.venue ? ' · ' : '') + esc(m.address) : '') + '</span></div>';
+    if (m.what) lines += '<div><b>What</b><span>' + esc(m.what) + '</span></div>';
+    if (i.rsvp || m.rsvp_by) lines += '<div><b>RSVP</b><span>' + esc(i.rsvp || '') + (m.rsvp_by ? (i.rsvp ? ' · ' : '') + 'by ' + esc(fmtShort(m.rsvp_by)) : '') + '</span></div>';
+    document.getElementById('fpInvCard').innerHTML =
+      '{{ fox('dark') }}' +
+      '<p class="inv-k">' + esc(i.headline || 'You’re invited') + '</p>' +
+      '<p class="inv-t">Violet’s Fox <em>Party</em></p>' +
+      (i.message ? '<p class="inv-msg">' + esc(i.message) + '</p>' : '') +
+      (lines ? '<div class="inv-rows">' + lines + '</div>' : '');
+  }
+  function inviteText() {
+    var m = meta(), i = m.invite, out = [];
+    if (i.headline) out.push(i.headline);
+    out.push('Violet’s Fox Party');
+    if (i.message) out.push('', i.message);
+    out.push('');
+    if (m.date) out.push('When: ' + fmtDay(m.date) + (timeSpan(m) ? ', ' + timeSpan(m) : ''));
+    if (m.venue || m.address) out.push('Where: ' + [m.venue, m.address].filter(Boolean).join(' · '));
+    if (m.what) out.push('What: ' + m.what);
+    if (i.rsvp || m.rsvp_by) out.push('RSVP: ' + [i.rsvp, m.rsvp_by ? 'by ' + fmtShort(m.rsvp_by) : ''].filter(Boolean).join(' · '));
+    return out.join('\n');
+  }
+  window.copyInvite = function (btn) {
+    var was = btn.textContent;
+    navigator.clipboard.writeText(inviteText()).then(function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = was; }, 1200); })
+      .catch(function () { btn.textContent = 'Couldn’t copy'; setTimeout(function () { btn.textContent = was; }, 1600); });
+  };
+  window.invForm = function (show) {
+    document.getElementById('fpInvForm').classList.toggle('show', !!show);
+    if (show) {
+      var i = meta().invite;
+      ['headline', 'message', 'rsvp'].forEach(function (k) { document.getElementById('if-' + k).value = i[k] || ''; });
+      document.getElementById('if-headline').focus();
+    }
+  };
+  window.saveInvite = async function () {
+    var done = busyOnce('party-invite'); if (!done) return;
+    var m = meta();
+    ['headline', 'message', 'rsvp'].forEach(function (k) { m.invite[k] = document.getElementById('if-' + k).value.trim(); });
+    try { if (await putMeta(m, 'fpInvSave')) { invForm(false); renderInvite(); } } catch (e) {} finally { done(); }
+  };
+
+  // ── the lists: one add/edit/delete engine, a renderer per section ──
+  var SECTIONS = {
+    guest:  { fields: ['name', 'note'], need: 'name', save: 'fpGuestSave', fresh: { rsvp: 'waiting' } },
+    wish:   { fields: ['title', 'price', 'where', 'url', 'by'], need: 'title', save: 'fpWishSave' },
+    loot:   { fields: ['title', 'cost'], need: 'title', save: 'fpLootSave' },
+    idea:   { fields: ['title', 'url'], need: 'title', save: 'fpInvSave' },
+    run:    { fields: ['time', 'title'], need: 'title', save: 'fpRunSave' },
+    todo:   { fields: ['title', 'due'], need: 'title', save: 'fpTodoSave' },
+    food:   { fields: ['label', 'text'], need: 'text', save: 'fpFoodSave' },
+    thanks: { fields: ['who', 'gift'], need: 'who', save: 'fpThanksSave' }
+  };
+  var editing = {};
+  function inp(section, k) { return document.getElementById(section + '-' + k); }
+  function clearForm(section) {
+    SECTIONS[section].fields.forEach(function (k) { inp(section, k).value = ''; });
+    document.getElementById(section + '-btn').textContent = 'Add';
+    document.getElementById(section + '-cancel').hidden = true;
+    editing[section] = null;
+  }
+  window.cancelEdit = function (section) { clearForm(section); };
+  window.editRow = function (section, id) {
+    var it = byId(id); if (!it) return;
+    SECTIONS[section].fields.forEach(function (k) { inp(section, k).value = it[k] || ''; });
+    editing[section] = id;
+    document.getElementById(section + '-btn').textContent = 'Update';
+    document.getElementById(section + '-cancel').hidden = false;
+    inp(section, SECTIONS[section].need).focus();
+  };
+  function takeBundle(r) {
+    return r.json().then(function (j) { if (j && j.items) { ITEMS = j.items; META = j.meta || META; } renderAll(); });
+  }
+  async function post(section, d, id) {
+    var url = '/api/party/item' + (id ? '/' + id : '');
+    var r = await saved(SECTIONS[section].save, postJson(url, d), id ? 'Updated' : 'Saved');
+    if (r.ok) await takeBundle(r);
+    return r.ok;
+  }
+  window.submitRow = async function (section) {
+    var s = SECTIONS[section], need = inp(section, s.need);
+    if (!need.value.trim()) { need.focus(); return; }
+    var done = busyOnce('party-' + section); if (!done) return;
+    var id = editing[section], prev = id ? (byId(id) || {}) : {};
+    var d = Object.assign({}, s.fresh || {}, prev, { section: section });
+    s.fields.forEach(function (k) { d[k] = inp(section, k).value.trim(); });
+    try { if (await post(section, d, id)) clearForm(section); } catch (e) {} finally { done(); }
+  };
+  window.delRow = async function (section, id) {
+    var done = busyOnce('party-del-' + id); if (!done) return;
+    try {
+      var r = await saved(SECTIONS[section].save, fetch('/api/party/item/' + id, { method: 'DELETE' }), 'Deleted');
+      if (r.ok) await takeBundle(r);
+    } catch (e) {} finally { done(); }
+  };
+  window.flip = async function (section, id, key, value) {
+    var it = byId(id); if (!it) return;
+    var d = Object.assign({}, it); d[key] = value;
+    var done = busyOnce('party-flip-' + id); if (!done) return;
+    try { await post(section, d, id); } catch (e) {} finally { done(); }
+  };
+  function xBtns(section, it, label) {
+    return '<button class="x edit" onclick="editRow(\'' + section + '\', \'' + it.id + '\')" aria-label="Edit ' + esc(label) + '">✎</button>' +
+      '<button class="x" onclick="delRow(\'' + section + '\', \'' + it.id + '\')" aria-label="Delete ' + esc(label) + '">×</button>';
+  }
+  function check(section, it, key, on, label) {
+    return '<button class="check' + (on ? ' on' : '') + '" onclick="flip(\'' + section + '\', \'' + it.id + '\', \'' + key + '\', ' + (on ? 'false' : 'true') + ')" role="checkbox" aria-checked="' + (on ? 'true' : 'false') + '" aria-label="' + esc(label) + '"><i>✓</i></button>';
+  }
+  function subWith(id, text, saveId) {
+    document.getElementById(id).innerHTML = esc(text) + ' · <span class="save" id="' + saveId + '" hidden></span>';
+  }
+
+  // guests
+  var RSVP = { waiting: 'Not yet', yes: 'Yes', maybe: 'Maybe', no: 'Can’t' }, RSVP_NEXT = { waiting: 'yes', yes: 'maybe', maybe: 'no', no: 'waiting' };
+  function guestCounts() { var c = { yes: 0, maybe: 0, no: 0, waiting: 0 }; rows('guest').forEach(function (g) { c[g.rsvp || 'waiting']++; }); return c; }
+  function renderGuests() {
+    var host = document.getElementById('fpGuests'), list = rows('guest').slice().reverse(), c = guestCounts();
+    subWith('fpGuestSub', list.length ? c.yes + ' yes · ' + c.maybe + ' maybe · ' + c.waiting + ' not yet · ' + c.no + ' can’t' : 'tap the pill as replies come in', 'fpGuestSave');
+    if (!list.length) { host.innerHTML = '<p class="empty">No one yet — add the first name and the headcount starts.</p>'; return; }
+    host.innerHTML = list.map(function (d) {
+      var r = d.rsvp || 'waiting';
+      return '<div class="row"><span class="main"><span class="t">' + esc(d.name) + '</span>' + (d.note ? '<span class="m">' + esc(d.note) + '</span>' : '') + '</span>' +
+        '<button class="rsvp ' + r + '" onclick="flip(\'guest\', \'' + d.id + '\', \'rsvp\', \'' + RSVP_NEXT[r] + '\')" aria-label="' + esc(d.name) + ': ' + RSVP[r] + ', tap to change">' + RSVP[r] + '</button>' +
+        xBtns('guest', d, d.name) + '</div>';
+    }).join('');
+  }
+
+  // wishes
+  function renderWishes() {
+    var host = document.getElementById('fpWishes'), list = rows('wish').slice().reverse();
+    if (!list.length) { host.innerHTML = '<p class="empty">Nothing on the list yet — add what she’s hoping for, and who’s getting it once that’s known.</p>'; return; }
+    host.innerHTML = list.map(function (d) {
+      var m = [];
+      if (d.where) m.push(d.url ? link(d.url, d.where) : esc(d.where)); else if (d.url) m.push(link(d.url, 'Open'));
+      m.push(d.by ? 'claimed by ' + esc(d.by) : 'open');
+      return '<div class="row' + (d.got ? ' done' : '') + '">' + check('wish', d, 'got', !!d.got, (d.got ? 'Bought: ' : 'Not bought: ') + d.title) +
+        '<span class="main"><span class="t">' + esc(d.title) + '</span><span class="m">' + m.join(' · ') + '</span></span>' +
+        (d.price ? '<span class="price">' + esc(String(d.price).replace(/^\$?/, '$')) + '</span>' : '') + xBtns('wish', d, d.title) + '</div>';
+    }).join('');
+  }
+
+  // loot bags
+  function bagCount() { var m = meta(); if (m.bags !== '' && m.bags != null) return +m.bags || 0; var c = guestCounts(); return c.yes + c.maybe + 1; }
+  function renderLoot() {
+    var host = document.getElementById('fpLoot'), tally = document.getElementById('fpLootTally'), list = rows('loot').slice().reverse();
+    if (!list.length) { host.innerHTML = '<p class="empty">Brainstorm first — every idea goes in, then tick the ones you’re actually doing and the cost adds up.</p>'; tally.hidden = true; return; }
+    host.innerHTML = list.map(function (d) {
+      return '<div class="row">' + check('loot', d, 'pick', !!d.pick, (d.pick ? 'Doing: ' : 'Idea: ') + d.title) +
+        '<span class="main"><span class="t">' + esc(d.title) + '</span></span>' +
+        (d.cost ? '<span class="price">' + money(num(d.cost)) + '</span>' : '') + xBtns('loot', d, d.title) + '</div>';
+    }).join('');
+    var picks = list.filter(function (d) { return d.pick; }), per = picks.reduce(function (s, d) { return s + num(d.cost); }, 0), bags = bagCount();
+    tally.hidden = false;
+    tally.innerHTML = '<span><span class="big">' + money(per) + '</span><span class="l">a bag · ' + picks.length + ' picked</span></span>' +
+      '<span><span class="big">' + money(per * bags) + '</span><span class="l">for ' + bags + ' bag' + (bags === 1 ? '' : 's') + '</span></span>' +
+      '<span class="note-txt">' + (meta().bags !== '' ? 'bag count set in The party' : 'yes + maybe guests, plus Violet') + '</span>';
+  }
+
+  // invitation ideas
+  function renderIdeas() {
+    var host = document.getElementById('fpInvIdeas'), list = rows('idea').slice().reverse();
+    if (!list.length) { host.innerHTML = '<p class="empty">No ideas saved yet.</p>'; return; }
+    host.innerHTML = list.map(function (d) {
+      return '<div class="row"><span class="main"><span class="t">' + esc(d.title) + '</span>' + (d.url ? '<span class="m">' + link(d.url, d.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]) + '</span>' : '') + '</span>' + xBtns('idea', d, d.title) + '</div>';
+    }).join('');
+  }
+
+  // run sheet
+  function renderRun() {
+    var host = document.getElementById('fpRun'), list = rows('run').slice();
+    list.sort(function (a, b) { return (a.time || '99').localeCompare(b.time || '99'); });
+    if (!list.length) { host.innerHTML = '<p class="empty">Nothing scheduled yet — set-up, arrivals, the bounce, pizza, cake, loot bags, pick-up.</p>'; return; }
+    host.innerHTML = list.map(function (d) {
+      return '<div class="row"><span class="time">' + esc(fmtTime(d.time) || '·') + '</span><span class="main"><span class="t">' + esc(d.title) + '</span></span>' + xBtns('run', d, d.title) + '</div>';
+    }).join('');
+  }
+
+  // before the party
+  function renderTodos() {
+    var host = document.getElementById('fpTodos'), list = rows('todo').slice(), today = todayIso();
+    list.sort(function (a, b) { return (a.done ? 1 : 0) - (b.done ? 1 : 0) || (a.due || '9999').localeCompare(b.due || '9999'); });
+    var left = list.filter(function (d) { return !d.done; });
+    subWith('fpTodoSub', list.length ? (left.length ? left.length + ' left' + (left[0].due ? ' · next: ' + left[0].title : '') : 'all done') : 'the to-do list', 'fpTodoSave');
+    if (!list.length) { host.innerHTML = '<p class="empty">Nothing here yet — order the cake, send the invites, buy the loot-bag bits.</p>'; return; }
+    host.innerHTML = list.map(function (d) {
+      var late = d.due && !d.done && d.due < today;
+      return '<div class="row' + (d.done ? ' done' : '') + '">' + check('todo', d, 'done', !!d.done, (d.done ? 'Done: ' : 'To do: ') + d.title) +
+        '<span class="main"><span class="t">' + esc(d.title) + '</span></span>' +
+        (d.due ? '<span class="due' + (late ? ' late' : '') + '">' + (late ? 'was ' : 'by ') + esc(fmtShort(d.due)) + '</span>' : '') + xBtns('todo', d, d.title) + '</div>';
+    }).join('');
+  }
+
+  // cake & food, with the allergies read off the guest list
+  function allergies() {
+    var re = /allerg|dairy|gluten|nut|egg|vegan|vegetarian|celiac|coeliac|soy|sesame|halal|kosher/i;
+    return rows('guest').filter(function (g) { return re.test(g.note || '') && (g.rsvp || 'waiting') !== 'no'; })
+      .map(function (g) { return g.note + ' · ' + g.name; });
+  }
+  function renderFood() {
+    var host = document.getElementById('fpFood'), list = rows('food').slice().reverse(), chips = document.getElementById('fpAllergies');
+    host.innerHTML = list.length ? list.map(function (d) {
+      return '<div class="row"><span class="lab">' + esc(d.label || 'Food') + '</span><span class="val">' + esc(d.text) + '</span>' + xBtns('food', d, d.text) + '</div>';
+    }).join('') : '<p class="empty">What’s on the table — the cake, the pizza order, what to skip.</p>';
+    var a = allergies();
+    chips.innerHTML = a.length ? a.map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('') : '<span class="note-txt">Allergies noted on a guest show up here.</span>';
+  }
+
+  // thank-you cards
+  function renderThanks() {
+    var host = document.getElementById('fpThanks'), hint = document.getElementById('fpThanksHint'), list = rows('thanks').slice();
+    list.sort(function (a, b) { return (a.sent ? 1 : 0) - (b.sent ? 1 : 0); });
+    var sent = list.filter(function (d) { return d.sent; }).length;
+    subWith('fpThanksSub', list.length ? sent + ' of ' + list.length + ' sent' : 'who gave what · tick when sent', 'fpThanksSave');
+    host.innerHTML = list.length ? list.map(function (d) {
+      return '<div class="row' + (d.sent ? ' done' : '') + '">' + check('thanks', d, 'sent', !!d.sent, (d.sent ? 'Sent to ' : 'Not sent to ') + d.who) +
+        '<span class="main"><span class="t">' + esc(d.who) + '</span>' + (d.gift ? '<span class="m">' + esc(d.gift) + '</span>' : '') + '</span>' + xBtns('thanks', d, d.who) + '</div>';
+    }).join('') : '<p class="empty">After the party: who gave what, and a tick once the card has gone.</p>';
+    // Wishes bought by a named person, not yet on this list — one tap adds them.
+    var have = {}; list.forEach(function (d) { have[(d.who || '').toLowerCase()] = true; });
+    var sugg = rows('wish').filter(function (w) { return w.got && w.by && !have[w.by.toLowerCase()]; });
+    hint.innerHTML = sugg.length ? '<div class="chips">' + sugg.map(function (w) {
+      return '<button class="mini accent" onclick="addThanks(\'' + w.id + '\')">+ ' + esc(w.by) + ' · ' + esc(w.title) + '</button>';
+    }).join('') + '</div>' : '';
+  }
+  window.addThanks = async function (wishId) {
+    var w = byId(wishId); if (!w) return;
+    var done = busyOnce('party-thanks-' + wishId); if (!done) return;
+    try { await post('thanks', { section: 'thanks', who: w.by, gift: w.title, sent: false }); } catch (e) {} finally { done(); }
+  };
+
+  function renderAll() { renderHero(); renderInfo(); renderInvite(); renderGuests(); renderWishes(); renderLoot(); renderIdeas(); renderRun(); renderTodos(); renderFood(); renderThanks(); }
+  renderAll();
+  // Another device may have changed things since this page loaded — the iPad
+  // on the counter and a phone on the couch both edit it — so coming back to
+  // the tab asks for the latest.
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) return;
+    fetch('/api/party').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (j && j.items) { ITEMS = j.items; META = j.meta || null; renderAll(); }
+    }).catch(function () {});
+  });
+</script>
+</body>
+</html>

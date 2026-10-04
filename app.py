@@ -276,6 +276,49 @@ def save_trips(trips):
         json.dump(trips, f, indent=2)
 
 
+# ── Violet's birthday party ─────────────────────────────────────────────
+# One JSON doc on the volume: the party's facts (meta) and every list row
+# (items, each tagged with its section — guest, wish, loot, idea, run, todo,
+# food, thanks). The page carries the whole doc down and every tap writes
+# back; reads and writes are open like the rest of her app, since the page
+# lives on the kitchen iPad and the parent session goes stale in minutes.
+PARTY_FILE = os.path.join(_DATA, 'violet_party.json')
+_PARTY_SECTIONS = {'guest', 'wish', 'loot', 'idea', 'run', 'todo', 'food', 'thanks'}
+_PARTY_ID_RE = re.compile(r'^[a-f0-9]{12}$')
+
+
+def load_party():
+    try:
+        with open(PARTY_FILE, encoding='utf-8') as f:
+            d = json.load(f)
+    except (FileNotFoundError, ValueError):
+        d = {}
+    return {'meta': d.get('meta') or None, 'items': d.get('items') or []}
+
+
+def save_party(d):
+    with open(PARTY_FILE, 'w', encoding='utf-8') as f:
+        json.dump(d, f, indent=2, ensure_ascii=False)
+
+
+def _party_item(b, item_id=None):
+    """A row as the page sends it, trimmed: strings only, section known."""
+    if not isinstance(b, dict) or b.get('section') not in _PARTY_SECTIONS:
+        return None
+    out = {}
+    for k, v in b.items():
+        if k == 'id' or not isinstance(k, str) or len(k) > 40:
+            continue
+        if isinstance(v, bool) or v is None:
+            out[k] = v
+        elif isinstance(v, (int, float)):
+            out[k] = v
+        elif isinstance(v, str):
+            out[k] = v.strip()[:2000]
+    out['id'] = item_id or uuid.uuid4().hex[:12]
+    return out
+
+
 def _trip_slug(title, start, taken):
     base = re.sub(r'-+', '-', re.sub(r'[^a-z0-9]+', '-', title.lower())).strip('-') or 'trip'
     if start:
@@ -2788,6 +2831,53 @@ def admin_trips_delete():
     if _TRIP_ID_RE.match(tid):
         shutil.rmtree(os.path.join(TRIP_PHOTOS_DIR, tid), ignore_errors=True)
     return jsonify({'ok': True})
+
+
+@app.route('/party')
+def party():
+    return render_template('party.html', party_json=json.dumps(load_party()))
+
+
+@app.route('/api/party')
+def api_party():
+    return jsonify(load_party())
+
+
+@app.route('/api/party/meta', methods=['POST'])
+def api_party_meta():
+    b = request.get_json(silent=True)
+    if not isinstance(b, dict):
+        return jsonify({'ok': False, 'error': 'no data'}), 400
+    d = load_party()
+    d['meta'] = b
+    save_party(d)
+    return jsonify({'ok': True, **d})
+
+
+@app.route('/api/party/item', methods=['POST'])
+@app.route('/api/party/item/<item_id>', methods=['POST', 'DELETE'])
+def api_party_item(item_id=None):
+    if item_id and not _PARTY_ID_RE.match(item_id):
+        return jsonify({'ok': False, 'error': 'no such row'}), 404
+    d = load_party()
+    if request.method == 'DELETE':
+        keep = [it for it in d['items'] if it.get('id') != item_id]
+        if len(keep) == len(d['items']):
+            return jsonify({'ok': False, 'error': 'no such row'}), 404
+        d['items'] = keep
+    else:
+        it = _party_item(request.get_json(silent=True), item_id)
+        if it is None:
+            return jsonify({'ok': False, 'error': 'bad row'}), 400
+        if item_id:
+            idx = next((i for i, x in enumerate(d['items']) if x.get('id') == item_id), None)
+            if idx is None:
+                return jsonify({'ok': False, 'error': 'no such row'}), 404
+            d['items'][idx] = it
+        else:
+            d['items'].append(it)
+    save_party(d)
+    return jsonify({'ok': True, **d})
 
 
 @app.route('/inspiration')
