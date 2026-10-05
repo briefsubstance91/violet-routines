@@ -529,27 +529,24 @@
   // ── state ── the whole party comes down with the page; writes refresh it.
   var BUNDLE = {{ party_json | safe }};
   var META = BUNDLE.meta || null, ITEMS = BUNDLE.items || [], PHOTOS = BUNDLE.photos || [];
-  // The Bubble Toronto, from their site and listings (checked Oct 2026). The
-  // three-activity package's own price and timings weren't readable from here —
-  // the timings shown are the Inflatapark + Laser Tag package's; confirm on
-  // the booking, then edit The party's times to match.
-  var VENUE = { name: 'The Bubble', address: '65 Orfus Road, Unit A, Toronto, ON M6A 1L7', phone: '(416) 410-7469',
+  // The Bubble Toronto — the package as booked, from their parties page.
+  var VENUE = { name: 'The Bubble', address: '65 Orfus Road, Unit A, Toronto, ON M6A 1L7', phone: '416 410 7469', email: 'hello@the-bubble.com',
                 parties: 'https://the-bubble.com/toronto/parties', faq: 'https://the-bubble.com/faqs',
                 hours: 'Sat 10 am – 9 pm · Sun 10 am – 8 pm · Wed–Thu 3 – 8 pm · Fri 3 – 9 pm · Mon–Tue closed', parking: 'Free lot right outside' };
   var PACKAGE = {
     name: 'Inflatapark | Laser Tag | Arcade Party',
-    tiles: [['Inflatable', '60', 'min'], ['Laser tag', '30', 'min'], ['Party room', '45', 'min'], ['Guests', '10', 'minimum']],
-    included: ['A dedicated party host and a private party room', '2 slices of pizza and juice or pop per guest, tableware included',
-               'A $10 arcade card with 200 e-tickets per guest', 'A $20 arcade card for Violet', 'A 30-day Inflatapark pass for Violet',
-               'Bubble socks for the guests', '2 adults play free'],
+    tiles: [['All in', '2½', 'hrs'], ['Inflatable', '60', 'min'], ['Laser tag', '30', 'min'], ['Arcade', '30', 'min'], ['Party room', '60', 'min']],
+    included: ['60 min on the inflatables, 30 min of laser tag, 30 min of arcade play, 60 min in the party room', '2 slices of pizza, juice boxes and pop per guest',
+               'A dedicated party host and a private party room, tableware included', 'A $20 arcade card and a 30-day Inflatapark pass for Violet',
+               'Bubble socks for the guests', '2 adults play free', 'Minimum 10 guests'],
     rules: ['Every guest needs a signed waiver — valid a year, sign online before the day', 'Regular socks on the inflatables; no grip or trampoline socks',
             'Laser tag is for 7 and up', 'Shoes, jewellery, bags and sharp things stay off the inflatables', 'No food, drinks or gum in the park'],
-    note: 'The Inflatapark + Laser Tag party runs 2½ hours at $50 a guest; this package adds arcade time, so check the price and the total time on the booking.'
+    note: '2½ hours from 11 means pick-up at 1:30. The host, socks, Violet’s arcade card and jump pass, the free adults and the 10-guest minimum are the Bubble’s standard party terms; the timings and food are this package’s own.'
   };
   var OLD_ADDRESS = 'North York, Toronto, ON';
   // What the page shows before anything is saved: the party as booked. The
   // first Save in "The party" writes the meta; until then these stand.
-  var DEFAULTS = { date: '2026-10-25', start: '11:00', end: '', rsvp_by: '', venue: VENUE.name, address: VENUE.address,
+  var DEFAULTS = { date: '2026-10-25', start: '11:00', end: '13:30', rsvp_by: '', venue: VENUE.name, address: VENUE.address,
                    url: VENUE.parties, what: 'Inflatapark, laser tag, arcade, pizza and cake', notes: 'Socks on, waivers signed before the day.', bags: '', invites: '', budget: '',
                    invite: { headline: 'You’re invited!', message: 'Come celebrate Violet’s birthday with the foxes.', rsvp: '' } };
   function meta() {
@@ -558,6 +555,7 @@
     // the first cut's placeholder address, before the real one was known
     if (m.address === OLD_ADDRESS) m.address = VENUE.address;
     if (!m.url) m.url = VENUE.parties;
+    if (!m.end && m.start === '11:00') m.end = '13:30';   // the package is 2½ hours
     return m;
   }
 
@@ -944,6 +942,7 @@
       '<p class="pk-h">House rules</p><ul class="pk-list">' + PACKAGE.rules.map(function (x) { return '<li class="rule">' + esc(x) + '</li>'; }).join('') + '</ul>' +
       '<p class="pk-h">The Bubble</p>' +
       '<div class="row"><span class="lab">Phone</span><span class="val">' + esc(VENUE.phone) + '</span><button class="mini" onclick="copyText(this, ' + JSON.stringify(VENUE.phone.replace(/[^0-9+]/g, '')).replace(/"/g, '&quot;') + ', \'Copy\')">Copy</button></div>' +
+      '<div class="row"><span class="lab">Email</span><span class="val">' + esc(VENUE.email) + '</span><button class="mini" onclick="copyText(this, ' + JSON.stringify(VENUE.email).replace(/"/g, '&quot;') + ', \'Copy\')">Copy</button></div>' +
       '<div class="row"><span class="lab">Hours</span><span class="val">' + esc(VENUE.hours) + '</span></div>' +
       '<div class="row"><span class="lab">Parking</span><span class="val">' + esc(VENUE.parking) + '</span></div>' +
       '<div class="row"><span class="lab">Links</span><span class="val">' + link(VENUE.parties, 'Party packages') + ' · ' + link(VENUE.faq, 'FAQ and waivers') + '</span></div>' +
