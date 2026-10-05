@@ -12,15 +12,17 @@
   <style>
     /* Violet's birthday — the fox party. Mum's Life OS design (its dark canvas,
        its section cards, Bebas Neue + DM Sans) in Violet's chosen fox colours:
-       black, orange, white. The one page in this app that isn't pastel, on
-       purpose, and it stays dark at every hour — no time-of-day theme here.
-       Tokens mirror Life OS's design system so the two apps' pages match. */
+       orange, with cream for the second kind of card and ember for the third,
+       late dates and can't-come. Borrowed from the PEI pages: a stat row, bars
+       drawn to scale, the run sheet as a timeline, copy buttons, a pill sub-nav.
+       The one page in this app that isn't pastel, on purpose, and it stays dark
+       at every hour — no time-of-day theme here. */
     :root {
       color-scheme: dark;
       --bg: #000; --surface: #0c0c0c; --raised: #161616; --border: #1c1c1c; --border-strong: #262626;
       --line: #3a3a3a; --faint: #444; --text: #fff; --soft: #ddd; --muted: #9a9a9a;
-      --fox: #ff8a2a; --fox-soft: #ffb878; --fox-ink: #0a0603;
-      --warning: #e8a33a; --danger: #d70cd8; --danger-soft: #ec91e9; --success: #07e5b2; --success-soft: #9aebcd;
+      --fox: #ff8a2a; --fox-soft: #ffb878; --fox-ink: #0a0603; --cream: #f3e2c6; --ember: #d7471f; --ember-soft: #f08a6a;
+      --danger: #d70cd8; --danger-soft: #ec91e9; --success: #07e5b2; --success-soft: #9aebcd;
       --font-display: 'Bebas Neue', Impact, sans-serif; --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
       --fs-1: 0.6rem; --fs-2: 0.7rem; --fs-3: 0.8rem; --fs-4: 0.9rem; --fs-5: 1rem; --fs-6: 1.15rem; --fs-7: 1.35rem;
       --fs-display: clamp(1.9rem, 4.5vw, 3rem);
@@ -31,21 +33,21 @@
       --pad: clamp(1.25rem, 4vw, 3rem);
     }
     *, *::before, *::after { box-sizing: border-box; }
-    html { -webkit-text-size-adjust: 100%; }
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
     body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.4;
       overflow-x: hidden; -webkit-tap-highlight-color: transparent; min-height: 100vh; }
     [hidden] { display: none !important; }
     :is(input, textarea, select, button):focus-visible { box-shadow: var(--ring); outline: none; }
     @media (max-width: 768px) { input, select, textarea { font-size: 16px !important; } }
 
-    /* top bar, the app's menu button in Life OS clothes */
+    /* top bar + the app's menu, in Life OS clothes */
     .bar { position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center;
       padding: calc(0.9rem + env(safe-area-inset-top, 0px)) var(--pad) 0.9rem; border-bottom: 1px solid var(--border);
       background: rgba(0,0,0,0.9); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
     .logo { font-family: var(--font-display); font-size: var(--fs-6); letter-spacing: 0.16em; color: var(--text); text-decoration: none; }
     .logo span { color: var(--fox); }
-    .menu-btn { background: transparent; border: 1px solid var(--border-strong); color: var(--soft); font-size: 1.1rem; line-height: 1;
-      padding: 0.45rem 0.7rem; border-radius: var(--r); cursor: pointer; }
+    .menu-btn { background: transparent; border: 1px solid var(--border-strong); color: var(--soft); font-size: 1.1rem; line-height: 1; padding: 0.45rem 0.7rem; border-radius: var(--r); cursor: pointer; }
     .menu-btn:hover { border-color: var(--line); color: var(--text); }
     .menu-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; backdrop-filter: blur(2px); }
     .menu-backdrop.open { display: block; }
@@ -59,26 +61,47 @@
     .menu-item:hover { background: var(--raised); }
     .menu-item-icon { font-size: 1.3rem; width: 28px; text-align: center; }
 
-    .page { padding: var(--s-9) var(--pad) 6rem; max-width: 1080px; margin: 0 auto; }
-    .back { display: inline-block; font-size: var(--fs-1); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); text-decoration: none; margin-bottom: var(--s-6); }
-    .back:hover { color: var(--text); }
-    .eyebrow { display: flex; align-items: center; gap: var(--s-3); font-size: var(--fs-1); letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin: 0; }
+    .page { padding: var(--s-8) var(--pad) 6rem; max-width: 1080px; margin: 0 auto; }
 
-    /* The fox mark, two colourways: on black (orange head) and on orange (black head). */
+    /* the sub-nav: the trip pages' pills, here jumping to a card */
+    .subnav { display: flex; gap: var(--s-3); flex-wrap: wrap; margin: 0 0 var(--s-8); }
+    .subnav a { display: inline-flex; align-items: center; min-height: 36px; padding: 0 var(--s-6); border: 1px solid var(--border-strong); border-radius: var(--r-pill);
+      font-size: var(--fs-1); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--soft); text-decoration: none;
+      transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+    .subnav a:hover { color: var(--text); border-color: var(--line); }
+    .subnav a.on { color: var(--text); background: var(--raised); border-color: var(--line); }
+    .sec { scroll-margin-top: calc(4.2rem + env(safe-area-inset-top, 0px)); }
+
+    .eyebrow { display: flex; align-items: center; gap: var(--s-3); font-size: var(--fs-1); letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin: 0; }
     .fox { width: 26px; height: 26px; flex: none; }
     .fox .h { fill: var(--fox); } .fox .m { fill: var(--text); } .fox .e { fill: var(--bg); }
     .fox.dark .h { fill: var(--bg); } .fox.dark .m { fill: var(--text); } .fox.dark .e { fill: var(--fox); }
 
     /* Hero: the title on the left, the orange countdown block on the right */
-    .hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-7); margin: var(--s-3) 0 var(--s-8); }
+    .hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-7); margin: var(--s-3) 0 var(--s-7); }
     .title { font-family: var(--font-display); font-size: var(--fs-display); line-height: 0.9; color: var(--text); margin: var(--s-3) 0 0; font-weight: 400; }
     .title span { color: var(--fox); }
     .dates { font-size: var(--fs-3); color: var(--muted); margin: var(--s-3) 0 0; }
     .count { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: var(--s-6);
-      padding: var(--s-5) var(--s-8); background: var(--fox); color: var(--fox-ink); border-radius: var(--r-lg); min-width: 0; }
+      padding: var(--s-5) var(--s-8) var(--s-6); background: var(--fox); color: var(--fox-ink); border-radius: var(--r-lg); min-width: 0; }
     .count .fox { grid-row: 1 / span 2; width: 52px; height: 52px; }
-    .count-n { display: block; font-family: var(--font-display); font-size: clamp(2.6rem, 6vw, 3.6rem); line-height: 0.9; color: var(--fox-ink); font-variant-numeric: tabular-nums; }
+    .count-n { display: block; font-family: var(--font-display); font-size: clamp(2.6rem, 6vw, 3.6rem); line-height: 0.9; color: var(--fox-ink); }
     .count-l { display: block; font-size: var(--fs-1); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fox-ink); margin-top: var(--s-2); }
+    /* the track: invites out → party day, today marked. Hidden until the invite date is set. */
+    .track { grid-column: 1 / -1; margin-top: var(--s-4); display: grid; gap: var(--s-2); }
+    .track .t { height: 5px; border-radius: var(--r-xs); background: rgba(10,6,3,0.22); position: relative; }
+    .track .t > i { position: absolute; left: 0; top: 0; height: 100%; border-radius: var(--r-xs); background: var(--fox-ink); }
+    .track .t > b { position: absolute; top: -3px; width: 11px; height: 11px; border-radius: 50%; background: var(--fox-ink); border: 2px solid var(--fox); transform: translateX(-50%); }
+    .track small { display: flex; justify-content: space-between; gap: var(--s-6); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+
+    /* the stat row — the packing page's allowance tiles */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--s-4); margin: 0 0 var(--s-8); }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--sc, var(--fox)); border-radius: var(--r-md); padding: var(--s-4) var(--s-5) var(--s-4) var(--s-6); min-width: 0; }
+    .stat .k { font-size: var(--fs-1); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); display: flex; gap: var(--s-3); align-items: baseline; flex-wrap: wrap; }
+    .stat .k em { font-style: normal; color: var(--soft); font-weight: 600; background: var(--raised); padding: 2px 7px; border-radius: var(--r-pill); letter-spacing: 0.08em; }
+    .stat .v { font-family: var(--font-display); font-size: 2rem; line-height: 1; margin-top: var(--s-3); color: var(--sc, var(--text)); }
+    .stat .v small { font-family: var(--font-sans); font-size: var(--fs-2); color: var(--muted); letter-spacing: 0.04em; margin-left: var(--s-3); }
+    .stat .s { font-size: var(--fs-2); color: var(--muted); margin-top: var(--s-2); overflow-wrap: anywhere; }
 
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s-7); align-items: start; }
 
@@ -106,9 +129,8 @@
     .note-txt { font-size: var(--fs-2); color: var(--muted); }
     .empty { font-size: var(--fs-3); color: var(--muted); font-style: italic; padding: var(--s-4) 0; margin: 0; }
     .price { flex: none; font-family: var(--font-display); font-size: var(--fs-5); color: var(--soft); letter-spacing: 0.03em; font-variant-numeric: tabular-nums; }
-    .time { flex: none; font-family: var(--font-display); font-size: var(--fs-6); color: var(--fox); min-width: 3.6rem; font-variant-numeric: tabular-nums; }
     .due { flex: none; font-size: var(--fs-1); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-    .due.late { color: var(--warning); }
+    .due.late { color: var(--ember-soft); }
 
     /* buttons */
     .mini { flex: none; background: transparent; border: 1px solid var(--border-strong); color: var(--muted); font-family: var(--font-sans);
@@ -132,13 +154,36 @@
       font-style: normal; font-size: var(--fs-2); color: transparent; transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease); }
     .check.on i { background: var(--fox); border-color: var(--fox); color: var(--fox-ink); }
 
-    /* RSVP pill: tap to cycle not yet → yes → maybe → can't */
+    /* RSVP pill: tap to cycle not yet → yes → maybe → can't. Maybe is striped, not a second orange. */
     .rsvp { flex: none; font-family: var(--font-sans); font-size: var(--fs-1); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
       padding: var(--s-2) var(--s-4); border-radius: var(--r-pill); border: 1px dashed var(--border-strong); background: transparent; color: var(--soft); cursor: pointer; min-height: 30px; white-space: nowrap;
       transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
     .rsvp.yes { color: var(--fox-ink); background: var(--fox); border: 1px solid var(--fox); }
-    .rsvp.maybe { color: var(--fox-soft); border: 1px solid rgba(255,138,42,0.45); }
-    .rsvp.no { color: var(--muted); border: 1px solid var(--border-strong); text-decoration: line-through; }
+    .rsvp.maybe { color: var(--fox-soft); border: 1px solid rgba(255,138,42,0.45); background: repeating-linear-gradient(135deg, rgba(255,138,42,0.22) 0 3px, transparent 3px 7px); }
+    .rsvp.no { color: var(--ember-soft); border: 1px solid rgba(215,71,31,0.45); text-decoration: line-through; }
+    /* the RSVP bar: one segment per answer, sized to its count, each labelled, a 2px gap between */
+    .rbar { display: flex; gap: 2px; height: 26px; margin: var(--s-2) 0 var(--s-3); border-radius: var(--r-sm); overflow: hidden; }
+    .rbar > button { display: inline-flex; align-items: center; justify-content: center; font: 700 11px var(--font-sans); min-width: 0; border: 0; padding: 0; cursor: pointer;
+      color: var(--fox-ink); background: var(--fox); transition: opacity var(--dur-fast) var(--ease); }
+    .rbar > .maybe { background: repeating-linear-gradient(135deg, var(--fox) 0 4px, var(--raised) 4px 8px); color: var(--text); text-shadow: 0 0 3px var(--bg); }
+    .rbar > .waiting { background: var(--line); color: var(--text); }
+    .rbar > .no { background: var(--raised); color: var(--ember-soft); }
+    .rbar.filtered > button { opacity: 0.35; } .rbar.filtered > button.on { opacity: 1; }
+    .rleg { display: flex; gap: var(--s-6); flex-wrap: wrap; font-size: var(--fs-2); color: var(--muted); margin-bottom: var(--s-3); }
+    .rleg i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; background: var(--fox); }
+    .rleg i.maybe { background: repeating-linear-gradient(135deg, var(--fox) 0 2px, var(--raised) 2px 4px); }
+    .rleg i.waiting { background: var(--line); }
+    .rleg i.no { background: var(--raised); border: 1px solid var(--line); }
+    .rleg .clear { margin-left: auto; color: var(--fox-soft); cursor: pointer; background: none; border: 0; font: inherit; padding: 0; }
+
+    /* scale bars — the packing page's progress bar */
+    .meter { display: grid; gap: var(--s-2); margin: var(--s-1) 0 var(--s-4); }
+    .meter .t { height: 6px; border-radius: var(--r-xs); background: var(--raised); position: relative; overflow: hidden; }
+    .meter .t > i { position: absolute; top: 0; left: 0; height: 100%; border-radius: var(--r-xs); background: var(--fox); }
+    .meter .t > b { position: absolute; top: -2px; width: 2px; height: 10px; background: var(--text); }
+    .meter .lg { display: flex; justify-content: space-between; gap: var(--s-4); font-size: var(--fs-2); color: var(--muted); flex-wrap: wrap; }
+    .meter .lg b { color: var(--text); font-weight: 600; }
+    .meter .lg .big { font-family: var(--font-display); font-size: var(--fs-7); color: var(--fox); line-height: 1; }
 
     /* forms */
     .in { background: var(--surface); border: 1px solid var(--line); color: var(--text); font-family: var(--font-sans); font-size: var(--fs-4);
@@ -154,16 +199,27 @@
     .form.show { display: flex; }
     .form label { font-size: var(--fs-1); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
     .form-two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
-    .form-btns { display: flex; gap: var(--s-3); align-items: center; margin-top: var(--s-2); }
+    .form-btns { display: flex; gap: var(--s-3); align-items: center; margin-top: var(--s-2); flex-wrap: wrap; }
 
-    /* loot tally + allergy chips */
-    .tally { display: flex; gap: var(--s-7); align-items: baseline; flex-wrap: wrap; margin-top: var(--s-5); padding-top: var(--s-4); border-top: 1px solid var(--border-strong); }
-    .tally .big { font-family: var(--font-display); font-size: var(--fs-7); color: var(--fox); line-height: 1; font-variant-numeric: tabular-nums; }
-    .tally .l { font-size: var(--fs-1); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-left: var(--s-2); }
     .chips { display: flex; gap: var(--s-2); flex-wrap: wrap; margin-top: var(--s-4); }
     .chip { font-size: var(--fs-1); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fox-soft);
       border: 1px solid rgba(255,138,42,0.4); border-radius: var(--r-pill); padding: var(--s-1) var(--s-4); }
     .hint { font-size: var(--fs-2); color: var(--muted); line-height: 1.5; margin: 0 0 var(--s-4); }
+
+    /* the run sheet as a timeline: a rail, a dot per entry, the current slot lit on the day */
+    .tl .it { display: grid; grid-template-columns: 4.6rem 14px 1fr auto; gap: 0 var(--s-4); align-items: start; padding: var(--s-2) 0; }
+    .tl .tm { font-family: var(--font-display); font-size: 1.05rem; color: var(--fox); text-align: right; line-height: 1.2; font-variant-numeric: tabular-nums; padding-top: 2px; white-space: nowrap; }
+    .tl .dot { position: relative; height: 100%; min-height: 30px; }
+    .tl .dot::before { content: ''; position: absolute; left: 6px; top: -10px; bottom: -10px; width: 2px; background: var(--border-strong); }
+    .tl .it:first-child .dot::before { top: 8px; } .tl .it:last-child .dot::before { bottom: auto; height: 10px; }
+    .tl .dot::after { content: ''; position: absolute; left: 2px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--line); border: 2px solid var(--surface); box-sizing: content-box; }
+    .tl .it.now .dot::after { background: var(--fox); box-shadow: 0 0 0 3px rgba(255,138,42,0.25); }
+    .tl .it.past .dot::after { background: var(--faint); }
+    .tl .it.past .nm { color: var(--muted); }
+    .tl .nm { font-size: var(--fs-4); font-weight: 500; line-height: 1.3; padding-top: 3px; min-width: 0; overflow-wrap: anywhere; }
+    .tl .nm small { display: block; font-size: var(--fs-2); color: var(--muted); font-weight: 400; }
+    .tl .it.now .nm::after { content: 'now'; font: 700 9px var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--fox); margin-left: var(--s-3); vertical-align: 1px; }
+    .tl .acts { display: flex; }
 
     /* the invitation preview: the party's details as a card, orange on black */
     .inv { background: var(--fox); color: var(--fox-ink); border-radius: var(--r-md); padding: var(--s-8) var(--s-8) var(--s-7); margin-bottom: var(--s-5); position: relative; overflow: hidden; }
@@ -177,7 +233,7 @@
     .inv-rows b { flex: none; width: 4.4rem; font-size: var(--fs-1); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
     .inv-rows span { font-weight: 500; overflow-wrap: anywhere; }
 
-    .offline { margin: 0 0 var(--s-7); border: 1px solid var(--warning); border-radius: var(--r); padding: var(--s-4) var(--s-6); font-size: var(--fs-3); color: var(--warning); }
+    .offline { margin: 0 0 var(--s-7); border: 1px solid var(--ember); border-radius: var(--r); padding: var(--s-4) var(--s-6); font-size: var(--fs-3); color: var(--ember-soft); }
 
     @media (max-width: 600px) {
       .hero { gap: var(--s-5); }
@@ -199,7 +255,10 @@
 {%- endmacro %}
 
 <main class="page">
-  <a class="back" href="/">‹ Home</a>
+  <nav class="subnav" aria-label="On this page">
+    <a href="#sec-party" class="on">Party</a><a href="#sec-guests">Guests</a><a href="#sec-wishes">Wishes</a><a href="#sec-loot">Loot bags</a>
+    <a href="#sec-run">Day of</a><a href="#sec-todo">To-do</a><a href="#sec-food">Food</a><a href="#sec-invite">Invite</a><a href="#sec-thanks">Thank-yous</a>
+  </nav>
 
   <div class="hero">
     <div>
@@ -211,14 +270,17 @@
       {{ fox('dark') }}
       <span class="count-n" id="fpCountN">—</span>
       <span class="count-l" id="fpCountL">sleeps to go</span>
+      <div class="track" id="fpTrack" hidden></div>
     </div>
   </div>
 
   <div class="offline" id="fpOffline" hidden>That didn’t save — check the connection and try again.</div>
 
+  <div class="stats" id="fpStats"></div>
+
   <div class="grid">
 
-    <section class="sec" style="--bc: var(--fox)">
+    <section class="sec" id="sec-party" style="--bc: var(--fox)">
       <header class="sec-h">
         <h2 class="sec-t">The party</h2>
         <span class="sec-sub">when · where · what · <span class="save" id="fpMetaSave" hidden></span></span>
@@ -239,7 +301,11 @@
         <input class="in" id="mf-what" type="text" placeholder="What happens — bounce, pizza, cake…">
         <textarea class="in" id="mf-notes" placeholder="Notes — drop-off or stay, socks required, parking…"></textarea>
         <div class="form-two">
+          <div><label for="mf-invites">Invites went out</label><input class="in" id="mf-invites" type="date" style="width:100%"></div>
           <div><label for="mf-bags">Loot bags to make</label><input class="in" id="mf-bags" type="number" min="0" inputmode="numeric" placeholder="blank = yes + maybe + Violet" style="width:100%"></div>
+        </div>
+        <div class="form-two">
+          <div><label for="mf-budget">Loot-bag budget, each</label><input class="in" id="mf-budget" type="text" inputmode="decimal" placeholder="$ a bag (optional)" style="width:100%"></div>
           <div></div>
         </div>
         <div class="form-btns">
@@ -249,11 +315,12 @@
       </div>
     </section>
 
-    <section class="sec" style="--bc: var(--text)">
+    <section class="sec" id="sec-guests" style="--bc: var(--cream)">
       <header class="sec-h">
         <h2 class="sec-t">Guest list</h2>
         <span class="sec-sub" id="fpGuestSub">tap the pill as replies come in</span>
       </header>
+      <div id="fpRsvp"></div>
       <div id="fpGuests"></div>
       <div class="add">
         <input class="in" id="guest-name" type="text" placeholder="Add a guest">
@@ -263,11 +330,12 @@
       </div>
     </section>
 
-    <section class="sec" style="--bc: var(--fox)">
+    <section class="sec" id="sec-wishes" style="--bc: var(--ember)">
       <header class="sec-h">
         <h2 class="sec-t">Wish list</h2>
         <span class="sec-sub">tick it when it's bought · <span class="save" id="fpWishSave" hidden></span></span>
       </header>
+      <div id="fpWishMeter"></div>
       <div id="fpWishes"></div>
       <div class="add">
         <input class="in" id="wish-title" type="text" placeholder="Add a wish">
@@ -280,11 +348,12 @@
       </div>
     </section>
 
-    <section class="sec" style="--bc: var(--text)">
+    <section class="sec" id="sec-loot" style="--bc: var(--fox)">
       <header class="sec-h">
         <h2 class="sec-t">Loot bags</h2>
         <span class="sec-sub">brainstorm, then tick what we're doing · <span class="save" id="fpLootSave" hidden></span></span>
       </header>
+      <div id="fpLootMeter"></div>
       <div id="fpLoot"></div>
       <div class="add">
         <input class="in" id="loot-title" type="text" placeholder="An idea — fox masks, stickers, a clementine…">
@@ -292,10 +361,54 @@
         <button class="mini" id="loot-cancel" hidden onclick="cancelEdit('loot')">Cancel</button>
         <button class="mini fill" id="loot-btn" onclick="submitRow('loot')">Add</button>
       </div>
-      <div class="tally" id="fpLootTally" hidden></div>
     </section>
 
-    <section class="sec" style="--bc: var(--fox)">
+    <section class="sec" id="sec-run" style="--bc: var(--cream)">
+      <header class="sec-h">
+        <h2 class="sec-t">Run sheet</h2>
+        <span class="sec-sub" id="fpRunSub">the day, hour by hour</span>
+      </header>
+      <div id="fpRun"></div>
+      <div class="add">
+        <input class="in date" id="run-time" type="time" aria-label="The time">
+        <input class="in" id="run-title" type="text" placeholder="What happens — arrivals, pizza, cake…">
+        <input class="in" id="run-note" type="text" placeholder="A note (optional)">
+        <button class="mini" id="run-cancel" hidden onclick="cancelEdit('run')">Cancel</button>
+        <button class="mini fill" id="run-btn" onclick="submitRow('run')">Add</button>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-todo" style="--bc: var(--ember)">
+      <header class="sec-h">
+        <h2 class="sec-t">Before the party</h2>
+        <span class="sec-sub" id="fpTodoSub">the to-do list</span>
+      </header>
+      <div id="fpTodoMeter"></div>
+      <div id="fpTodos"></div>
+      <div class="add">
+        <input class="in" id="todo-title" type="text" placeholder="What needs doing before the party?">
+        <input class="in date" id="todo-due" type="date" aria-label="By when">
+        <button class="mini" id="todo-cancel" hidden onclick="cancelEdit('todo')">Cancel</button>
+        <button class="mini fill" id="todo-btn" onclick="submitRow('todo')">Add</button>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-food" style="--bc: var(--fox)">
+      <header class="sec-h">
+        <h2 class="sec-t">Cake &amp; food</h2>
+        <span class="sec-sub">allergies come from the guest list · <span class="save" id="fpFoodSave" hidden></span></span>
+      </header>
+      <div id="fpFood"></div>
+      <div class="chips" id="fpAllergies"></div>
+      <div class="add">
+        <input class="in short" id="food-label" type="text" placeholder="Cake">
+        <input class="in" id="food-text" type="text" placeholder="Orange and chocolate fox cake, nut-free bakery…">
+        <button class="mini" id="food-cancel" hidden onclick="cancelEdit('food')">Cancel</button>
+        <button class="mini fill" id="food-btn" onclick="submitRow('food')">Add</button>
+      </div>
+    </section>
+
+    <section class="sec" id="sec-invite" style="--bc: var(--cream)">
       <header class="sec-h">
         <h2 class="sec-t">Invitation</h2>
         <span class="sec-sub">the wording, a preview, design ideas · <span class="save" id="fpInvSave" hidden></span></span>
@@ -303,7 +416,7 @@
       <div class="inv" id="fpInvCard"></div>
       <div class="form-btns" style="margin: 0 0 var(--s-5)">
         <button class="mini" onclick="invForm(true)">Edit wording</button>
-        <button class="mini accent" onclick="copyInvite(this)">Copy invite text</button>
+        <button class="mini accent" onclick="copyText(this, inviteText(), 'Copy invite text')">Copy invite text</button>
       </div>
       <div class="form" id="fpInvForm">
         <input class="in" id="if-headline" type="text" placeholder="Headline — You're invited!">
@@ -324,54 +437,12 @@
       </div>
     </section>
 
-    <section class="sec" style="--bc: var(--text)">
-      <header class="sec-h">
-        <h2 class="sec-t">Run sheet</h2>
-        <span class="sec-sub">the day, hour by hour · <span class="save" id="fpRunSave" hidden></span></span>
-      </header>
-      <div id="fpRun"></div>
-      <div class="add">
-        <input class="in date" id="run-time" type="time" aria-label="The time">
-        <input class="in" id="run-title" type="text" placeholder="What happens — arrivals, pizza, cake…">
-        <button class="mini" id="run-cancel" hidden onclick="cancelEdit('run')">Cancel</button>
-        <button class="mini fill" id="run-btn" onclick="submitRow('run')">Add</button>
-      </div>
-    </section>
-
-    <section class="sec" style="--bc: var(--fox)">
-      <header class="sec-h">
-        <h2 class="sec-t">Before the party</h2>
-        <span class="sec-sub" id="fpTodoSub">the to-do list</span>
-      </header>
-      <div id="fpTodos"></div>
-      <div class="add">
-        <input class="in" id="todo-title" type="text" placeholder="What needs doing before the party?">
-        <input class="in date" id="todo-due" type="date" aria-label="By when">
-        <button class="mini" id="todo-cancel" hidden onclick="cancelEdit('todo')">Cancel</button>
-        <button class="mini fill" id="todo-btn" onclick="submitRow('todo')">Add</button>
-      </div>
-    </section>
-
-    <section class="sec" style="--bc: var(--text)">
-      <header class="sec-h">
-        <h2 class="sec-t">Cake &amp; food</h2>
-        <span class="sec-sub">allergies come from the guest list · <span class="save" id="fpFoodSave" hidden></span></span>
-      </header>
-      <div id="fpFood"></div>
-      <div class="chips" id="fpAllergies"></div>
-      <div class="add">
-        <input class="in short" id="food-label" type="text" placeholder="Cake">
-        <input class="in" id="food-text" type="text" placeholder="Orange and chocolate fox cake, nut-free bakery…">
-        <button class="mini" id="food-cancel" hidden onclick="cancelEdit('food')">Cancel</button>
-        <button class="mini fill" id="food-btn" onclick="submitRow('food')">Add</button>
-      </div>
-    </section>
-
-    <section class="sec" style="--bc: var(--fox)">
+    <section class="sec" id="sec-thanks" style="--bc: var(--ember)">
       <header class="sec-h">
         <h2 class="sec-t">Thank-you cards</h2>
         <span class="sec-sub" id="fpThanksSub">who gave what · tick when sent</span>
       </header>
+      <div id="fpThanksMeter"></div>
       <div id="fpThanks"></div>
       <div id="fpThanksHint"></div>
       <div class="add">
@@ -411,7 +482,7 @@
   // What the page shows before anything is saved: the party as booked. The
   // first Save in "The party" writes the meta; until then these stand.
   var DEFAULTS = { date: '2026-10-25', start: '11:00', end: '', rsvp_by: '', venue: 'The Bubble', address: 'North York, Toronto, ON',
-                   url: '', what: '', notes: '', bags: '',
+                   url: '', what: '', notes: '', bags: '', invites: '', budget: '',
                    invite: { headline: 'You’re invited!', message: 'Come celebrate Violet’s birthday with the foxes.', rsvp: '' } };
   function meta() {
     var m = Object.assign({}, DEFAULTS, META || {});
@@ -452,39 +523,80 @@
   function timeSpan(m) { return m.start ? fmtTime(m.start) + (m.end ? ' – ' + fmtTime(m.end) : '') : ''; }
   function mapsUrl(m) { return 'https://maps.apple.com/?q=' + encodeURIComponent([m.venue, m.address].filter(Boolean).join(', ')); }
   function money(n) { return '$' + (Math.round(n * 100) / 100).toFixed(2); }
+  function dollars(n) { return money(n).replace(/\.00$/, ''); }
   function num(s) { var n = parseFloat(String(s || '').replace(/[^0-9.]/g, '')); return isNaN(n) ? 0 : n; }
   function rows(section) { return ITEMS.filter(function (it) { return it.section === section; }); }
   function byId(id) { return ITEMS.filter(function (x) { return x.id === id; })[0]; }
   function link(url, label) { return '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(label) + ' ↗</a>'; }
+  function meter(fill, left, right, mark) {
+    return '<div class="meter"><div class="t"><i style="width:' + Math.max(0, Math.min(100, fill)) + '%"></i>' + (mark != null ? '<b style="left:' + mark + '%"></b>' : '') + '</div><div class="lg"><span>' + left + '</span><span>' + right + '</span></div></div>';
+  }
+  // Copy anything the page shows that you'd otherwise retype — the address, the invite.
+  window.copyText = function (btn, text, was) {
+    navigator.clipboard.writeText(text).then(function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = was; }, 1200); })
+      .catch(function () { btn.textContent = 'Couldn’t copy'; setTimeout(function () { btn.textContent = was; }, 1600); });
+  };
 
-  // ── hero: the dates line + the countdown ──
+  // ── the numbers everything else reads from ──
+  var RSVP = { waiting: 'Not yet', yes: 'Yes', maybe: 'Maybe', no: 'Can’t' }, RSVP_NEXT = { waiting: 'yes', yes: 'maybe', maybe: 'no', no: 'waiting' };
+  function guestCounts() { var c = { yes: 0, maybe: 0, no: 0, waiting: 0 }; rows('guest').forEach(function (g) { c[g.rsvp || 'waiting']++; }); return c; }
+  function bagCount() { var m = meta(); if (m.bags !== '' && m.bags != null) return +m.bags || 0; var c = guestCounts(); return c.yes + c.maybe + 1; }
+  function lootPicks() { return rows('loot').filter(function (d) { return d.pick; }); }
+  function lootPer() { return lootPicks().reduce(function (s, d) { return s + num(d.cost); }, 0); }
+
+  // ── hero: the dates line, the countdown, the invites-to-party track ──
   function renderHero() {
-    var m = meta(), n = document.getElementById('fpCountN'), l = document.getElementById('fpCountL');
+    var m = meta(), n = document.getElementById('fpCountN'), l = document.getElementById('fpCountL'), tr = document.getElementById('fpTrack');
     var bits = [fmtDay(m.date), timeSpan(m), m.venue].filter(Boolean);
     document.getElementById('fpDates').textContent = bits.join(' · ') || 'Set the day in The party — the countdown starts from there.';
+    tr.hidden = true;
     if (!m.date) { n.textContent = '—'; l.textContent = 'sleeps to go'; return; }
-    var sleeps = Math.round((pd(m.date) - pd(todayIso())) / 86400000);
+    var today = pd(todayIso()), sleeps = Math.round((pd(m.date) - today) / 86400000);
     if (sleeps > 0) { n.textContent = sleeps; l.textContent = sleeps === 1 ? 'sleep to go' : 'sleeps to go'; }
     else if (sleeps === 0) { n.textContent = '!'; l.textContent = 'it’s today'; }
     else { n.textContent = '·'; l.textContent = 'that was fun'; }
+    if (m.invites && m.invites < m.date) {
+      var span = pd(m.date) - pd(m.invites), at = Math.max(0, Math.min(100, (today - pd(m.invites)) / span * 100));
+      tr.hidden = false;
+      tr.innerHTML = '<div class="t"><i style="width:' + at + '%"></i><b style="left:' + at + '%"></b></div>' +
+        '<small><span>Invites · ' + esc(fmtShort(m.invites)) + '</span><span>Party · ' + esc(fmtShort(m.date)) + '</span></small>';
+    }
+  }
+
+  // ── the stat row ──
+  function renderStats() {
+    var c = guestCounts(), g = rows('guest'), coming = c.yes + c.maybe, bags = bagCount(), per = lootPer(), picks = lootPicks();
+    var w = rows('wish'), bought = w.filter(function (x) { return x.got; }), wTotal = w.reduce(function (s, x) { return s + num(x.price); }, 0), bTotal = bought.reduce(function (s, x) { return s + num(x.price); }, 0);
+    var t = rows('todo'), left = t.filter(function (x) { return !x.done; }).sort(function (a, b) { return (a.due || '9999').localeCompare(b.due || '9999'); });
+    document.getElementById('fpStats').innerHTML =
+      '<div class="stat" style="--sc: var(--fox)"><div class="k">Coming' + (c.waiting ? ' <em>' + c.waiting + ' not yet</em>' : '') + '</div>' +
+        '<div class="v">' + coming + '<small>of ' + g.length + ' asked</small></div><div class="s">' + (g.length ? c.yes + ' yes · ' + c.maybe + ' maybe · ' + c.no + ' can’t' : 'no one on the list yet') + '</div></div>' +
+      '<div class="stat" style="--sc: var(--cream)"><div class="k">Loot bags</div><div class="v">' + bags + (picks.length ? '<small>' + money(per) + ' each</small>' : '') + '</div>' +
+        '<div class="s">' + (picks.length ? money(per * bags) + ' all in · ' + picks.length + ' thing' + (picks.length === 1 ? '' : 's') + ' a bag' : 'nothing picked yet') + '</div></div>' +
+      '<div class="stat" style="--sc: var(--ember)"><div class="k">To-dos' + (left.length ? ' <em>' + left.length + ' left</em>' : '') + '</div>' +
+        '<div class="v">' + (t.length - left.length) + '<small>of ' + t.length + ' done</small></div><div class="s">' + (left.length ? 'next: ' + esc(left[0].title) + (left[0].due ? ' · ' + esc(fmtShort(left[0].due)) : '') : (t.length ? 'all done' : 'nothing listed yet')) + '</div></div>' +
+      '<div class="stat" style="--sc: var(--cream)"><div class="k">Wishes</div><div class="v">' + bought.length + '<small>of ' + w.length + ' bought</small></div>' +
+        '<div class="s">' + (w.length ? dollars(bTotal) + ' of ' + dollars(wTotal) + ' claimed' : 'the list is empty') + '</div></div>';
   }
 
   // ── the party: meta ──
-  function infoRow(lab, val) { return '<div class="row"><span class="lab">' + lab + '</span><span class="val">' + val + '</span></div>'; }
+  function infoRow(lab, val, extra) { return '<div class="row"><span class="lab">' + lab + '</span><span class="val">' + val + '</span>' + (extra || '') + '</div>'; }
   function renderInfo() {
     var m = meta(), host = document.getElementById('fpInfo'), out = '';
     out += infoRow('When', esc(fmtDay(m.date)) + (timeSpan(m) ? ' · ' + esc(timeSpan(m)) : ''));
-    out += infoRow('Where', esc(m.venue || '') + (m.address ? (m.venue ? ' · ' : '') + link(mapsUrl(m), m.address) : ''));
+    var where = [m.venue, m.address].filter(Boolean).join(', ');
+    out += infoRow('Where', esc(m.venue || '') + (m.address ? (m.venue ? ' · ' : '') + link(mapsUrl(m), m.address) : ''),
+      where ? '<button class="mini" onclick="copyText(this, ' + JSON.stringify(where).replace(/"/g, '&quot;') + ', \'Copy\')">Copy</button>' : '');
     if (m.url) out += infoRow('Venue', link(m.url, 'Open the website'));
     if (m.what) out += infoRow('What', esc(m.what));
     if (m.rsvp_by) {
-      var waiting = rows('guest').filter(function (g) { return (g.rsvp || 'waiting') === 'waiting'; }).length;
+      var waiting = guestCounts().waiting;
       out += infoRow('RSVP', 'by ' + esc(fmtShort(m.rsvp_by)) + (waiting ? ' <span class="note-txt">· ' + waiting + ' still to hear from</span>' : ''));
     }
     if (m.notes) out += infoRow('Notes', esc(m.notes).replace(/\n/g, '<br>'));
-    host.innerHTML = out + '<div class="form-btns"><button class="mini" onclick="infoForm(true)">Edit</button></div>';
+    host.innerHTML = out + '<div class="form-btns"><button class="mini" onclick="infoForm(true)">Edit</button><button class="mini accent" onclick="copyText(this, inviteText(), \'Copy invite text\')">Copy invite text</button></div>';
   }
-  var META_FIELDS = ['date', 'start', 'end', 'rsvp', 'venue', 'address', 'url', 'what', 'notes', 'bags'];
+  var META_FIELDS = ['date', 'start', 'end', 'rsvp', 'venue', 'address', 'url', 'what', 'notes', 'invites', 'bags', 'budget'];
   function metaKey(k) { return k === 'rsvp' ? 'rsvp_by' : k; }
   window.infoForm = function (show) {
     document.getElementById('fpInfoForm').classList.toggle('show', !!show);
@@ -521,7 +633,7 @@
       (i.message ? '<p class="inv-msg">' + esc(i.message) + '</p>' : '') +
       (lines ? '<div class="inv-rows">' + lines + '</div>' : '');
   }
-  function inviteText() {
+  window.inviteText = function () {
     var m = meta(), i = m.invite, out = [];
     if (i.headline) out.push(i.headline);
     out.push('Violet’s Fox Party');
@@ -532,11 +644,6 @@
     if (m.what) out.push('What: ' + m.what);
     if (i.rsvp || m.rsvp_by) out.push('RSVP: ' + [i.rsvp, m.rsvp_by ? 'by ' + fmtShort(m.rsvp_by) : ''].filter(Boolean).join(' · '));
     return out.join('\n');
-  }
-  window.copyInvite = function (btn) {
-    var was = btn.textContent;
-    navigator.clipboard.writeText(inviteText()).then(function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = was; }, 1200); })
-      .catch(function () { btn.textContent = 'Couldn’t copy'; setTimeout(function () { btn.textContent = was; }, 1600); });
   };
   window.invForm = function (show) {
     document.getElementById('fpInvForm').classList.toggle('show', !!show);
@@ -559,7 +666,7 @@
     wish:   { fields: ['title', 'price', 'where', 'url', 'by'], need: 'title', save: 'fpWishSave' },
     loot:   { fields: ['title', 'cost'], need: 'title', save: 'fpLootSave' },
     idea:   { fields: ['title', 'url'], need: 'title', save: 'fpInvSave' },
-    run:    { fields: ['time', 'title'], need: 'title', save: 'fpRunSave' },
+    run:    { fields: ['time', 'title', 'note'], need: 'title', save: 'fpRunSave' },
     todo:   { fields: ['title', 'due'], need: 'title', save: 'fpTodoSave' },
     food:   { fields: ['label', 'text'], need: 'text', save: 'fpFoodSave' },
     thanks: { fields: ['who', 'gift'], need: 'who', save: 'fpThanksSave' }
@@ -623,25 +730,33 @@
     document.getElementById(id).innerHTML = esc(text) + ' · <span class="save" id="' + saveId + '" hidden></span>';
   }
 
-  // guests
-  var RSVP = { waiting: 'Not yet', yes: 'Yes', maybe: 'Maybe', no: 'Can’t' }, RSVP_NEXT = { waiting: 'yes', yes: 'maybe', maybe: 'no', no: 'waiting' };
-  function guestCounts() { var c = { yes: 0, maybe: 0, no: 0, waiting: 0 }; rows('guest').forEach(function (g) { c[g.rsvp || 'waiting']++; }); return c; }
+  // guests — the RSVP bar filters the list; tap a segment, tap again to clear
+  var guestFilter = null;
+  window.filterGuests = function (k) { guestFilter = guestFilter === k ? null : k; renderGuests(); };
   function renderGuests() {
-    var host = document.getElementById('fpGuests'), list = rows('guest').slice().reverse(), c = guestCounts();
-    subWith('fpGuestSub', list.length ? c.yes + ' yes · ' + c.maybe + ' maybe · ' + c.waiting + ' not yet · ' + c.no + ' can’t' : 'tap the pill as replies come in', 'fpGuestSave');
-    if (!list.length) { host.innerHTML = '<p class="empty">No one yet — add the first name and the headcount starts.</p>'; return; }
+    var host = document.getElementById('fpGuests'), all = rows('guest').slice().reverse(), c = guestCounts();
+    subWith('fpGuestSub', all.length ? c.yes + ' yes · ' + c.maybe + ' maybe · ' + c.waiting + ' not yet · ' + c.no + ' can’t' : 'tap the pill as replies come in', 'fpGuestSave');
+    var keys = ['yes', 'maybe', 'waiting', 'no'];
+    document.getElementById('fpRsvp').innerHTML = all.length ?
+      '<div class="rbar' + (guestFilter ? ' filtered' : '') + '">' + keys.map(function (k) { return c[k] ? '<button class="' + k + (guestFilter === k ? ' on' : '') + '" style="flex:' + c[k] + '" onclick="filterGuests(\'' + k + '\')" aria-label="' + RSVP[k] + ': ' + c[k] + ', tap to show only these">' + c[k] + '</button>' : ''; }).join('') + '</div>' +
+      '<div class="rleg">' + keys.map(function (k) { return '<span><i class="' + k + '"></i>' + RSVP[k] + ' ' + c[k] + '</span>'; }).join('') + (guestFilter ? '<button class="clear" onclick="filterGuests(null)">show all</button>' : '') + '</div>' : '';
+    if (!all.length) { host.innerHTML = '<p class="empty">No one yet — add the first name and the headcount starts.</p>'; return; }
+    var list = guestFilter ? all.filter(function (d) { return (d.rsvp || 'waiting') === guestFilter; }) : all;
     host.innerHTML = list.map(function (d) {
       var r = d.rsvp || 'waiting';
       return '<div class="row"><span class="main"><span class="t">' + esc(d.name) + '</span>' + (d.note ? '<span class="m">' + esc(d.note) + '</span>' : '') + '</span>' +
         '<button class="rsvp ' + r + '" onclick="flip(\'guest\', \'' + d.id + '\', \'rsvp\', \'' + RSVP_NEXT[r] + '\')" aria-label="' + esc(d.name) + ': ' + RSVP[r] + ', tap to change">' + RSVP[r] + '</button>' +
         xBtns('guest', d, d.name) + '</div>';
-    }).join('');
+    }).join('') || '<p class="empty">No one in that group.</p>';
   }
 
-  // wishes
+  // wishes — bought against the whole list, in dollars where prices are known
   function renderWishes() {
-    var host = document.getElementById('fpWishes'), list = rows('wish').slice().reverse();
-    if (!list.length) { host.innerHTML = '<p class="empty">Nothing on the list yet — add what she’s hoping for, and who’s getting it once that’s known.</p>'; return; }
+    var host = document.getElementById('fpWishes'), mt = document.getElementById('fpWishMeter'), list = rows('wish').slice().reverse();
+    if (!list.length) { host.innerHTML = '<p class="empty">Nothing on the list yet — add what she’s hoping for, and who’s getting it once that’s known.</p>'; mt.innerHTML = ''; return; }
+    var bought = list.filter(function (d) { return d.got; }), total = list.reduce(function (s, d) { return s + num(d.price); }, 0), done = bought.reduce(function (s, d) { return s + num(d.price); }, 0);
+    mt.innerHTML = total ? meter(done / total * 100, '<b>' + bought.length + ' bought</b> · ' + dollars(done), dollars(total - done) + ' still open')
+                         : meter(bought.length / list.length * 100, '<b>' + bought.length + ' of ' + list.length + ' bought</b>', (list.length - bought.length) + ' open');
     host.innerHTML = list.map(function (d) {
       var m = [];
       if (d.where) m.push(d.url ? link(d.url, d.where) : esc(d.where)); else if (d.url) m.push(link(d.url, 'Open'));
@@ -652,21 +767,20 @@
     }).join('');
   }
 
-  // loot bags
-  function bagCount() { var m = meta(); if (m.bags !== '' && m.bags != null) return +m.bags || 0; var c = guestCounts(); return c.yes + c.maybe + 1; }
+  // loot bags — the per-bag cost against a budget, when one is set
   function renderLoot() {
-    var host = document.getElementById('fpLoot'), tally = document.getElementById('fpLootTally'), list = rows('loot').slice().reverse();
-    if (!list.length) { host.innerHTML = '<p class="empty">Brainstorm first — every idea goes in, then tick the ones you’re actually doing and the cost adds up.</p>'; tally.hidden = true; return; }
+    var host = document.getElementById('fpLoot'), mt = document.getElementById('fpLootMeter'), list = rows('loot').slice().reverse();
+    if (!list.length) { host.innerHTML = '<p class="empty">Brainstorm first — every idea goes in, then tick the ones you’re actually doing and the cost adds up.</p>'; mt.innerHTML = ''; return; }
+    var picks = lootPicks(), per = lootPer(), bags = bagCount(), budget = num(meta().budget);
+    var left = '<span class="big">' + money(per) + '</span> a bag · ' + picks.length + ' picked';
+    var right = (budget ? 'budget ' + dollars(budget) + ' · ' : '') + '<b>' + money(per * bags) + '</b> for ' + bags + ' bag' + (bags === 1 ? '' : 's');
+    mt.innerHTML = meter(budget ? per / budget * 100 : (picks.length ? 100 : 0), left, right, budget ? 100 : null) +
+      '<p class="hint">' + (meta().bags !== '' ? 'Bag count set in The party.' : 'Bags = yes + maybe guests, plus Violet.') + (budget ? '' : ' Set a per-bag budget in The party to see the bar against it.') + '</p>';
     host.innerHTML = list.map(function (d) {
       return '<div class="row">' + check('loot', d, 'pick', !!d.pick, (d.pick ? 'Doing: ' : 'Idea: ') + d.title) +
         '<span class="main"><span class="t">' + esc(d.title) + '</span></span>' +
         (d.cost ? '<span class="price">' + money(num(d.cost)) + '</span>' : '') + xBtns('loot', d, d.title) + '</div>';
     }).join('');
-    var picks = list.filter(function (d) { return d.pick; }), per = picks.reduce(function (s, d) { return s + num(d.cost); }, 0), bags = bagCount();
-    tally.hidden = false;
-    tally.innerHTML = '<span><span class="big">' + money(per) + '</span><span class="l">a bag · ' + picks.length + ' picked</span></span>' +
-      '<span><span class="big">' + money(per * bags) + '</span><span class="l">for ' + bags + ' bag' + (bags === 1 ? '' : 's') + '</span></span>' +
-      '<span class="note-txt">' + (meta().bags !== '' ? 'bag count set in The party' : 'yes + maybe guests, plus Violet') + '</span>';
   }
 
   // invitation ideas
@@ -678,23 +792,32 @@
     }).join('');
   }
 
-  // run sheet
+  // run sheet — a timeline; on the day, the entry whose time has come is lit
   function renderRun() {
-    var host = document.getElementById('fpRun'), list = rows('run').slice();
+    var host = document.getElementById('fpRun'), list = rows('run').slice(), m = meta();
     list.sort(function (a, b) { return (a.time || '99').localeCompare(b.time || '99'); });
+    subWith('fpRunSub', list.length ? list.length + ' moment' + (list.length === 1 ? '' : 's') + (m.start ? ' · from ' + fmtTime(m.start) : '') : 'the day, hour by hour', 'fpRunSave');
     if (!list.length) { host.innerHTML = '<p class="empty">Nothing scheduled yet — set-up, arrivals, the bounce, pizza, cake, loot bags, pick-up.</p>'; return; }
-    host.innerHTML = list.map(function (d) {
-      return '<div class="row"><span class="time">' + esc(fmtTime(d.time) || '·') + '</span><span class="main"><span class="t">' + esc(d.title) + '</span></span>' + xBtns('run', d, d.title) + '</div>';
-    }).join('');
+    var nowIdx = -1;
+    if (m.date === todayIso()) {
+      var d = new Date(), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      list.forEach(function (it, i) { if (it.time && it.time <= hm) nowIdx = i; });
+    }
+    host.innerHTML = '<div class="tl">' + list.map(function (d, i) {
+      var cls = i === nowIdx ? ' now' : (nowIdx > i ? ' past' : '');
+      return '<div class="it' + cls + '"><span class="tm">' + esc(fmtTime(d.time) || '·') + '</span><span class="dot"></span>' +
+        '<span class="nm">' + esc(d.title) + (d.note ? '<small>' + esc(d.note) + '</small>' : '') + '</span><span class="acts">' + xBtns('run', d, d.title) + '</span></div>';
+    }).join('') + '</div>';
   }
 
-  // before the party
+  // before the party — done against the list, the late ones in ember
   function renderTodos() {
-    var host = document.getElementById('fpTodos'), list = rows('todo').slice(), today = todayIso();
+    var host = document.getElementById('fpTodos'), mt = document.getElementById('fpTodoMeter'), list = rows('todo').slice(), today = todayIso();
     list.sort(function (a, b) { return (a.done ? 1 : 0) - (b.done ? 1 : 0) || (a.due || '9999').localeCompare(b.due || '9999'); });
-    var left = list.filter(function (d) { return !d.done; });
-    subWith('fpTodoSub', list.length ? (left.length ? left.length + ' left' + (left[0].due ? ' · next: ' + left[0].title : '') : 'all done') : 'the to-do list', 'fpTodoSave');
-    if (!list.length) { host.innerHTML = '<p class="empty">Nothing here yet — order the cake, send the invites, buy the loot-bag bits.</p>'; return; }
+    var left = list.filter(function (d) { return !d.done; }), done = list.length - left.length;
+    subWith('fpTodoSub', list.length ? (left.length ? left.length + ' left' : 'all done') : 'the to-do list', 'fpTodoSave');
+    if (!list.length) { host.innerHTML = '<p class="empty">Nothing here yet — order the cake, send the invites, buy the loot-bag bits.</p>'; mt.innerHTML = ''; return; }
+    mt.innerHTML = meter(done / list.length * 100, '<b>' + done + ' of ' + list.length + ' done</b>', left.length ? left.length + ' to go' + (left[0].due ? ' · next ' + esc(fmtShort(left[0].due)) : '') : 'nothing left');
     host.innerHTML = list.map(function (d) {
       var late = d.due && !d.done && d.due < today;
       return '<div class="row' + (d.done ? ' done' : '') + '">' + check('todo', d, 'done', !!d.done, (d.done ? 'Done: ' : 'To do: ') + d.title) +
@@ -720,10 +843,11 @@
 
   // thank-you cards
   function renderThanks() {
-    var host = document.getElementById('fpThanks'), hint = document.getElementById('fpThanksHint'), list = rows('thanks').slice();
+    var host = document.getElementById('fpThanks'), mt = document.getElementById('fpThanksMeter'), hint = document.getElementById('fpThanksHint'), list = rows('thanks').slice();
     list.sort(function (a, b) { return (a.sent ? 1 : 0) - (b.sent ? 1 : 0); });
     var sent = list.filter(function (d) { return d.sent; }).length;
     subWith('fpThanksSub', list.length ? sent + ' of ' + list.length + ' sent' : 'who gave what · tick when sent', 'fpThanksSave');
+    mt.innerHTML = list.length ? meter(sent / list.length * 100, '<b>' + sent + ' of ' + list.length + ' sent</b>', (list.length - sent) ? (list.length - sent) + ' to write' : 'all sent') : '';
     host.innerHTML = list.length ? list.map(function (d) {
       return '<div class="row' + (d.sent ? ' done' : '') + '">' + check('thanks', d, 'sent', !!d.sent, (d.sent ? 'Sent to ' : 'Not sent to ') + d.who) +
         '<span class="main"><span class="t">' + esc(d.who) + '</span>' + (d.gift ? '<span class="m">' + esc(d.gift) + '</span>' : '') + '</span>' + xBtns('thanks', d, d.who) + '</div>';
@@ -741,17 +865,39 @@
     try { await post('thanks', { section: 'thanks', who: w.by, gift: w.title, sent: false }); } catch (e) {} finally { done(); }
   };
 
-  function renderAll() { renderHero(); renderInfo(); renderInvite(); renderGuests(); renderWishes(); renderLoot(); renderIdeas(); renderRun(); renderTodos(); renderFood(); renderThanks(); }
+  function renderAll() { renderHero(); renderStats(); renderInfo(); renderInvite(); renderGuests(); renderWishes(); renderLoot(); renderIdeas(); renderRun(); renderTodos(); renderFood(); renderThanks(); }
   renderAll();
+
+  // The sub-nav follows the scroll: the lit pill is the card row nearest the
+  // top. Cards share a row in the grid, so a tap remembers which one you meant
+  // until the scroll moves to another row.
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('.subnav a'));
+    var secs = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+    var pinned = 0;
+    links.forEach(function (a, i) { a.addEventListener('click', function () { pinned = i; }); });
+    function mark() {
+      var top = window.scrollY + 120, rowTop = -1;
+      secs.forEach(function (s) { if (s && s.offsetTop <= top && s.offsetTop > rowTop) rowTop = s.offsetTop; });
+      var row = []; secs.forEach(function (s, i) { if (s && s.offsetTop === rowTop) row.push(i); });
+      if (!row.length) row = [0];
+      var cur = row.indexOf(pinned) >= 0 ? pinned : row[0];
+      links.forEach(function (a, i) { a.classList.toggle('on', i === cur); });
+    }
+    window.addEventListener('scroll', mark, { passive: true });
+    mark();
+  })();
+
   // Another device may have changed things since this page loaded — the iPad
   // on the counter and a phone on the couch both edit it — so coming back to
-  // the tab asks for the latest.
-  document.addEventListener('visibilitychange', function () {
-    if (document.hidden) return;
+  // the tab asks for the latest. On the day, the clock moves the run sheet.
+  function refresh() {
     fetch('/api/party').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (j && j.items) { ITEMS = j.items; META = j.meta || null; renderAll(); }
     }).catch(function () {});
-  });
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+  setInterval(function () { if (!document.hidden && meta().date === todayIso()) renderRun(); }, 60000);
 </script>
 </body>
 </html>
