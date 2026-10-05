@@ -2860,6 +2860,21 @@ def api_party_meta():
     return jsonify({'ok': True, **d})
 
 
+@app.route('/api/party/items', methods=['POST'])
+def api_party_items():
+    """Several rows at once — the guest list pasted in from a note. One write,
+    so a flaky connection can't land half a list."""
+    b = request.get_json(silent=True) or {}
+    rows = b.get('items') if isinstance(b.get('items'), list) else []
+    items = [it for it in (_party_item(r) for r in rows[:200]) if it is not None]
+    if not items:
+        return jsonify({'ok': False, 'error': 'nothing to add'}), 400
+    d = load_party()
+    d['items'].extend(items)
+    save_party(d)
+    return jsonify({'ok': True, 'added': len(items), **d})
+
+
 @app.route('/api/party/item', methods=['POST'])
 @app.route('/api/party/item/<item_id>', methods=['POST', 'DELETE'])
 def api_party_item(item_id=None):

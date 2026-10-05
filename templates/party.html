@@ -366,6 +366,16 @@
         <input class="in" id="guest-note" type="text" placeholder="Allergies, a parent's name, a note…">
         <button class="mini" id="guest-cancel" hidden onclick="cancelEdit('guest')">Cancel</button>
         <button class="mini fill" id="guest-btn" onclick="submitRow('guest')">Add</button>
+        <button class="mini" onclick="bulkForm(true)">Paste a list</button>
+      </div>
+      <div class="form" id="fpBulkForm">
+        <label for="guest-bulk">One guest a line — a note after a dash if you like: Nora – nut allergy</label>
+        <textarea class="in" id="guest-bulk" rows="6" placeholder="Maya&#10;Naomi&#10;Leva – no dairy"></textarea>
+        <div class="form-btns">
+          <button class="mini fill" onclick="bulkAdd()">Add them all</button>
+          <button class="mini" onclick="bulkForm(false)">Cancel</button>
+          <span class="save" id="fpBulkSave" hidden></span>
+        </div>
       </div>
     </section>
 
@@ -818,6 +828,26 @@
         xBtns('guest', d, d.name) + '</div>';
     }).join('') || '<p class="empty">No one in that group.</p>';
   }
+
+  // a pasted list: one name a line, an optional note after a dash
+  window.bulkForm = function (show) {
+    document.getElementById('fpBulkForm').classList.toggle('show', !!show);
+    if (show) document.getElementById('guest-bulk').focus();
+  };
+  window.bulkAdd = async function () {
+    var box = document.getElementById('guest-bulk'), have = {};
+    rows('guest').forEach(function (g) { have[(g.name || '').toLowerCase()] = true; });
+    var items = box.value.split(/\n+/).map(function (line) {
+      var m = line.trim().match(/^(.+?)(?:\s+[\u2013\u2014-]\s+(.+))?$/);
+      return m && m[1] ? { section: 'guest', name: m[1].trim(), note: (m[2] || '').trim(), rsvp: 'waiting' } : null;
+    }).filter(function (it) { return it && !have[it.name.toLowerCase()]; });
+    if (!items.length) { box.focus(); return; }
+    var done = busyOnce('party-bulk'); if (!done) return;
+    try {
+      var r = await saved('fpBulkSave', postJson('/api/party/items', { items: items }), items.length + ' added');
+      if (r.ok) { await takeBundle(r); box.value = ''; bulkForm(false); }
+    } catch (e) {} finally { done(); }
+  };
 
   // wishes — bought against the whole list, in dollars where prices are known
   function renderWishes() {
