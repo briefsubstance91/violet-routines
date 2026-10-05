@@ -1,3 +1,4 @@
+import base64
 import csv
 import functools
 import hmac
@@ -287,13 +288,18 @@ _PARTY_SECTIONS = {'guest', 'wish', 'loot', 'idea', 'run', 'todo', 'food', 'than
 _PARTY_ID_RE = re.compile(r'^[a-f0-9]{12}$')
 
 
+PARTY_PHOTOS_DIR = os.path.join(_DATA, 'party_photos')
+_PARTY_PHOTO_MAX = 3 * 1024 * 1024      # after the page shrinks it to 1600px, a photo is ~300 KB
+
+
 def load_party():
     try:
         with open(PARTY_FILE, encoding='utf-8') as f:
             d = json.load(f)
     except (FileNotFoundError, ValueError):
         d = {}
-    return {'meta': d.get('meta') or None, 'items': d.get('items') or []}
+    return {'meta': d.get('meta') or None, 'items': d.get('items') or [],
+            'photos': d.get('photos') or []}
 
 
 def save_party(d):
@@ -2877,6 +2883,66 @@ def api_party_item(item_id=None):
         else:
             d['items'].append(it)
     save_party(d)
+    return jsonify({'ok': True, **d})
+
+
+# Photos for the party page: the venue's rooms, the cake idea, the invite. A
+# photo is either a file on the volume (uploaded from the iPad, shrunk by the
+# page first) or a link to a picture that lives elsewhere (the venue's site).
+@app.route('/api/party/photo', methods=['POST'])
+def api_party_photo():
+    b = request.get_json(silent=True) or {}
+    d = load_party()
+    url = (b.get('url') or '').strip()
+    if url:
+        if not re.match(r'^https?://', url) or len(url) > 2000:
+            return jsonify({'ok': False, 'error': 'That isn’t a web address.'}), 400
+        ph = {'id': uuid.uuid4().hex[:12], 'kind': 'url', 'url': url, 'name': (b.get('name') or '').strip()[:200]}
+    else:
+        data, mime = b.get('data') or '', (b.get('mime') or 'image/jpeg').lower()
+        if mime not in ('image/jpeg', 'image/png', 'image/webp', 'image/gif'):
+            return jsonify({'ok': False, 'error': 'Photos only — JPEG, PNG, WebP or GIF.'}), 400
+        if len(data) > _PARTY_PHOTO_MAX * 4 // 3:
+            return jsonify({'ok': False, 'error': 'That one’s too big — try again, the page will shrink it.'}), 413
+        try:
+            raw = base64.b64decode(data, validate=True)
+        except Exception:
+            return jsonify({'ok': False, 'error': 'The photo didn’t come through.'}), 400
+        if not raw:
+            return jsonify({'ok': False, 'error': 'The photo didn’t come through.'}), 400
+        pid = uuid.uuid4().hex[:12] + {'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif'}[mime]
+        os.makedirs(PARTY_PHOTOS_DIR, exist_ok=True)
+        with open(os.path.join(PARTY_PHOTOS_DIR, pid), 'wb') as f:
+            f.write(raw)
+        ph = {'id': pid, 'kind': 'file', 'mime': mime, 'name': (b.get('name') or '').strip()[:200]}
+    d['photos'].append(ph)
+    save_party(d)
+    return jsonify({'ok': True, **d})
+
+
+@app.route('/party/photo/<photo_id>')
+def party_photo(photo_id):
+    if not _PHOTO_ID_RE.match(photo_id):
+        return ('', 404)
+    ph = next((p for p in load_party()['photos'] if p.get('id') == photo_id and p.get('kind') == 'file'), None)
+    if not ph:
+        return ('', 404)
+    return send_from_directory(PARTY_PHOTOS_DIR, photo_id, mimetype=ph.get('mime') or 'image/jpeg', max_age=30 * 86400)
+
+
+@app.route('/api/party/photo/<photo_id>', methods=['DELETE'])
+def api_party_photo_delete(photo_id):
+    d = load_party()
+    ph = next((p for p in d['photos'] if p.get('id') == photo_id), None)
+    if not ph:
+        return jsonify({'ok': False, 'error': 'no such photo'}), 404
+    d['photos'] = [p for p in d['photos'] if p.get('id') != photo_id]
+    save_party(d)
+    if ph.get('kind') == 'file' and _PHOTO_ID_RE.match(photo_id):
+        try:
+            os.remove(os.path.join(PARTY_PHOTOS_DIR, photo_id))
+        except OSError:
+            pass
     return jsonify({'ok': True, **d})
 
 

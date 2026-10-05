@@ -233,6 +233,35 @@
     .inv-rows b { flex: none; width: 4.4rem; font-size: var(--fs-1); font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
     .inv-rows span { font-weight: 500; overflow-wrap: anywhere; }
 
+    /* the venue's package, as booked — facts from the Bubble's site, with a photo strip */
+    .pk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--s-3); margin: 0 0 var(--s-5); }
+    .pk { background: var(--raised); border-radius: var(--r-md); padding: var(--s-4) var(--s-5); border-left: 3px solid var(--fox); min-width: 0; }
+    .pk .k { font-size: var(--fs-1); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .pk .v { font-family: var(--font-display); font-size: 1.5rem; line-height: 1; margin-top: var(--s-2); color: var(--text); }
+    .pk .v small { font-family: var(--font-sans); font-size: var(--fs-2); color: var(--muted); margin-left: var(--s-2); letter-spacing: 0.04em; }
+    .pk-list { display: grid; gap: var(--s-2); margin: 0; padding: 0; list-style: none; }
+    .pk-list li { display: flex; gap: var(--s-3); align-items: baseline; font-size: var(--fs-3); color: var(--soft); }
+    .pk-list li::before { content: '\2713'; color: var(--fox); flex: none; font-weight: 700; }
+    .pk-list li.rule::before { content: '\25CF'; color: var(--cream); font-size: 0.5rem; vertical-align: middle; }
+    .pk-h { font-size: var(--fs-1); letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin: var(--s-5) 0 var(--s-3); }
+    .pk-h:first-child { margin-top: 0; }
+    .pk-note { font-size: var(--fs-2); color: var(--muted); line-height: 1.5; margin: var(--s-4) 0 0; }
+    .pk-note a { color: var(--fox-soft); text-decoration: none; }
+    .pk-note a:hover { text-decoration: underline; }
+
+    .ph { margin: 0 0 var(--s-5); }
+    .ph-strip { display: flex; gap: var(--s-2); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; padding-bottom: var(--s-1); }
+    .ph-btn { flex: none; background: none; border: none; padding: 0; cursor: pointer; border-radius: var(--r-sm); }
+    .ph-btn:active { opacity: 0.8; }
+    .ph-thumb { width: 112px; height: 80px; object-fit: cover; display: block; border-radius: var(--r-sm); border: 1px solid var(--border-strong); background: var(--raised); }
+    .ph-add { display: flex; gap: var(--s-3); flex-wrap: wrap; align-items: center; margin-top: var(--s-3); }
+    .ph-add .in { flex: 1 1 180px; }
+    .lb { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; flex-direction: column; gap: var(--s-5); padding: var(--s-6); }
+    .lb.show { display: flex; }
+    .lb img { max-width: 100%; max-height: 76vh; border-radius: var(--r-md); }
+    .lb-bar { display: flex; gap: var(--s-4); align-items: center; flex-wrap: wrap; justify-content: center; }
+    .lb-n { font-size: var(--fs-2); color: var(--soft); letter-spacing: 0.08em; }
+
     .offline { margin: 0 0 var(--s-7); border: 1px solid var(--ember); border-radius: var(--r); padding: var(--s-4) var(--s-6); font-size: var(--fs-3); color: var(--ember-soft); }
 
     @media (max-width: 600px) {
@@ -256,7 +285,7 @@
 
 <main class="page">
   <nav class="subnav" aria-label="On this page">
-    <a href="#sec-party" class="on">Party</a><a href="#sec-guests">Guests</a><a href="#sec-wishes">Wishes</a><a href="#sec-loot">Loot bags</a>
+    <a href="#sec-party" class="on">Party</a><a href="#sec-package">Package</a><a href="#sec-guests">Guests</a><a href="#sec-wishes">Wishes</a><a href="#sec-loot">Loot bags</a>
     <a href="#sec-run">Day of</a><a href="#sec-todo">To-do</a><a href="#sec-food">Food</a><a href="#sec-invite">Invite</a><a href="#sec-thanks">Thank-yous</a>
   </nav>
 
@@ -285,6 +314,8 @@
         <h2 class="sec-t">The party</h2>
         <span class="sec-sub">when · where · what · <span class="save" id="fpMetaSave" hidden></span></span>
       </header>
+      <div class="ph" id="fpPhotos"></div>
+      <input type="file" id="ph-file" accept="image/*" multiple hidden onchange="uploadPhotos(this.files)">
       <div id="fpInfo"></div>
       <div class="form" id="fpInfoForm">
         <div class="form-two">
@@ -313,6 +344,14 @@
           <button class="mini" onclick="infoForm(false)">Cancel</button>
         </div>
       </div>
+    </section>
+
+    <section class="sec" id="sec-package" style="--bc: var(--cream)">
+      <header class="sec-h">
+        <h2 class="sec-t">The package</h2>
+        <span class="sec-sub">Inflatapark · laser tag · arcade · what the Bubble includes</span>
+      </header>
+      <div id="fpPackage"></div>
     </section>
 
     <section class="sec" id="sec-guests" style="--bc: var(--cream)">
@@ -456,6 +495,17 @@
   </div>
 </main>
 
+<div class="lb" id="fpLb" role="dialog" aria-label="Party photos" onclick="if (event.target === this) closeLb()">
+  <img id="lbImg" src="" alt="">
+  <div class="lb-bar">
+    <button class="mini" onclick="lbStep(-1)" aria-label="Previous photo">‹</button>
+    <span class="lb-n" id="lbN"></span>
+    <button class="mini" onclick="lbStep(1)" aria-label="Next photo">›</button>
+    <button class="mini" onclick="lbDelete()">Remove</button>
+    <button class="mini accent" onclick="closeLb()">Close</button>
+  </div>
+</div>
+
 <div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
 <div class="menu-panel" id="menuPanel">
   <div class="menu-title">✦ Menu</div>
@@ -478,15 +528,36 @@
 
   // ── state ── the whole party comes down with the page; writes refresh it.
   var BUNDLE = {{ party_json | safe }};
-  var META = BUNDLE.meta || null, ITEMS = BUNDLE.items || [];
+  var META = BUNDLE.meta || null, ITEMS = BUNDLE.items || [], PHOTOS = BUNDLE.photos || [];
+  // The Bubble Toronto, from their site and listings (checked Oct 2026). The
+  // three-activity package's own price and timings weren't readable from here —
+  // the timings shown are the Inflatapark + Laser Tag package's; confirm on
+  // the booking, then edit The party's times to match.
+  var VENUE = { name: 'The Bubble', address: '65 Orfus Road, Unit A, Toronto, ON M6A 1L7', phone: '(416) 410-7469',
+                parties: 'https://the-bubble.com/toronto/parties', faq: 'https://the-bubble.com/faqs',
+                hours: 'Sat 10 am – 9 pm · Sun 10 am – 8 pm · Wed–Thu 3 – 8 pm · Fri 3 – 9 pm · Mon–Tue closed', parking: 'Free lot right outside' };
+  var PACKAGE = {
+    name: 'Inflatapark | Laser Tag | Arcade Party',
+    tiles: [['Inflatable', '60', 'min'], ['Laser tag', '30', 'min'], ['Party room', '45', 'min'], ['Guests', '10', 'minimum']],
+    included: ['A dedicated party host and a private party room', '2 slices of pizza and juice or pop per guest, tableware included',
+               'A $10 arcade card with 200 e-tickets per guest', 'A $20 arcade card for Violet', 'A 30-day Inflatapark pass for Violet',
+               'Bubble socks for the guests', '2 adults play free'],
+    rules: ['Every guest needs a signed waiver — valid a year, sign online before the day', 'Regular socks on the inflatables; no grip or trampoline socks',
+            'Laser tag is for 7 and up', 'Shoes, jewellery, bags and sharp things stay off the inflatables', 'No food, drinks or gum in the park'],
+    note: 'The Inflatapark + Laser Tag party runs 2½ hours at $50 a guest; this package adds arcade time, so check the price and the total time on the booking.'
+  };
+  var OLD_ADDRESS = 'North York, Toronto, ON';
   // What the page shows before anything is saved: the party as booked. The
   // first Save in "The party" writes the meta; until then these stand.
-  var DEFAULTS = { date: '2026-10-25', start: '11:00', end: '', rsvp_by: '', venue: 'The Bubble', address: 'North York, Toronto, ON',
-                   url: '', what: '', notes: '', bags: '', invites: '', budget: '',
+  var DEFAULTS = { date: '2026-10-25', start: '11:00', end: '', rsvp_by: '', venue: VENUE.name, address: VENUE.address,
+                   url: VENUE.parties, what: 'Inflatapark, laser tag, arcade, pizza and cake', notes: 'Socks on, waivers signed before the day.', bags: '', invites: '', budget: '',
                    invite: { headline: 'You’re invited!', message: 'Come celebrate Violet’s birthday with the foxes.', rsvp: '' } };
   function meta() {
     var m = Object.assign({}, DEFAULTS, META || {});
     m.invite = Object.assign({}, DEFAULTS.invite, (META || {}).invite || {});
+    // the first cut's placeholder address, before the real one was known
+    if (m.address === OLD_ADDRESS) m.address = VENUE.address;
+    if (!m.url) m.url = VENUE.parties;
     return m;
   }
 
@@ -865,7 +936,88 @@
     try { await post('thanks', { section: 'thanks', who: w.by, gift: w.title, sent: false }); } catch (e) {} finally { done(); }
   };
 
-  function renderAll() { renderHero(); renderStats(); renderInfo(); renderInvite(); renderGuests(); renderWishes(); renderLoot(); renderIdeas(); renderRun(); renderTodos(); renderFood(); renderThanks(); }
+  // the package card
+  function renderPackage() {
+    document.getElementById('fpPackage').innerHTML =
+      '<div class="pk-grid">' + PACKAGE.tiles.map(function (t) { return '<div class="pk"><div class="k">' + esc(t[0]) + '</div><div class="v">' + esc(t[1]) + '<small>' + esc(t[2]) + '</small></div></div>'; }).join('') + '</div>' +
+      '<p class="pk-h">Included</p><ul class="pk-list">' + PACKAGE.included.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
+      '<p class="pk-h">House rules</p><ul class="pk-list">' + PACKAGE.rules.map(function (x) { return '<li class="rule">' + esc(x) + '</li>'; }).join('') + '</ul>' +
+      '<p class="pk-h">The Bubble</p>' +
+      '<div class="row"><span class="lab">Phone</span><span class="val">' + esc(VENUE.phone) + '</span><button class="mini" onclick="copyText(this, ' + JSON.stringify(VENUE.phone.replace(/[^0-9+]/g, '')).replace(/"/g, '&quot;') + ', \'Copy\')">Copy</button></div>' +
+      '<div class="row"><span class="lab">Hours</span><span class="val">' + esc(VENUE.hours) + '</span></div>' +
+      '<div class="row"><span class="lab">Parking</span><span class="val">' + esc(VENUE.parking) + '</span></div>' +
+      '<div class="row"><span class="lab">Links</span><span class="val">' + link(VENUE.parties, 'Party packages') + ' · ' + link(VENUE.faq, 'FAQ and waivers') + '</span></div>' +
+      '<p class="pk-note">' + esc(PACKAGE.note) + '</p>';
+  }
+
+  // photos: a strip on The party card, a lightbox, upload from the iPad or paste a link
+  function photoSrc(p) { return p.kind === 'url' ? p.url : '/party/photo/' + p.id; }
+  function renderPhotos() {
+    var host = document.getElementById('fpPhotos');
+    host.innerHTML = (PHOTOS.length ? '<div class="ph-strip">' + PHOTOS.map(function (p, i) {
+        return '<button class="ph-btn" onclick="openLb(' + i + ')" aria-label="Open photo ' + (i + 1) + '"><img class="ph-thumb" src="' + esc(photoSrc(p)) + '" alt="' + esc(p.name || '') + '" loading="lazy"></button>';
+      }).join('') + '</div>' : '') +
+      '<div class="ph-add"><button class="mini" onclick="document.getElementById(\'ph-file\').click()">＋ photos</button>' +
+      '<input class="in" id="ph-url" type="url" placeholder="…or paste a picture\u2019s link"><button class="mini accent" onclick="addPhotoUrl()">Add</button>' +
+      '<span class="save" id="fpPhotoSave" hidden></span></div>';
+  }
+  function takePhotos(r) { return r.json().then(function (j) { if (j && j.photos) { PHOTOS = j.photos; } renderPhotos(); }); }
+  // Shrink before upload: the iPad's camera makes 4 MB photos; 1600px is plenty on a screen.
+  function shrink(file) {
+    return new Promise(function (res, rej) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        var max = 1600, w = img.width, h = img.height, k = Math.min(1, max / Math.max(w, h));
+        var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        res(c.toDataURL('image/jpeg', 0.85).split(',')[1]);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('not an image')); };
+      img.src = url;
+    });
+  }
+  window.uploadPhotos = async function (files) {
+    var done = busyOnce('party-photos'); if (!done) return;
+    try {
+      for (var i = 0; i < files.length; i++) {
+        var data = await shrink(files[i]);
+        var r = await saved('fpPhotoSave', postJson('/api/party/photo', { name: files[i].name, mime: 'image/jpeg', data: data }), 'Added');
+        if (r.ok) await takePhotos(r);
+      }
+    } catch (e) {} finally { done(); document.getElementById('ph-file').value = ''; }
+  };
+  window.addPhotoUrl = async function () {
+    var inp = document.getElementById('ph-url'), url = inp.value.trim();
+    if (!url) { inp.focus(); return; }
+    var done = busyOnce('party-photo-url'); if (!done) return;
+    try { var r = await saved('fpPhotoSave', postJson('/api/party/photo', { url: url }), 'Added'); if (r.ok) await takePhotos(r); }
+    catch (e) {} finally { done(); }
+  };
+  var lbIdx = 0;
+  function renderLb() {
+    var p = PHOTOS[lbIdx]; if (!p) { closeLb(); return; }
+    document.getElementById('lbImg').src = photoSrc(p);
+    document.getElementById('lbImg').alt = p.name || '';
+    document.getElementById('lbN').textContent = (lbIdx + 1) + ' of ' + PHOTOS.length + (p.name ? ' · ' + p.name : '');
+  }
+  window.openLb = function (i) { lbIdx = i; renderLb(); document.getElementById('fpLb').classList.add('show'); };
+  window.closeLb = function () { document.getElementById('fpLb').classList.remove('show'); };
+  window.lbStep = function (d) { if (!PHOTOS.length) return; lbIdx = (lbIdx + d + PHOTOS.length) % PHOTOS.length; renderLb(); };
+  window.lbDelete = async function () {
+    var p = PHOTOS[lbIdx]; if (!p) return;
+    var done = busyOnce('party-photo-del'); if (!done) return;
+    try {
+      var r = await saved('fpPhotoSave', fetch('/api/party/photo/' + p.id, { method: 'DELETE' }), 'Removed');
+      if (r.ok) { await takePhotos(r); lbIdx = Math.min(lbIdx, PHOTOS.length - 1); if (PHOTOS.length) renderLb(); else closeLb(); }
+    } catch (e) {} finally { done(); }
+  };
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('fpLb').classList.contains('show')) return;
+    if (e.key === 'Escape') closeLb(); else if (e.key === 'ArrowLeft') lbStep(-1); else if (e.key === 'ArrowRight') lbStep(1);
+  });
+
+  function renderAll() { renderHero(); renderStats(); renderPackage(); renderPhotos(); renderInfo(); renderInvite(); renderGuests(); renderWishes(); renderLoot(); renderIdeas(); renderRun(); renderTodos(); renderFood(); renderThanks(); }
   renderAll();
 
   // The sub-nav follows the scroll: the lit pill is the card row nearest the
@@ -893,7 +1045,7 @@
   // the tab asks for the latest. On the day, the clock moves the run sheet.
   function refresh() {
     fetch('/api/party').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
-      if (j && j.items) { ITEMS = j.items; META = j.meta || null; renderAll(); }
+      if (j && j.items) { ITEMS = j.items; META = j.meta || null; PHOTOS = j.photos || []; renderAll(); }
     }).catch(function () {});
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
